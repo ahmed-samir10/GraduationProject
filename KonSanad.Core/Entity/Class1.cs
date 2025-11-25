@@ -8,7 +8,7 @@ namespace KonSanad.Core.Entity
 {
     internal class Class1
     {
-       public int Id { get; set; }
+      
         
     }
 }
