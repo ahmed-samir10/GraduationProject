@@ -8,5 +8,4 @@
         public int CampaignsJoined { get; set; }
         public int TasksCompleted { get; set; }
     }
-
 }
