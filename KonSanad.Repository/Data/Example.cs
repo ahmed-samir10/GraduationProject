@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KonSanad.Core.Entity
+namespace KonSanad.Repository.Data
 {
-    internal class Class1
+    internal class Example
     {
-        // Yousseif
         public int MyProperty { get; set; }
-
     }
 }
