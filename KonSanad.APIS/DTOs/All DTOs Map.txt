@@ -1,0 +1,52 @@
+﻿1️- Donor DTOs (7 DTOs)
+DonorLoginDTO - تسجيل الدخول
+DonorRegisterDTO - إنشاء حساب جديد
+DonorReadDTO - عرض معلومات المتبرع
+DonorProfileDTO - الملف الشخصي الكامل
+DonorUpdateDTO - تعديل البيانات
+
+
+2- Campaign DTOs (4 DTOs)
+CampaignCardDTO - بطاقة الحملة في القوائم
+CampaignDetailsDTO - صفحة تفاصيل الحملة
+CampaignSpendingDTO - معلومات الإنفاق
+CampaignListDTO - قائمة الحملات مع Pagination
+
+
+3️- Donation DTOs (5 DTOs)
+CreateCashDonationDTO - إنشاء تبرع نقدي
+CreateItemDonationDTO - إنشاء تبرع عيني
+DonationSummaryDTO - ملخص التبرع
+DonationDetailsDTO - تفاصيل التبرع
+OrderItemReadDTO - عرض عناصر التبرع
+
+
+4️- Requirement DTOs (1 DTO)
+RequirementCardDTO - بطاقة المتطلبات
+
+
+5️- Receipt DTOs (1 DTO)
+ReceiptReadDTO - عرض الإيصال
+
+
+
+6️- Statistics DTOs (1 DTO)
+HomeStatisticsDTO - إحصائيات الصفحة الرئيسية
+
+
+
+7️- Contact DTOs (1 DTO)
+ContactMessageDTO - رسالة التواصل
+
+
+
+8️- Category DTOs (1 DTO)
+CategoryReadDTO - عرض الفئات
+
+
+
+9️- Auth DTOs (2 DTOs)
+
+LoginResponseDTO - استجابة تسجيل الدخول
+ChangePasswordDTO - تغيير كلمة المرور
+
