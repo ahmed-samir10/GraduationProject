@@ -8,7 +8,8 @@ namespace KonSanad.Core.Entity
 {
     internal class Class1
     {
-      
-        
+        // Yousseif
+        public int MyProperty { get; set; }
+
     }
 }
