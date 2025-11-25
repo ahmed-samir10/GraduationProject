@@ -16,7 +16,9 @@ namespace KonSanad.Repository.Data.Persistence
         // My Sring Connection
         // const string ConnectionString = "Server=.;Database=KonSanadDb;Trusted_Connection=True;" +"TrustServerCertificate=True;MultipleActiveResultSets=True;";
 
-        public KonSanadDbContext() { }
+        public KonSanadDbContext(DbContextOptions<KonSanadDbContext> options) : base(options)
+        { 
+        }
 
         #region My DbSets
 

@@ -13,7 +13,7 @@ namespace KonSanad.Repository.Entities
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Unit { get; set; } = null!;
-        public int? StockQuantity { get; set; }
+        public int? StockQuantity { get; set; } = 0;
         public int? MinimumLevel { get; set; }
 
         // Link to Category

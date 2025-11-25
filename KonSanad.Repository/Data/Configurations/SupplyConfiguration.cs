@@ -14,7 +14,8 @@ namespace KonSanad.Repository.Data.Configurations
             builder.Property(s => s.Name).IsRequired().HasMaxLength(200);
             builder.Property(s => s.Description).IsRequired().HasMaxLength(1000);
             builder.Property(s => s.Unit).IsRequired().HasMaxLength(50);
-            builder.Property(s => s.StockQuantity).IsRequired(false);
+            builder.Property(s => s.StockQuantity).IsRequired(false)
+                .HasDefaultValue(0); 
             builder.Property(s => s.MinimumLevel).IsRequired(false);
 
             // Relationship with Category

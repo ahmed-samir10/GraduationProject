@@ -7,7 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="new\" />
+    <Compile Remove="new\**" />
+    <EmbeddedResource Remove="new\**" />
+    <None Remove="new\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KonSanad.Core\KonSanad.Core.csproj" />
+    <ProjectReference Include="..\KonSanad.Repository\KonSanad.Repository.csproj" />
   </ItemGroup>
 
 </Project>

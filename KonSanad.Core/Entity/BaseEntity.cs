@@ -3,7 +3,7 @@
 public abstract class BaseEntity<TKey>
 {
     [Key]
-    public required TKey Id { get; set; }
+    public TKey Id { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; } = string.Empty;
