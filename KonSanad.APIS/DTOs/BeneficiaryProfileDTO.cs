@@ -11,6 +11,7 @@
         public string? CaseType { get; set; }
         public int? FamilyMembersCount { get; set; }
         public string? CaseDescription { get; set; }
+        public int NationalId { get; set; }
 
         // إحصائيات الملف الشخصي
         public int TotalRequests { get; set; }

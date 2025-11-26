@@ -25,4 +25,8 @@
     <ProjectReference Include="..\KonSanad.Core\KonSanad.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Identity\migration\" />
+  </ItemGroup>
+
 </Project>

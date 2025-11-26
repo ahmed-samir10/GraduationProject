@@ -16,7 +16,7 @@ namespace KonSanad.Repository.Entities
         public string Address { get; set; } = null!;
         public string Skills { get; set; } = null!;
         public bool? Availability { get; set; }
-
+        public int NationalId { get; set; }
 
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]

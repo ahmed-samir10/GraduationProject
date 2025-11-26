@@ -143,6 +143,9 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int>("NationalId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -413,6 +416,9 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int>("NationalId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -922,6 +928,9 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("bit");
 
                     b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NationalId")
                         .HasColumnType("int");
 
                     b.Property<string>("Password")
