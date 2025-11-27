@@ -19,5 +19,8 @@ namespace KonSanad.Repository.Entities
         public int SupplyId { get; set; }
         [ForeignKey(nameof(SupplyId))]
         public Supply? Supply { get; set; } // My Navigation Property
+
+        // new: optional image url for the requested item (nullable)
+        public string? ImageUrl { get; set; }
     }
 }

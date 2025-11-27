@@ -1,50 +1,65 @@
 ﻿using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
 {
-    // KonSanad.Services/Services/DonationOrderService.cs
     public class DonationOrderService : IDonationOrderService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private const int DefaultManagerId = 1; // change if you want a different default manager
+
         public DonationOrderService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // removed [FromBody] attribute — service methods should not have MVC attributes
-        public async Task<DonationResponseDto> CreateDonationAsync(CreateDonationRequestDto request, int donorId)
+        // compatibility: calls the new overload with no beneficiary
+        public Task<DonationResponseDto> CreateDonationAsync(CreateDonationRequestDto request, int donorId)
+            => CreateDonationAsync(request, donorId, beneficiaryId: null);
+
+        // explicit campaign endpoint: set campaign and call core
+        public Task<DonationResponseDto> CreateDonationToCampaignAsync(CreateDonationRequestDto request, int donorId, int campaignId)
         {
-            // optional: verify donor exists using _unitOfWork if your domain requires it
-            // var donor = await _unitOfWork.Repository<Donor, int>().GetByIdAsync(donorId);
-            // if (donor == null) throw new UnauthorizedAccessException("Donor not found");
+            request.CampaignId = campaignId;
+            return CreateDonationAsync(request, donorId, beneficiaryId: null);
+        }
+
+        // explicit beneficiary endpoint: pass beneficiaryId to core
+        public Task<DonationResponseDto> CreateDonationToBeneficiaryAsync(CreateDonationRequestDto request, int donorId, int beneficiaryId)
+            => CreateDonationAsync(request, donorId, beneficiaryId);
+
+        // core implementation — creates DonationOrder, CashDonation, OrderItems, SupplyMovements and Receipts
+        public async Task<DonationResponseDto> CreateDonationAsync(CreateDonationRequestDto request, int donorId, int? beneficiaryId)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
 
             try
             {
-                // 1. create DonationOrder and set donor id and cash amount
+                var hasCash = request.CashAmount.HasValue && request.CashAmount.Value > 0;
+                var hasItems = request.Items != null && request.Items.Any();
+
+                // create DonationOrder (always created to group the operation)
                 var donationOrder = new DonationOrder
                 {
-                     DonorId = donorId,
+                    DonorId = donorId > 0 ? donorId : null,
                     CampaignId = request.CampaignId,
-                    CashAmount = request.CashAmount,
-                    CreatedAt = DateTime.UtcNow,
+                    CashAmount = hasCash ? request.CashAmount : null,
+                    OrderDate = DateTime.UtcNow,
                     Status = "Pending",
                     IsDeleted = false,
-                    DonationCategoryStatus = "Pending2"
+                    DonationCategoryStatus = "Pending2",
+                    ManagerId = null
                 };
 
                 await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
-                // Save now to get donationOrder.Id so child entities can refer to it
-                await _unitOfWork.Complete();
+                var saved = await _unitOfWork.Complete();
+                if (saved <= 0) throw new InvalidOperationException("Failed to create DonationOrder.");
 
                 var response = new DonationResponseDto
                 {
@@ -53,53 +68,65 @@ namespace KonSanad.Services.Services
                     Items = new List<DonationItemDto>()
                 };
 
-                // 2. cash donation (if any) - link to saved donationOrder
-                if (request.CashAmount > 0)
+                int? cashReceiptId = null;
+                int? itemsReceiptId = null;
+
+                // cash-only
+                if (hasCash && !hasItems)
                 {
                     var cashDonation = new CashDonation
                     {
                         DonationOrderId = donationOrder.Id,
-                        Amount = request.CashAmount.Value,
-                        CreatedAt = DateTime.UtcNow,
-                        Status = "Pending"
+                        Amount = request.CashAmount.Value
                     };
 
                     await _unitOfWork.Repository<CashDonation, int>().AddAsync(cashDonation);
-                    // optional: set response.CashAmount already set above
+                    await _unitOfWork.Complete(); // generate id
+
+                    var cashReceipt = new Receipt
+                    {
+                        DonationOrderId = donationOrder.Id,
+                        CashDonationId = cashDonation.Id,
+                        DonorId = donorId > 0 ? donorId : null,
+                        ManagerId = DefaultManagerId,
+                        BeneficiaryId = beneficiaryId // will be null for campaign flow
+                    };
+
+                    await _unitOfWork.Repository<Receipt, int>().AddAsync(cashReceipt);
+                    await _unitOfWork.Complete();
+                    cashReceiptId = cashReceipt.Id;
+
+                    response.Message = "تم تسجيل تبرع نقدي وتم إصدار إيصال الدفع.";
+                    response.TotalItems = 0;
+                    response.CashReceiptId = cashReceiptId;
+                    return response;
                 }
 
-                // 3. in-kind donations
-                if (request.Items != null && request.Items.Any())
+                // items-only
+                if (hasItems && !hasCash)
                 {
                     foreach (var item in request.Items)
                     {
-                        // determine supplyId only if provided and exists
                         int? supplyId = null;
                         if (item.SupplyId > 0)
                         {
                             var supplyExists = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(item.SupplyId);
-                            if (supplyExists != null)
-                                supplyId = item.SupplyId;
-                            else
-                                supplyId = null; // treat as custom supply (no FK)
+                            if (supplyExists != null) supplyId = item.SupplyId;
                         }
 
                         var orderItem = new OrderItem
                         {
                             DonationOrderId = donationOrder.Id,
-                            SupplyId = supplyId, // now nullable
-                            CustomSupplyName = supplyId.HasValue ? null : (item.CustomName ?? "تبرع عيني عام"),
+                            SupplyId = supplyId,
+                            CustomSupplyName = supplyId.HasValue ? null : (item.CustomName ?? "تبرع عيني"),
                             Quantity = item.Quantity,
-                            Unit = item.Unit,
-                            CreatedAt = DateTime.UtcNow,
+                            Unit = item.Unit ?? string.Empty,
                             Status = "Pending"
                         };
 
-                        // add order item to context
                         await _unitOfWork.Repository<OrderItem, int>().AddAsync(orderItem);
                         response.Items.Add(item);
 
-                        // update supply stock if applicable
                         if (supplyId.HasValue)
                         {
                             var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(supplyId.Value);
@@ -110,7 +137,6 @@ namespace KonSanad.Services.Services
                             }
                         }
 
-                        // create movement; set SupplyId only when available
                         var movement = new SupplyMovement
                         {
                             SupplyId = supplyId,
@@ -118,22 +144,135 @@ namespace KonSanad.Services.Services
                             MovementType = "IncomingDonation",
                             MovedQuantity = item.Quantity,
                             MovementDate = DateTime.UtcNow,
-                            Status = "Pending"
+                            Status = "Pending",
+                            ManagerId = DefaultManagerId
                         };
 
                         await _unitOfWork.Repository<SupplyMovement, int>().AddAsync(movement);
                     }
+
+                    var affected = await _unitOfWork.Complete();
+                    if (affected <= 0) throw new InvalidOperationException("Failed to save donation items.");
+
+                    var itemsReceipt = new Receipt
+                    {
+                        DonationOrderId = donationOrder.Id,
+                        DonorId = donorId > 0 ? donorId : null,
+                        ManagerId = DefaultManagerId,
+                        BeneficiaryId = beneficiaryId // set when donating to beneficiary
+                    };
+
+                    await _unitOfWork.Repository<Receipt, int>().AddAsync(itemsReceipt);
+                    await _unitOfWork.Complete();
+                    itemsReceiptId = itemsReceipt.Id;
+
+                    response.Message = "تم تسجيل تبرع عيني وتم إصدار إيصال الاستلام.";
+                    response.TotalItems = response.Items.Sum(i => i.Quantity);
+                    response.ItemsReceiptId = itemsReceiptId;
+                    return response;
                 }
 
-                // Save all remaining changes (order items, movements, cash donation updates, supply updates)
-                await _unitOfWork.Complete();
+                // both cash & items => create both and separate receipts
+                if (hasCash && hasItems)
+                {
+                    var cashDonation = new CashDonation
+                    {
+                        DonationOrderId = donationOrder.Id,
+                        Amount = request.CashAmount.Value
+                    };
 
+                    await _unitOfWork.Repository<CashDonation, int>().AddAsync(cashDonation);
+                    await _unitOfWork.Complete();
+
+                    var cashReceipt = new Receipt
+                    {
+                        DonationOrderId = donationOrder.Id,
+                        CashDonationId = cashDonation.Id,
+                        DonorId = donorId > 0 ? donorId : null,
+                        ManagerId = DefaultManagerId,
+                        BeneficiaryId = beneficiaryId
+                    };
+
+                    await _unitOfWork.Repository<Receipt, int>().AddAsync(cashReceipt);
+                    await _unitOfWork.Complete();
+                    cashReceiptId = cashReceipt.Id;
+
+                    foreach (var item in request.Items)
+                    {
+                        int? supplyId = null;
+                        if (item.SupplyId > 0)
+                        {
+                            var supplyExists = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(item.SupplyId);
+                            if (supplyExists != null) supplyId = item.SupplyId;
+                        }
+
+                        var orderItem = new OrderItem
+                        {
+                            DonationOrderId = donationOrder.Id,
+                            SupplyId = supplyId,
+                            CustomSupplyName = supplyId.HasValue ? null : (item.CustomName ?? "تبرع عيني"),
+                            Quantity = item.Quantity,
+                            Unit = item.Unit ?? string.Empty,
+                            Status = "Pending"
+                        };
+
+                        await _unitOfWork.Repository<OrderItem, int>().AddAsync(orderItem);
+                        response.Items.Add(item);
+
+                        if (supplyId.HasValue)
+                        {
+                            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(supplyId.Value);
+                            if (supply != null)
+                            {
+                                supply.StockQuantity = (supply.StockQuantity ?? 0) + item.Quantity;
+                                _unitOfWork.Repository<Supply, int>().Update(supply);
+                            }
+                        }
+
+                        var movement = new SupplyMovement
+                        {
+                            SupplyId = supplyId,
+                            OrderItem = orderItem,
+                            MovementType = "IncomingDonation",
+                            MovedQuantity = item.Quantity,
+                            MovementDate = DateTime.UtcNow,
+                            Status = "Pending",
+                            ManagerId = DefaultManagerId
+                        };
+
+                        await _unitOfWork.Repository<SupplyMovement, int>().AddAsync(movement);
+                    }
+
+                    var affected = await _unitOfWork.Complete();
+                    if (affected <= 0) throw new InvalidOperationException("Failed to save donation items.");
+
+                    var itemsReceipt = new Receipt
+                    {
+                        DonationOrderId = donationOrder.Id,
+                        DonorId = donorId > 0 ? donorId : null,
+                        ManagerId = DefaultManagerId,
+                        BeneficiaryId = beneficiaryId
+                    };
+
+                    await _unitOfWork.Repository<Receipt, int>().AddAsync(itemsReceipt);
+                    await _unitOfWork.Complete();
+                    itemsReceiptId = itemsReceipt.Id;
+
+                    response.Message = "تم تسجيل تبرع نقدي وعيني. تم إصدار إيصال لكل عملية.";
+                    response.TotalItems = response.Items.Sum(i => i.Quantity);
+                    response.CashReceiptId = cashReceiptId;
+                    response.ItemsReceiptId = itemsReceiptId;
+                    return response;
+                }
+
+                // fallback
+                response.Message = "لم يتم تقديم تبرع صالح.";
+                response.TotalItems = 0;
                 return response;
             }
-            catch (Exception)
+            catch (DbUpdateException dbEx)
             {
-                // consider logging the exception before rethrowing
-                throw;
+                throw new InvalidOperationException("Database update failed while creating donation order.", dbEx);
             }
         }
 
@@ -153,9 +292,10 @@ namespace KonSanad.Services.Services
                     Items = d.OrderItems != null
                                 ? d.OrderItems.Select(i => new DonationItemDto
                                 {
-                                    SupplyId = (int)i.SupplyId,
-                                    CustomName = i.Supply != null ? i.Supply.Name : null,
-                                    Quantity = i.Quantity
+                                    SupplyId = i.SupplyId ?? 0,
+                                    CustomName = i.Supply != null ? i.Supply.Name : i.CustomSupplyName,
+                                    Quantity = i.Quantity,
+                                    Unit = i.Unit
                                 }).ToList()
                                 : new List<DonationItemDto>()
                 })

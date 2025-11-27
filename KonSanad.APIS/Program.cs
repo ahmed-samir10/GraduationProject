@@ -30,8 +30,13 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
-builder.Services.AddScoped<IDonationOrderService,DonationOrderService>();
+builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Register campaign service
+builder.Services.AddScoped<ICampaignService, CampaignService>();
+
 // identity services
 builder.Services.AddIdentityCore<AppUser>(options =>
 {
@@ -47,7 +52,13 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Register AutoMapper (ensure AutoMapper.Extensions.Microsoft.DependencyInjection is installed)
-builder.Services.AddAutoMapper(typeof(MappingProfiles));
+builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Repository.Entities.Campaign, KonSanad.Core.Dtos.CampaignDto, string>, KonSanad.APIS.Helpers.CampaignUrlResolver>();
+
+
+// register ImageUrls resolver (NewProductRequestDto -> HelpOrder.ImageUrlsJson)
+builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
+
+builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfiles(builder.Configuration)));
 
 // JWT auth
 var jwtKey = builder.Configuration["JWT:Key"];
@@ -131,6 +142,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
+app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapControllers();

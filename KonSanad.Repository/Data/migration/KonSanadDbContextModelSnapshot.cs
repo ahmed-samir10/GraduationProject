@@ -208,6 +208,10 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<int?>("ManagerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("PictureUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -459,13 +463,16 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<int?>("BeneficiaryId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ImageUrlsJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -480,7 +487,6 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("rowversion");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -508,6 +514,9 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<int>("HelpOrderId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -692,10 +701,9 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("rowversion");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SupplyId")
+                    b.Property<int?>("SupplyId")
                         .HasColumnType("int");
 
                     b.Property<string>("Unit")
@@ -1121,8 +1129,7 @@ namespace KonSanad.Repository.Data.migration
                     b.HasOne("KonSanad.Repository.Entities.Supply", "Supply")
                         .WithMany("OrderItems")
                         .HasForeignKey("SupplyId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("DonationOrder");
 

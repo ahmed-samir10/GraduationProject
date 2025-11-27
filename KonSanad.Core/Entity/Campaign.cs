@@ -18,12 +18,13 @@ namespace KonSanad.Repository.Entities
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
 
-
+         public string PictureUrl { get; set; }
         // Category FK
         public int? CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; } // Navigation property
 
+       
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; }  // Navigation property

@@ -11,6 +11,8 @@ namespace KonSanad.Repository.Entities
     {
         public string Description { get; set; } = null!;
 
+        // store image urls as JSON string (nullable)
+        public string? ImageUrlsJson { get; set; }
 
         // This My Relations Between ( Beneficiary And HelpOrder )
         public int? BeneficiaryId { get; set; }
@@ -18,11 +20,15 @@ namespace KonSanad.Repository.Entities
         [ForeignKey(nameof(BeneficiaryId))]
         public Beneficiary? Beneficiary { get; set; } // My Navigation Property
 
-
         // This My Relations Between ( Manager And HelpOrder )
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; } // My Navigation Property
+
+        // metadata
+        public DateTime? CreatedAt { get; set; }
+        public string? Status { get; set; }
+        public bool IsDeleted { get; set; }
 
         public ICollection<HelpOrderItem> HelpOrderItems { get; set; } = new List<HelpOrderItem>();
     }

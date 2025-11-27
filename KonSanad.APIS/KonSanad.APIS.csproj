@@ -23,4 +23,8 @@
     <ProjectReference Include="..\KonSanad.Services\KonSanad.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="WWWROOt\" />
+  </ItemGroup>
+
 </Project>
