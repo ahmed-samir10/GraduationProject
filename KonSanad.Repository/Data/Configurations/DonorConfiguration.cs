@@ -21,7 +21,7 @@ namespace KonSanad.Repository.Data.Configurations
             builder.Property(d => d.Password).IsRequired().HasMaxLength(200);
             builder.Property(d => d.Phone).IsRequired().HasMaxLength(50);
             builder.Property(d => d.Address).IsRequired().HasMaxLength(500);
-            builder.Property(d => d.DonorType).IsRequired().HasMaxLength(50);
+         //   builder.Property(d => d.DonorType).IsRequired().HasMaxLength(50);
 
             // Relationships
             builder.HasMany(d => d.DonationOrders)

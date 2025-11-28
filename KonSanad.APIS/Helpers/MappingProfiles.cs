@@ -14,16 +14,21 @@ namespace KonSanad.APIS.Helpers
     {
         public MappingProfiles()
         {
-            // existing mappings kept...
             CreateMap<RegisterDto, AppUser>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.DisplayName))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
-                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
+      .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
+      .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.DisplayName))
+      .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+        .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Phone))
+          .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+      .ForMember(dest => dest.NationalId, opt => opt.MapFrom(src => src.NationalId))
+      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
+      .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
 
             CreateMap<RegisterDto, UserDto>()
                 .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.DisplayName))
+                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                  .ForMember(dest => dest.NationalId, opt => opt.MapFrom(src => src.NationalId))
+                     .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
 
             CreateMap<Beneficiary, BeneficiaryDto>();

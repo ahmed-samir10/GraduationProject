@@ -10,7 +10,14 @@ namespace KonSanad.Core.Dtos
     {
         public string Email { get; set; }
         public string DisplayName { get; set; }
+        public string Role { get; set; } = string.Empty;
+        public string Phone { get; set; } = null!;
+        public string Address { get; set; } = null!;
+
+
+        public string NationalId { get; set; }
         public string Token { get; set; }
-        public string[] Roles { get; set; } = Array.Empty<string>();
+        // public string[] Roles { get; set; } = Array.Empty<string>();
+
     }
 }

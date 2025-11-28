@@ -2,11 +2,13 @@
 using Azure.Core;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace KonSanad.APIS.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BeneificeryController : ControllerBase
@@ -39,7 +41,8 @@ namespace KonSanad.APIS.Controllers
             var result = await _helpRequestService.RequestExistingProductAsync(beneficiaryId, request);
             if (result.HelpOrderId == 0) return NotFound(new { success = false, message = result.Message });
 
-            return Ok(new { success = true, data = result });
+            // return Arabic confirmation as requested
+            return Ok(new { success = true, message = "تم استقبال طلبك", data = result });
         }
 
         // 2) Request a new product (name, condition, reason, image)

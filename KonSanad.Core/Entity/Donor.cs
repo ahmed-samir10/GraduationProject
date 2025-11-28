@@ -14,8 +14,9 @@ namespace KonSanad.Repository.Entities
         public string Password { get; set; } = null!;
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
-        public string DonorType { get; set; } = null!;
-        public int NationalId { get; set; }
+
+        public string AppUserId { get; set; }
+        public string NationalId { get; set; }
 
 
         // Navigation

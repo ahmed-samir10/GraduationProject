@@ -2,17 +2,18 @@
 using KonSanad.APIS.DTOs;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.Dtos.KonSanad.APIS.DTOs;
+using KonSanad.Core.Entities; // ← هنا Donor و Beneficiary و Volunteer
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace KonSanad.APIS.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -22,18 +23,22 @@ namespace KonSanad.APIS.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork; // مهم جدًا عشان نضيف Donor/Beneficiary
 
-        public AccountController(UserManager<AppUser> userManager,
+        public AccountController(
+            UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
             SignInManager<AppUser> signInManager,
-            IMapper mapper)
+            IMapper mapper,
+            IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost("login")]
@@ -47,96 +52,123 @@ namespace KonSanad.APIS.Controllers
             if (!result.Succeeded)
                 return Unauthorized(new ApiResponse(401, "Invalid email or password"));
 
-            var token = await _tokenService.CreateToken(user, _userManager);
-            var roles = (await _userManager.GetRolesAsync(user)).ToArray();
-
-            var userDto = new UserDto
-            {
-                Email = user.Email,
-                DisplayName = user.FullName,
-                Token = token,
-                Roles = roles
-            };
-
-            return Ok(userDto);
+            return Ok(await BuildUserResponseAsync(user));
         }
 
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
             if (await _userManager.FindByEmailAsync(registerDto.Email) != null)
-                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Email address already in use." } });
+                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Email already in use" } });
 
-            var allowed = new[] { "Volunteer", "Beneficiary", "Donor" };
+            var allowedRoles = new[] { "Donor", "Beneficiary", "Volunteer" };
             var role = registerDto.Role?.Trim();
-            if (string.IsNullOrEmpty(role) || !allowed.Contains(role))
-                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Role must be one of: Volunteer, Beneficiary, Donor" } });
+            if (string.IsNullOrWhiteSpace(role) || !allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Role must be Donor, Beneficiary, or Volunteer" } });
 
-            // Ensure role exists
             if (!await _roleManager.RoleExistsAsync(role))
-            {
-                var roleCreate = await _roleManager.CreateAsync(new IdentityRole(role));
-                if (!roleCreate.Succeeded)
-                {
-                    var errors = roleCreate.Errors.Select(e => e.Description).ToArray();
-                    return BadRequest(new ApiValidationErrorResponse { Errors = errors });
-                }
-            }
+                await _roleManager.CreateAsync(new IdentityRole(role));
 
             var user = _mapper.Map<AppUser>(registerDto);
             user.UserName = registerDto.Email;
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToArray();
-                return BadRequest(new ApiValidationErrorResponse { Errors = errors });
-            }
+                return BadRequest(new ApiValidationErrorResponse { Errors = result.Errors.Select(e => e.Description).ToArray() });
 
-            var addRoleResult = await _userManager.AddToRoleAsync(user, role);
-            if (!addRoleResult.Succeeded)
-            {
-                var errors = addRoleResult.Errors.Select(e => e.Description).ToArray();
-                return BadRequest(new ApiValidationErrorResponse { Errors = errors });
-            }
+            var roleResult = await _userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded)
+                return BadRequest(new ApiValidationErrorResponse { Errors = roleResult.Errors.Select(e => e.Description).ToArray() });
 
-            var token = await _tokenService.CreateToken(user, _userManager);
-            var roles = (await _userManager.GetRolesAsync(user)).ToArray();
+            // هنا السحر: ننشئ حساب المستفيد أو المتبرع أو المتطوع تلقائيًا
+            await CreateProfileBasedOnRole(user, role, registerDto);
 
-            var userDto = new UserDto
-            {
-                Email = user.Email,
-                DisplayName = user.FullName,
-                Token = token,
-                Roles = roles
-            };
-
-            return Ok(userDto);
+            return Ok(await BuildUserResponseAsync(user));
         }
 
         [Authorize]
-        [HttpGet]
+        [HttpGet("current")]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
             var email = User.FindFirstValue(ClaimTypes.Email);
             var user = await _userManager.FindByEmailAsync(email);
-
-            var token = await _tokenService.CreateToken(user, _userManager);
-            var roles = (await _userManager.GetRolesAsync(user)).ToArray();
-
-            return Ok(new UserDto
-            {
-                Email = user.Email,
-                DisplayName = user.FullName,
-                Token = token,
-                Roles = roles
-            });
+            return Ok(await BuildUserResponseAsync(user));
         }
 
         [HttpGet("emailexists")]
-        public async Task<ActionResult<bool>> CheckEmailExistsAsync([FromQuery] string email)
+        public async Task<ActionResult<bool>> CheckEmailExists([FromQuery] string email)
+            => await _userManager.FindByEmailAsync(email) != null;
+
+        // دالة مساعدة عشان نرجع نفس الشكل في Login و Register و CurrentUser
+        private async Task<UserDto> BuildUserResponseAsync(AppUser user)
         {
-            return await _userManager.FindByEmailAsync(email) != null;
+            var roles = await _userManager.GetRolesAsync(user);
+            return new UserDto
+            {
+
+                Email = user.Email!,
+
+                DisplayName = user.FullName ?? "User",
+                Role = roles.FirstOrDefault() ?? "User",
+
+                Token = await _tokenService.CreateToken(user, _userManager)
+            };
+        }
+
+        // دالة جديدة: تنشئ الحساب المناسب (Donor / Beneficiary / Volunteer) تلقائيًا
+        private async Task CreateProfileBasedOnRole(AppUser user, string role, RegisterDto registerDto)
+        {
+            switch (role.ToLower())
+            {
+                case "donor":
+                    var donor = new Donor
+                    {
+                        AppUserId = user.Id,
+                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                        CreatedAt = DateTime.UtcNow,
+                        Email = user.Email,
+                        Password = user.PasswordHash,
+                        IsDeleted = false,
+                        Address = registerDto.Address ?? "غير محدد",     // مهم
+                        Phone = registerDto.Phone ?? "غير محدد",         // مهم
+                        NationalId = registerDto.NationalId ?? "غير محدد" // مهم
+                    };
+                    await _unitOfWork.Repository<Donor, int>().AddAsync(donor);
+                    break;
+
+                case "beneficiary":
+                    var beneficiary = new Beneficiary
+                    {
+                        Email = user.Email,
+                        Pssword = user.PasswordHash,
+                        AppUserId = user.Id,
+                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = false,
+                        Address = registerDto.Address ?? "غير محدد",     // مهم
+                        Phone = registerDto.Phone ?? "غير محدد",         // مهم
+                        NationalId = registerDto.NationalId ?? "غير محدد" // مهم
+                        // أضف الحقول اللي عايزها: Phone, Address, Needs, etc.
+                    };
+                    await _unitOfWork.Repository<Beneficiary, int>().AddAsync(beneficiary);
+                    break;
+
+                case "volunteer":
+                    var volunteer = new Volunteer
+                    {
+                        AppUserId = user.Id,
+                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = false,
+                        Address = registerDto.Address ?? "غير محدد",     // مهم
+                        Phone = registerDto.Phone ?? "غير محدد",         // مهم
+                        NationalId = registerDto.NationalId ?? "غير محدد" // مهم
+                    };
+                    await _unitOfWork.Repository<Volunteer, int>().AddAsync(volunteer);
+                    break;
+            }
+
+            await _unitOfWork.Complete();
         }
     }
 }

@@ -13,6 +13,12 @@ namespace KonSanad.Core.Dtos
         public string Email { get; set; }
         public string Password { get; set; }
 
+        public string Phone { get; set; } = null!;
+        public string Address { get; set; } = null!;
+
+
+        public string NationalId { get; set; }
+
         // Add this to capture user type on registration:
         // Allowed values: "Volunteer", "Beneficiary", "Donor"
         public string Role { get; set; }

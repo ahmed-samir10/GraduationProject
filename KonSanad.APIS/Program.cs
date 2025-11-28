@@ -53,7 +53,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 //>>>>>>> AhmedBranch
 // Register campaign service
-//builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<ICampaignService, CampaignService>();
 
 // identity services
 builder.Services.AddIdentityCore<AppUser>(options =>
@@ -99,37 +99,37 @@ builder.Services.AddAuthentication(options =>
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
+        ValidateIssuer = false,
         ValidIssuer = jwtIssuer,
-        ValidateAudience = true,
+        ValidateAudience = false,
         ValidAudience = jwtAudience,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateLifetime = true,
-         ClockSkew = TimeSpan.FromSeconds(300) // allow small clock skew
-     };
+        ClockSkew = TimeSpan.FromSeconds(300) // allow small clock skew
+    };
 
-     options.Events = new JwtBearerEvents
-     {
-         OnAuthenticationFailed = ctx =>
-         {
-             var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-             logger.LogError(ctx.Exception, "JWT authentication failed: {Message}", ctx.Exception.Message);
-             return Task.CompletedTask;
-         },
-         OnTokenValidated = ctx =>
-         {
-             var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-             logger.LogInformation("JWT validated for {sub}", ctx.Principal?.Identity?.Name ?? "(no name)");
-             return Task.CompletedTask;
-         },
-         OnChallenge = ctx =>
-         {
-             // keep the default 401 behavior but log
-             var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-             logger.LogWarning("JWT OnChallenge: {Error} - {ErrorDescription}", ctx.Error, ctx.ErrorDescription);
-             return Task.CompletedTask;
-         }
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = ctx =>
+        {
+            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
+            logger.LogError(ctx.Exception, "JWT authentication failed: {Message}", ctx.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = ctx =>
+        {
+            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
+            logger.LogInformation("JWT validated for {sub}", ctx.Principal?.Identity?.Name ?? "(no name)");
+            return Task.CompletedTask;
+        },
+        OnChallenge = ctx =>
+        {
+            // keep the default 401 behavior but log
+            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
+            logger.LogWarning("JWT OnChallenge: {Error} - {ErrorDescription}", ctx.Error, ctx.ErrorDescription);
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -209,10 +209,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.UseAuthorization();
+
 app.UseStaticFiles();
-app.UseAuthentication();
 app.UseAuthorization();
+app.UseAuthentication();
+
 
 app.MapControllers();
 

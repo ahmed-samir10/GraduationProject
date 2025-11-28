@@ -13,8 +13,9 @@ namespace KonSanad.Repository.Entities
         public string Pssword { get; set; } = null!;
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
-        public int NationalId { get; set; }
+        public string NationalId { get; set; }
 
+        public string AppUserId { get; set; }
 
         // Naviegation property
         public ICollection<HelpOrder> HelpOrders { get; set; } = new List<HelpOrder>();

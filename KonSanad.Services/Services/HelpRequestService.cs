@@ -25,6 +25,23 @@ namespace KonSanad.Services.Services
             var orderItem = await _unitOfWork.Repository<OrderItem, int>().GetByIdAsync(request.OrderItemId);
             if (orderItem == null) return new HelpRequestResponseDto { HelpOrderId = 0, Message = "Order item not found." };
 
+            // verify this order item belongs to a donation (donor) and is not already assigned to a beneficiary
+            var donationOrder = await _unitOfWork.Repository<DonationOrder, int>().GetByIdAsync(orderItem.DonationOrderId);
+            if (donationOrder == null) return new HelpRequestResponseDto { HelpOrderId = 0, Message = "Order item does not belong to a donation order." };
+
+            if (!donationOrder.DonorId.HasValue)
+                return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donation has no donor and cannot be requested." };
+
+            // ensure donation is not already assigned to any beneficiary (via Receipts)
+            var receipts = await _unitOfWork.Repository<Receipt, int>().GetAllAsync();
+            var assigned = receipts.Any(r => r.DonationOrderId == donationOrder.Id && r.BeneficiaryId.HasValue);
+            if (assigned)
+                return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donated order is already assigned to a beneficiary." };
+
+            // optional: prevent requesting items that belong to campaigns (uncomment if desired)
+            // if (donationOrder.CampaignId.HasValue)
+            //     return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donation belongs to a campaign and cannot be requested here." };
+
             // create HelpOrder with reason and reference to order item
             var helpOrder = new HelpOrder
             {
@@ -38,19 +55,40 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
             await _unitOfWork.Complete();
 
-            // if the donated item maps to a supply catalog entry, create HelpOrderItem to indicate requested quantity
+            // ensure we have a Supply record to reference in HelpOrderItem
+            int supplyId;
             if (orderItem.SupplyId.HasValue)
             {
-                var helpItem = new HelpOrderItem
+                supplyId = orderItem.SupplyId.Value;
+            }
+            else
+            {
+                // create a catalog-style Supply for this donated custom item so HelpOrderItem can reference it
+                var supply = new Supply
                 {
-                    HelpOrderId = helpOrder.Id,
-                    SupplyId = orderItem.SupplyId.Value,
-                    QuantityRequested = orderItem.Quantity
+                    Name = string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? "Donated Custom Item" : orderItem.CustomSupplyName,
+                    Description = $"Donated item from DonationOrder {donationOrder.Id}",
+                    Unit = string.IsNullOrWhiteSpace(orderItem.Unit) ? "pcs" : orderItem.Unit,
+                    StockQuantity = 0
                 };
 
-                await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
+                await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
                 await _unitOfWork.Complete();
+
+                supplyId = supply.Id;
             }
+
+            // create HelpOrderItem using quantity from the donated order item
+            var helpItem = new HelpOrderItem
+            {
+                HelpOrderId = helpOrder.Id,
+                SupplyId = supplyId,
+                QuantityRequested = orderItem.Quantity,
+                ImageUrl = null
+            };
+
+            await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
+            await _unitOfWork.Complete();
 
             return new HelpRequestResponseDto
             {
@@ -64,7 +102,7 @@ namespace KonSanad.Services.Services
             if (beneficiaryId <= 0) throw new System.ArgumentException("Invalid beneficiary id", nameof(beneficiaryId));
             if (request == null) throw new System.ArgumentNullException(nameof(request));
 
-            // store new product request details in HelpOrder.Description as JSON (avoids schema changes)
+            // keep JSON payload in Description for quick reference
             var payload = new
             {
                 ProductName = request.ProductName,
@@ -77,12 +115,38 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = beneficiaryId,
-                Description = $"NewProductRequest:{json}",
+                Description = request.Reason,
                 Status = "Requested",
                 IsDeleted = false
             };
 
+            // persist help order first (follows existing pattern)
             await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
+            await _unitOfWork.Complete();
+
+            // Create a Supply entry for the requested custom product so HelpOrderItem can reference it.
+            // Supply requires Name, Description and Unit per configuration, provide minimal sensible defaults.
+            var supply = new Supply
+            {
+                Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
+                Description = string.IsNullOrWhiteSpace(request.Reason) ? "Requested via HelpOrder (new product)" : request.Reason,
+                Unit = "pcs",
+                StockQuantity = 0
+            };
+
+            await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
+            await _unitOfWork.Complete();
+
+            // Create HelpOrderItem referencing the newly created Supply
+            var helpItem = new HelpOrderItem
+            {
+                HelpOrderId = helpOrder.Id,
+                SupplyId = supply.Id,
+                QuantityRequested = 1,
+                ImageUrl = request.ImageUrl
+            };
+
+            await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
             await _unitOfWork.Complete();
 
             return new HelpRequestResponseDto
