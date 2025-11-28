@@ -2,7 +2,7 @@
 using KonSanad.Core.IRepositery;
 
 
-using KonSanad.Core.Dtos;
+
 using System.Threading.Tasks;
 
 namespace KonSanad.Core.IRepositery

@@ -12,7 +12,7 @@ namespace KonSanad.APIS.Helpers
 {
     public class MappingProfiles : Profile
     {
-        public MappingProfiles(IConfiguration configuration)
+        public MappingProfiles()
         {
             // existing mappings kept...
             CreateMap<RegisterDto, AppUser>()
@@ -65,7 +65,7 @@ namespace KonSanad.APIS.Helpers
             CreateMap<NewProductRequestDto, HelpOrder>()
                 // readable description (no JSON)
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src =>
-                    $"ProductName: {src.ProductName ?? string.Empty}; Condition: {src.Condition ?? string.Empty}; Reason: {src.Reason ?? string.Empty}"))
+                    $"ProductName: {src.ProductName ?? string.Empty}; Condition: {src.Status ?? string.Empty}; Reason: {src.Reason ?? string.Empty}"))
                 // map image input using dedicated resolver (ImageUrlsResolver should return string? JSON array or single URL string)
                 .ForMember(dest => dest.ImageUrlsJson, opt => opt.MapFrom<ImageUrlsResolver>())
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Requested"))

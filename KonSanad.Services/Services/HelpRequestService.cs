@@ -68,7 +68,7 @@ namespace KonSanad.Services.Services
             var payload = new
             {
                 ProductName = request.ProductName,
-                Condition = request.Condition,
+                Condition = request.Status,
                 Reason = request.Reason,
                 ImageUrl = request.ImageUrl
             };

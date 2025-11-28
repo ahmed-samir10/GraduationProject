@@ -30,9 +30,18 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
+//تسجيل سيرفس المستفيد
+builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
+//
 builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
+builder.Services.AddTransient<CampaignUrlResolver>();
+builder.Services.AddTransient<ImageUrlsResolver>(); // if you have this resolver
+// register AutoMapper profiles (will now be created by AutoMapper using reflection + DI resolvers)
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register campaign service
 builder.Services.AddScoped<ICampaignService, CampaignService>();
@@ -58,7 +67,8 @@ builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Repository.Enti
 // register ImageUrls resolver (NewProductRequestDto -> HelpOrder.ImageUrlsJson)
 builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
 
-builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfiles(builder.Configuration)));
+//انا عملت للسطر دا كومينت مش عارف اي لازمته بس هو حل مشكلة الصوره ال في الحمله
+//builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfiles(builder.Configuration)));
 
 // JWT auth
 var jwtKey = builder.Configuration["JWT:Key"];

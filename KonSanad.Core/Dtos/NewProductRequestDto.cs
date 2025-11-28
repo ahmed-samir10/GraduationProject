@@ -11,8 +11,8 @@ namespace KonSanad.Core.Dtos
     public class NewProductRequestDto
     {
         public string ProductName { get; set; } = string.Empty;
-        public string Condition { get; set; } = string.Empty; // e.g. "New", "Used - Good"
-        public string Reason { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty; // e.g. "New", "Used - Good" الحاله
+        public string Reason { get; set; } = string.Empty; // وصف
         public string? ImageUrl { get; set; }
     }
 

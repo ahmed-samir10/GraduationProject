@@ -12,7 +12,6 @@ namespace KonSanad.Repository.Repository
     public class GenericRepository<T, Tkey> : IGenericRepository<T, Tkey> where T : BaseEntity<Tkey>
     {
         private readonly KonSanadDbContext _context;
-
         public GenericRepository(KonSanadDbContext context)
         {
             _context = context;
@@ -20,12 +19,8 @@ namespace KonSanad.Repository.Repository
 
         public async Task<IReadOnlyList<T>> GetAllAsync()
         {
-           
-
             return await _context.Set<T>().ToListAsync();
         }
-
-
 
        
         public async Task AddAsync(T entity)
