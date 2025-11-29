@@ -15,6 +15,6 @@ namespace KonSanad.Core.IRepositery
         // explicit endpoints for front-end: donate to a beneficiary (direct handover)
         Task<DonationResponseDto> CreateDonationToBeneficiaryAsync(CreateDonationRequestDto request, int donorId, int beneficiaryId);
 
-        Task<IEnumerable<object>> GetDonorDonationsAsync(int donorId);
+        Task<IEnumerable<object>> GetDonorDonationsAsync();
     }
 }

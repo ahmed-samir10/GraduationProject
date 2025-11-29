@@ -1,0 +1,50 @@
+[
+    {
+        "Name": "غذائي",
+        "Description": "Food supplies",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "ملابس",
+        "Description": "Clothing items",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "طبي",
+        "Description": "School supplies",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "تعليمي",
+        "Description": "Medical supplies",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "أيتام",
+        "Description": "Hygiene items",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "سكن",
+        "Description": "Shelter items",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "غذائي",
+        "Description": "Water supplies",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Name": "طبي",
+        "Description": "Miscellaneous",
+        "Status": 1,
+        "IsDeleted": 0
+    }
+]

@@ -1,0 +1,82 @@
+[
+    {
+        "FullName": "Benef1",
+        "Email": "b1@email.com",
+        "Password": "pass",
+        "Phone": "0101111001",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654321"
+    },
+    {
+        "FullName": "Benef2",
+        "Email": "b2@email.com",
+        "Password": "pass",
+        "Phone": "0101111002",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654322"
+    },
+    {
+        "FullName": "Benef3",
+        "Email": "b3@email.com",
+        "Password": "pass",
+        "Phone": "0101111003",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654323"
+    },
+    {
+        "FullName": "Benef4",
+        "Email": "b4@email.com",
+        "Password": "pass",
+        "Phone": "0101111004",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654324"
+    },
+    {
+        "FullName": "Benef5",
+        "Email": "b5@email.com",
+        "Password": "pass",
+        "Phone": "0101111005",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654325"
+    },
+    {
+        "FullName": "Benef6",
+        "Email": "b6@email.com",
+        "Password": "pass",
+        "Phone": "0101111006",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654326"
+    },
+    {
+        "FullName": "Benef7",
+        "Email": "b7@email.com",
+        "Password": "pass",
+        "Phone": "0101111007",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654327"
+    },
+    {
+        "FullName": "Benef8",
+        "Email": "b8@email.com",
+        "Password": "pass",
+        "Phone": "0101111008",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "987654328"
+    }
+]

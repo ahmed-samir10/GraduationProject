@@ -1,0 +1,82 @@
+[
+    {
+        "FullName": "Ali Omar",
+        "Email": "ali1@email.com",
+        "Password": "pass123",
+        "Phone": "01000000001",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456789"
+    },
+    {
+        "FullName": "Sara Ahmed",
+        "Email": "sara2@email.com",
+        "Password": "pass123",
+        "Phone": "01000000002",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456780"
+    },
+    {
+        "FullName": "Mohamed Ali",
+        "Email": "mohamed3@email.com",
+        "Password": "pass123",
+        "Phone": "01000000003",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456781"
+    },
+    {
+        "FullName": "Nora Khaled",
+        "Email": "nora4@email.com",
+        "Password": "pass123",
+        "Phone": "01000000004",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456782"
+    },
+    {
+        "FullName": "Omar Hany",
+        "Email": "omar5@email.com",
+        "Password": "pass123",
+        "Phone": "01000000005",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456783"
+    },
+    {
+        "FullName": "Laila Mostafa",
+        "Email": "laila6@email.com",
+        "Password": "pass123",
+        "Phone": "01000000006",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456784"
+    },
+    {
+        "FullName": "Youssef Adel",
+        "Email": "youssef7@email.com",
+        "Password": "pass123",
+        "Phone": "01000000007",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456785"
+    },
+    {
+        "FullName": "Mona Fathy",
+        "Email": "mona8@email.com",
+        "Password": "pass123",
+        "Phone": "01000000008",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0,
+        "NationalId": "123456786"
+    }
+]

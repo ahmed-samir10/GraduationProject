@@ -86,18 +86,18 @@ namespace KonSanad.APIS.Controllers
             return Ok(await BuildUserResponseAsync(user));
         }
 
-        [Authorize]
-        [HttpGet("current")]
-        public async Task<ActionResult<UserDto>> GetCurrentUser()
-        {
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var user = await _userManager.FindByEmailAsync(email);
-            return Ok(await BuildUserResponseAsync(user));
-        }
+        //[Authorize]
+        //[HttpGet("current")]
+        //public async Task<ActionResult<UserDto>> GetCurrentUser()
+        //{
+        //    var email = User.FindFirstValue(ClaimTypes.Email);
+        //    var user = await _userManager.FindByEmailAsync(email);
+        //    return Ok(await BuildUserResponseAsync(user));
+        //}
 
-        [HttpGet("emailexists")]
-        public async Task<ActionResult<bool>> CheckEmailExists([FromQuery] string email)
-            => await _userManager.FindByEmailAsync(email) != null;
+        //[HttpGet("emailexists")]
+        //public async Task<ActionResult<bool>> CheckEmailExists([FromQuery] string email)
+        //    => await _userManager.FindByEmailAsync(email) != null;
 
         // دالة مساعدة عشان نرجع نفس الشكل في Login و Register و CurrentUser
         private async Task<UserDto> BuildUserResponseAsync(AppUser user)
@@ -108,7 +108,7 @@ namespace KonSanad.APIS.Controllers
 
                 Email = user.Email!,
 
-                DisplayName = user.FullName ?? "User",
+                FullName = user.FullName ?? "User",
                 Role = roles.FirstOrDefault() ?? "User",
 
                 Token = await _tokenService.CreateToken(user, _userManager)
@@ -124,7 +124,7 @@ namespace KonSanad.APIS.Controllers
                     var donor = new Donor
                     {
                         AppUserId = user.Id,
-                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                        FullName = registerDto.FullName ?? user.FullName ?? "Donor User",
                         CreatedAt = DateTime.UtcNow,
                         Email = user.Email,
                         Password = user.PasswordHash,
@@ -142,13 +142,14 @@ namespace KonSanad.APIS.Controllers
                         Email = user.Email,
                         Pssword = user.PasswordHash,
                         AppUserId = user.Id,
-                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                     
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false,
                         Address = registerDto.Address ?? "غير محدد",     // مهم
                         Phone = registerDto.Phone ?? "غير محدد",         // مهم
-                        NationalId = registerDto.NationalId ?? "غير محدد" // مهم
+                        NationalId = registerDto.NationalId ?? "غير محدد", // مهم
                         // أضف الحقول اللي عايزها: Phone, Address, Needs, etc.
+                        FullName = registerDto.FullName?.Trim()
                     };
                     await _unitOfWork.Repository<Beneficiary, int>().AddAsync(beneficiary);
                     break;
@@ -157,7 +158,7 @@ namespace KonSanad.APIS.Controllers
                     var volunteer = new Volunteer
                     {
                         AppUserId = user.Id,
-                        FullName = registerDto.DisplayName ?? user.FullName ?? "Donor User",
+                        FullName = registerDto.FullName ?? user.FullName ?? "volunteer User",
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false,
                         Address = registerDto.Address ?? "غير محدد",     // مهم

@@ -1,0 +1,66 @@
+[
+    {
+        "Name": "Rice",
+        "Description": "Food item",
+        "Unit": "kg",
+        "StockQuantity": 500,
+        "MinimumLevel": 50,
+        "CategoryId": 1
+    },
+    {
+        "Name": "Shirt",
+        "Description": "Clothing",
+        "Unit": "pcs",
+        "StockQuantity": 200,
+        "MinimumLevel": 20,
+        "CategoryId": 2
+    },
+    {
+        "Name": "Book",
+        "Description": "School book",
+        "Unit": "pcs",
+        "StockQuantity": 100,
+        "MinimumLevel": 10,
+        "CategoryId": 3
+    },
+    {
+        "Name": "Medicine",
+        "Description": "Medical",
+        "Unit": "pcs",
+        "StockQuantity": 50,
+        "MinimumLevel": 5,
+        "CategoryId": 4
+    },
+    {
+        "Name": "Soap",
+        "Description": "Hygiene",
+        "Unit": "pcs",
+        "StockQuantity": 300,
+        "MinimumLevel": 30,
+        "CategoryId": 5
+    },
+    {
+        "Name": "Tent",
+        "Description": "Shelter",
+        "Unit": "pcs",
+        "StockQuantity": 20,
+        "MinimumLevel": 2,
+        "CategoryId": 6
+    },
+    {
+        "Name": "Water Bottle",
+        "Description": "Water",
+        "Unit": "pcs",
+        "StockQuantity": 400,
+        "MinimumLevel": 40,
+        "CategoryId": 7
+    },
+    {
+        "Name": "Blanket",
+        "Description": "Misc",
+        "Unit": "pcs",
+        "StockQuantity": 100,
+        "MinimumLevel": 10,
+        "CategoryId": 8
+    }
+]

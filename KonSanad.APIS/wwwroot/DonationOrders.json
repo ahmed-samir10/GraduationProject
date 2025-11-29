@@ -1,0 +1,74 @@
+[
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 500,
+        "DonorId": 1,
+        "CampaignId": 1,
+        "ManagerId": 1,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 600,
+        "DonorId": 2,
+        "CampaignId": 2,
+        "ManagerId": 2,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 700,
+        "DonorId": 3,
+        "CampaignId": 3,
+        "ManagerId": 3,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 800,
+        "DonorId": 4,
+        "CampaignId": 4,
+        "ManagerId": 4,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 900,
+        "DonorId": 5,
+        "CampaignId": 5,
+        "ManagerId": 5,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 1000,
+        "DonorId": 6,
+        "CampaignId": 6,
+        "ManagerId": 6,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 1100,
+        "DonorId": 7,
+        "CampaignId": 7,
+        "ManagerId": 7,
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "DonationCategoryStatus": "Pending",
+        "CashAmount": 1200,
+        "DonorId": 8,
+        "CampaignId": 8,
+        "ManagerId": 8,
+        "Status": 1,
+        "IsDeleted": 0
+    }
+]

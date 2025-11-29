@@ -16,9 +16,10 @@ namespace KonSanad.Core.Dtos
 
             public string Status { get; set; } = string.Empty; // نشطة - عاجلة - مكتملة
             public int ProgressPercentage { get; set; }
+        public int DonorCount { get; set; }
 
-            //public BeneficiaryDto Beneficiary { get; set; } = new BeneficiaryDto();
-            //public List<SupplyDto> Supplies { get; set; } = new List<SupplyDto>();
-        }
+        //public BeneficiaryDto Beneficiary { get; set; } = new BeneficiaryDto();
+        //public List<SupplyDto> Supplies { get; set; } = new List<SupplyDto>();
+    }
     
 }

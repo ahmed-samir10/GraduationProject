@@ -24,9 +24,17 @@
   <ItemGroup>
     <ProjectReference Include="..\KonSanad.Core\KonSanad.Core.csproj" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<None Update="Data\dataSeed\*.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Data\Identity\migration\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Data\Identity\migration\" />
+	</ItemGroup>
+
+	
 
 </Project>

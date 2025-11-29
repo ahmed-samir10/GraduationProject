@@ -9,7 +9,7 @@ namespace KonSanad.Core.Dtos
     public class UserDto
     {
         public string Email { get; set; }
-        public string DisplayName { get; set; }
+        public string FullName { get; set; }
         public string Role { get; set; } = string.Empty;
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;

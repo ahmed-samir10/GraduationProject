@@ -21,7 +21,6 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<KonSanadDbContext>(option =>
@@ -32,28 +31,29 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
-//<<<<<<< HEAD
-//تسجيل سيرفس المستفيد
+
+builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
+builder.Services.AddScoped<ICampaignService, CampaignService>();
+
+// register DI
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
-//
-//builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
-//builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
 builder.Services.AddTransient<CampaignUrlResolver>();
 builder.Services.AddTransient<ImageUrlsResolver>(); // if you have this resolver
+
 // register AutoMapper profiles (will now be created by AutoMapper using reflection + DI resolvers)
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
-//=======
-//builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
-//builder.Services.AddScoped<IDonationService, DonationService>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
-//>>>>>>> AhmedBranch
-// Register campaign service
-builder.Services.AddScoped<ICampaignService, CampaignService>();
+// register token service
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// register ImageUrls resolver (NewProductRequestDto -> HelpOrder.ImageUrlsJson)
+builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
 
 // identity services
 builder.Services.AddIdentityCore<AppUser>(options =>
@@ -66,23 +66,7 @@ builder.Services.AddIdentityCore<AppUser>(options =>
        .AddSignInManager<SignInManager<AppUser>>()
        .AddUserManager<UserManager<AppUser>>();
 
-// register token service
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-// register Doner service
-//builder.Services.AddScoped<IDonorService, DonorService>();
-
-// Register AutoMapper (ensure AutoMapper.Extensions.Microsoft.DependencyInjection is installed)
-builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Repository.Entities.Campaign, KonSanad.Core.Dtos.CampaignDto, string>, KonSanad.APIS.Helpers.CampaignUrlResolver>();
-
-
-// register ImageUrls resolver (NewProductRequestDto -> HelpOrder.ImageUrlsJson)
-builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
-
-//انا عملت للسطر دا كومينت مش عارف اي لازمته بس هو حل مشكلة الصوره ال في الحمله
-//builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfiles(builder.Configuration)));
-
-// JWT auth
+// JWT auth configuration
 var jwtKey = builder.Configuration["JWT:Key"]
              ?? "BackupSuperLongSecretKey1234567890ABCDEF1234567890";
 var jwtIssuer = builder.Configuration["JWT:ValidIssuer"];
@@ -99,14 +83,21 @@ builder.Services.AddAuthentication(options =>
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
+
         ValidateIssuer = false,
-        ValidIssuer = jwtIssuer,
         ValidateAudience = false,
-        ValidAudience = jwtAudience,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.FromSeconds(300) // allow small clock skew
+        ClockSkew = TimeSpan.FromSeconds(300)
+        //ValidateIssuer = true,
+        //ValidIssuer = jwtIssuer,
+        //ValidateAudience = true,
+        //ValidAudience = jwtAudience,
+        //ValidateIssuerSigningKey = true,
+        //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        //ValidateLifetime = true,
+        //ClockSkew = TimeSpan.FromSeconds(300) // allow small clock skew
     };
 
     options.Events = new JwtBearerEvents
@@ -114,7 +105,7 @@ builder.Services.AddAuthentication(options =>
         OnAuthenticationFailed = ctx =>
         {
             var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-            logger.LogError(ctx.Exception, "JWT authentication failed: {Message}", ctx.Exception.Message);
+            logger.LogError(ctx.Exception, "JWT authentication failed: {Message}", ctx.Exception.Message,ctx.Exception);
             return Task.CompletedTask;
         },
         OnTokenValidated = ctx =>
@@ -132,8 +123,6 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
-
-
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -155,24 +144,32 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.SetIsOriginAllowed(origin => true)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
 
 var context = services.GetRequiredService<KonSanadDbContext>();
-
 var Identitycontext = services.GetRequiredService<AppIdentityDbContext>();
 var userManager = services.GetRequiredService<UserManager<AppUser>>();
 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
 var ILoggerFactory = services.GetRequiredService<ILoggerFactory>();
+
 try
 {
     await context.Database.MigrateAsync();
+    await KonSanadDbContextSeed.SeedAsync(context);
     await Identitycontext.Database.MigrateAsync();
-    
     await AppIdentityDbContextSeed.SeedUsersAsync(userManager);
 
     var rolesToEnsure = new[] { "Volunteer", "Beneficiary", "Donor" };
@@ -197,24 +194,23 @@ catch (Exception ex)
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "KonSanad API V1");
-        c.RoutePrefix = string.Empty;
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "KonSanad API V1");
+    c.RoutePrefix = string.Empty;
+});
+
+// في الأول
+
+
+// باقي الكود...
+
+// في الـ middleware
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
-
-
-
 app.UseStaticFiles();
-app.UseAuthorization();
 app.UseAuthentication();
-
-
+app.UseAuthorization();
 app.MapControllers();
-
 app.Run();

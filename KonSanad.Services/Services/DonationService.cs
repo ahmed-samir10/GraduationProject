@@ -24,12 +24,12 @@ namespace KonSanad.Services.Services
             => _orderService.CreateDonationAsync(request, donorId);
 
         // delegate existing list-by-donor that returns detailed DTOs
-      //  public Task<IEnumerable<DonationResponseDto>> GetDonorDonationsAsync(KonSanad.Core.Dtos.DonorRequetDto v)
-      //      => _orderService.GetDonorDonationsAsync(v);
+        //  public Task<IEnumerable<DonationResponseDto>> GetDonorDonationsAsync(KonSanad.Core.Dtos.DonorRequetDto v)
+        //      => _orderService.GetDonorDonationsAsync(v);
 
         // delegate existing simple donor history projection
-        public Task<IEnumerable<object>> GetDonorDonationsAsync(int donorId)
-            => _orderService.GetDonorDonationsAsync(donorId);
+        public Task<IEnumerable<object>> GetDonorDonationsAsync()
+            => _orderService.GetDonorDonationsAsync();
 
         // return receipts (and related info) targeted to a beneficiary
         public async Task<IEnumerable<object>> GetBeneficiaryDonationsAsync(int beneficiaryId)
@@ -77,50 +77,48 @@ namespace KonSanad.Services.Services
 
             return results;
         }
-
-        // return all donation orders with summary info (cash, items count, last receipt)
-        public async Task<IEnumerable<object>> GetAllDonationsAsync()
+        public async Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync()
         {
-            var donationOrders = await _unitOfWork.Repository<DonationOrder, int>().GetAllAsync();
+            // Get all OrderItems
             var orderItems = await _unitOfWork.Repository<OrderItem, int>().GetAllAsync();
-            var cashDonations = await _unitOfWork.Repository<CashDonation, int>().GetAllAsync();
-            var receipts = await _unitOfWork.Repository<Receipt, int>().GetAllAsync();
-            var donors = await _unitOfWork.Repository<Donor, int>().GetAllAsync();
-            var campaigns = await _unitOfWork.Repository<Campaign, int>().GetAllAsync();
 
-            var results = donationOrders
-                .Where(d => !d.IsDeleted)
-                .OrderByDescending(d => d.CreatedAt)
-                .Select(d =>
+            // Fill DTO
+            var result = orderItems
+                .Where(i => !i.IsDeleted)
+                .OrderByDescending(i => i.CreatedAt)
+                .Select(i => new OrderItemDto
                 {
-                    var cash = cashDonations.FirstOrDefault(c => c.DonationOrderId == d.Id) ?? d.CashDonation;
-                    var itemsCount = (d.OrderItems != null && d.OrderItems.Any())
-                        ? d.OrderItems.Sum(i => i.Quantity)
-                        : orderItems.Where(i => i.DonationOrderId == d.Id).Sum(i => i.Quantity);
-
-                    var donor = donors.FirstOrDefault(x => x.Id == d.DonorId);
-                    var campaign = campaigns.FirstOrDefault(c => c.Id == d.CampaignId);
-                    var lastReceipt = receipts.Where(r => r.DonationOrderId == d.Id)
-                                             .OrderByDescending(r => r.CreatedAt)
-                                             .FirstOrDefault();
-
-                    return new
-                    {
-                        DonationOrderId = d.Id,
-                        Date = d.CreatedAt,
-                        DonorId = d.DonorId,
-                        DonorName = donor?.FullName,
-                        CashAmount = cash != null ? (decimal?)cash.Amount : d.CashAmount,
-                        ItemsCount = itemsCount,
-                        CampaignId = d.CampaignId,
-                        CampaignTitle = campaign?.Title,
-                        LastReceiptId = lastReceipt?.Id,
-                        LastReceiptStatus = lastReceipt?.Status
-                    };
+                    Id = i.Id,
+                    CustomSupplyName = i.CustomSupplyName,
+                    Quantity = i.Quantity,
+                    Unit = i.Unit,
+                    //DonationOrderId = i.DonationOrderId,
+                    //SupplyId = i.SupplyId,
+                    CreatedAt = i.CreatedAt,
+                    // UpdatedAt = i.UpdatedAt,
+                    // Status = i.Status
                 })
                 .ToList();
 
-            return results;
+            return result;
         }
+        public async Task<OrderItemDto?> GetOrderItemByIdAsync(int id)
+        {
+            var item = await _unitOfWork.Repository<OrderItem, int>().GetByIdAsync(id);
+
+
+            if (item == null) return null;
+
+            return new OrderItemDto
+            {
+                Id = item.Id,
+                CustomSupplyName = item.CustomSupplyName,
+                Quantity = item.Quantity,
+                Unit = item.Unit,
+                CreatedAt = item.CreatedAt,
+
+            };
+        }
+
     }
 }

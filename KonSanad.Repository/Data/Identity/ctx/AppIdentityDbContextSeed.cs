@@ -15,7 +15,7 @@ namespace KonSanad.Repository.Data.Identity.ctx
                 var user = new AppUser()
                 {
                     FirstName = "Ahmed samir",
-                    LastName = "ahmednasr97",
+                 
                     Email = "ahmedSamir97@gmail.com",
                     UserName = "ahmedSamir97@gmail.com", // <-- important
                     PhoneNumber = "01015317037",

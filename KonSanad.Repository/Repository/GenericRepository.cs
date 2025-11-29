@@ -1,11 +1,12 @@
-﻿using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Data.Persistence;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Data.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Repository.Repository
 {
@@ -21,8 +22,9 @@ namespace KonSanad.Repository.Repository
         {
             return await _context.Set<T>().ToListAsync();
         }
-
        
+
+
         public async Task AddAsync(T entity)
            => await _context.Set<T>().AddAsync(entity);
         public void Update(T entity)

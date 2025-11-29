@@ -1,0 +1,98 @@
+[
+    {
+        "Id": 1,
+        "CustomSupplyName": "أرز خاص",
+        "Quantity": 10,
+        "Unit": "كجم",
+        "DonationOrderId": 1,
+        "SupplyId": 1,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 2,
+        "CustomSupplyName": "قميص دافئ",
+        "Quantity": 5,
+        "Unit": "قطعة",
+        "DonationOrderId": 2,
+        "SupplyId": 2,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 3,
+        "CustomSupplyName": "حقيبة كتب مدرسية",
+        "Quantity": 15,
+        "Unit": "قطعة",
+        "DonationOrderId": 3,
+        "SupplyId": 3,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 4,
+        "CustomSupplyName": "عدة طبية",
+        "Quantity": 8,
+        "Unit": "قطعة",
+        "DonationOrderId": 4,
+        "SupplyId": 4,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 5,
+        "CustomSupplyName": "حزمة صابون",
+        "Quantity": 20,
+        "Unit": "قطعة",
+        "DonationOrderId": 5,
+        "SupplyId": 5,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 6,
+        "CustomSupplyName": "خيمة كبيرة",
+        "Quantity": 2,
+        "Unit": "قطعة",
+        "DonationOrderId": 6,
+        "SupplyId": 6,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 7,
+        "CustomSupplyName": "زجاجات مياه",
+        "Quantity": 12,
+        "Unit": "قطعة",
+        "DonationOrderId": 7,
+        "SupplyId": 7,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "Id": 8,
+        "CustomSupplyName": "بطانيات",
+        "Quantity": 6,
+        "Unit": "قطعة",
+        "DonationOrderId": 8,
+        "SupplyId": 8,
+        "CreatedAt": "2025-11-29T15:00:00",
+        "UpdatedAt": "2025-11-29T15:00:00",
+        "Status": 1,
+        "IsDeleted": 0
+    }
+]

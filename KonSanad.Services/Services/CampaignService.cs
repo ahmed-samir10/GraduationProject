@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Entities;
+using KonSanad.Repository.Repository;
 using Microsoft.EntityFrameworkCore;
-using AutoMapper;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace KonSanad.Services.Services
 {
@@ -24,17 +25,19 @@ namespace KonSanad.Services.Services
         public async Task<List<CampaignDto>> GetAllAsync()
         {
             var campaigns = await _db.Campaigns
-                .Include(c => c.Category)
-                .Include(c => c.Manager)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
-                .Include(c => c.CampaignVolunteers)
-                .Include(c => c.Missions)
-                .Include(c => c.CampaignResults)
-                .AsNoTracking()
-                .ToListAsync();
+       .Include(c => c.Category)
+       .Include(c => c.Manager)
+       .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
+       .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
+       .ThenInclude(oi => oi.Supply)
+       .Include(c => c.CampaignVolunteers)
+       .Include(c => c.Missions)
+       .Include(c => c.CampaignResults)
+       .AsNoTracking()
+       .ToListAsync();
 
-            return _mapper.Map<List<CampaignDto>>(campaigns);
+            var dtos = _mapper.Map<List<CampaignDto>>(campaigns);
+            return dtos;
         }
 
         public async Task<CampaignDto?> GetByIdAsync(int id)
@@ -52,8 +55,11 @@ namespace KonSanad.Services.Services
 
             if (campaign == null) return null;
 
+
             return _mapper.Map<CampaignDto>(campaign);
         }
+
+
 
         public async Task<CampaignDto> CreateAsync(CampaignCreateDto createDto)
         {
@@ -87,6 +93,6 @@ namespace KonSanad.Services.Services
             return true;
         }
 
-       
+
     }
 }

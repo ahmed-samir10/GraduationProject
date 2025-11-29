@@ -17,6 +17,7 @@ namespace KonSanad.Repository.Entities
         public DateTime? EndDate { get; set; }
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
+    
 
          public string PictureUrl { get; set; }
         // Category FK

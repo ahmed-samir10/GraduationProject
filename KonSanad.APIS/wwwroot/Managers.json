@@ -1,0 +1,74 @@
+[
+    {
+        "FullName": "Manager1",
+        "Email": "mgr1@email.com",
+        "Phone": "0110000001",
+        "Password": "pass",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager2",
+        "Email": "mgr2@email.com",
+        "Phone": "0110000002",
+        "Password": "pass",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager3",
+        "Email": "mgr3@email.com",
+        "Phone": "0110000003",
+        "Password": "pass",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager4",
+        "Email": "mgr4@email.com",
+        "Phone": "0110000004",
+        "Password": "pass",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager5",
+        "Email": "mgr5@email.com",
+        "Phone": "0110000005",
+        "Password": "pass",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager6",
+        "Email": "mgr6@email.com",
+        "Phone": "0110000006",
+        "Password": "pass",
+        "Address": "Giza",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager7",
+        "Email": "mgr7@email.com",
+        "Phone": "0110000007",
+        "Password": "pass",
+        "Address": "Cairo",
+        "Status": 1,
+        "IsDeleted": 0
+    },
+    {
+        "FullName": "Manager8",
+        "Email": "mgr8@email.com",
+        "Phone": "0110000008",
+        "Password": "pass",
+        "Address": "Alex",
+        "Status": 1,
+        "IsDeleted": 0
+    }
+]

@@ -305,21 +305,16 @@ namespace KonSanad.Services.Services
             return donations;
         }
 
-        public async Task<IEnumerable<object>> GetDonorDonationsAsync(int donorId)
+        public async Task<IEnumerable<object>> GetDonorDonationsAsync()
         {
             var allDonations = await _unitOfWork.Repository<DonationOrder, int>().GetAllAsync();
 
             var donations = allDonations
-                .Where(d => d.DonorId == donorId && !d.IsDeleted)
+
                 .OrderByDescending(d => d.CreatedAt)
-                .Select(d => new
+                .Select(d => new OrderItemDto
                 {
-                    d.Id,
-                    Date = d.CreatedAt.ToString("yyyy-MM-dd"),
-                    CashAmount = d.CashDonation != null ? d.CashDonation.Amount : 0m,
-                    ItemsCount = d.OrderItems != null ? d.OrderItems.Sum(i => i.Quantity) : 0,
-                    Campaign = d.Campaign != null ? d.Campaign.Title : null,
-                    Status = d.Status
+
                 })
                 .Take(50)
                 .ToList();
