@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace KonSanad.Core.Dtos
         public string ProductName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty; // e.g. "New", "Used - Good" الحاله
         public string Reason { get; set; } = string.Empty; // وصف
-        public string? ImageUrl { get; set; }
+        public IFormFile ImageFile { get; set; }
     }
 
 }

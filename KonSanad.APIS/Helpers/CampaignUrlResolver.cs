@@ -18,7 +18,7 @@ namespace KonSanad.APIS.Helpers
         {
 
             if (!string.IsNullOrEmpty(source.PictureUrl))
-                return $"{_configuration["BaseUrl"]}{source.PictureUrl}";
+                return $"{source.PictureUrl}";
             return null;
 
         }

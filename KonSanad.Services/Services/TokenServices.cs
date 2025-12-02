@@ -19,50 +19,37 @@ namespace KonSanad.Services.Services
             _configuration = configuration;
         }
 
-        public async Task<string> CreateToken(AppUser user, UserManager<AppUser> userManager)
+ 
+        public string GenerateJwtToken(AppUser user, IList<string> roles)
         {
-            // جيب الرولات
-            var userRoles = await userManager.GetRolesAsync(user);
+            var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Name, user.UserName ?? "")
+        };
 
-            var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id ?? string.Empty),
-               new Claim("Id", user.Id ?? string.Empty),
-                 new Claim("fullName", user.FullName ?? "User"),
-               new Claim("Email", user.Email ?? string.Empty),
-                  new Claim("DisplayName", user.FullName ?? "User"),
-                // السطر الصحيح: نحط الرولات كـ array داخل التوكن
-            new Claim("role", userRoles.FirstOrDefault() ?? "User"),
+            
+               claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
 
-
-
-                // اختياري: لو عايز role واحد للـ [Authorize(Roles = "...")]
-                new Claim(ClaimTypes.Role, userRoles.FirstOrDefault() ?? "User")
-            };
-
-            // مهم جدًا: دعم أكتر من رول في الـ Policy والـ Authorize
-            foreach (var role in userRoles)
-            {
-                authClaims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var key = _configuration["JWT:Key"]
-                     ?? throw new InvalidOperationException("JWT:Key is missing in configuration");
-
-            var authKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-
-            var days = _configuration.GetValue<double>("JWT:DurationInDays", 30);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.UtcNow.AddDays(days),
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authKey, SecurityAlgorithms.HmacSha256)
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: creds
             );
-
+            Console.WriteLine("TOKEN ISSUER     = " + _configuration["Jwt:Issuer"]);
+            Console.WriteLine("TOKEN AUDIENCE   = " + _configuration["Jwt:Audience"]);
+            Console.WriteLine("TOKEN KEY        = " + _configuration["Jwt:Key"]);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+
     }
 }

@@ -2,14 +2,16 @@
 using Azure.Core;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
 using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace KonSanad.APIS.Controllers
 {
-    // [Authorize (Roles = "Beneficiary")]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class BeneificeryController : ControllerBase
@@ -26,11 +28,12 @@ namespace KonSanad.APIS.Controllers
             _ORder = ORder;
         }
 
+        [Authorize]
         [HttpGet("GetAllCampiagn")]
         public async Task<IActionResult> GetAll()
         {
             var list = await _service.GetAllAsync();
-            return Ok(list);
+            return Ok(new { success = true, data = list } );
         }
 
         [HttpGet("GetCampaignById")]
@@ -44,7 +47,23 @@ namespace KonSanad.APIS.Controllers
             return Ok(campaignDto);
         }
 
+        [HttpPost("join-campaign")]
+        public async Task<IActionResult> JoinCampaign(int id, [FromBody] JoinCampaignRequestDto request)
+        {
 
+          //  var userId = User.FindFirst("uid")?.Value;
+           
+         //   Console.WriteLine($"User ID from token: {userId}  , type {userId.GetType()}");
+            try
+            {
+                var message = await _helpRequestService.JoinCampaignAsync(id, request);
+                return Ok(new { success = true, data = message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
 
         [HttpGet("order-item")]
         public async Task<IActionResult> GetOrderItem()
@@ -71,12 +90,15 @@ namespace KonSanad.APIS.Controllers
         }
         // 1) Request an existing donated product (only reason required)
         // POST api/beneificery/{beneficiaryId}/request-existing
-        [HttpPost("{beneficiaryId:int}/request-existing")]
-        public async Task<IActionResult> RequestExistingProduct(int beneficiaryId, [FromBody] ExistingProductRequestDto request)
+        [HttpPost("request-existing")]
+        public async Task<IActionResult> RequestExistingProduct(int id, [FromBody] ExistingProductRequestDto request)
         {
             if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
+            // هتتظبط  بعد لما نضيف المصادقة
 
-            var result = await _helpRequestService.RequestExistingProductAsync(beneficiaryId, request);
+            var userId = User.FindFirst("uid")?.Value;
+
+            var result = await _helpRequestService.RequestExistingProductAsync( id, request);
             if (result.HelpOrderId == 0) return NotFound(new { success = false, message = result.Message });
 
             // return Arabic confirmation as requested
@@ -85,12 +107,15 @@ namespace KonSanad.APIS.Controllers
 
         // 2) Request a new product (name, condition, reason, image)
         // POST api/beneificery/{beneficiaryId}/request-new
-        [HttpPost("{beneficiaryId:int}/request-new")]
-        public async Task<IActionResult> RequestNewProduct(int beneficiaryId, [FromBody] NewProductRequestDto request)
+        [HttpPost("request-new")]
+        public async Task<IActionResult> RequestNewProduct(int id, [FromForm] NewProductRequestDto request)
         {
             if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
+            // هتتظبط  بعد لما نضيف المصادقة
 
-            var result = await _helpRequestService.RequestNewProductAsync(beneficiaryId, request);
+            var userId = User.FindFirst("uid")?.Value;
+
+            var result = await _helpRequestService.RequestNewProductAsync(id, request);
             return Ok(new { success = true, data = result });
         }
     }

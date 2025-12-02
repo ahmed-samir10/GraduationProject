@@ -22,8 +22,11 @@ namespace KonSanad.Repository.Repository
         {
             return await _context.Set<T>().ToListAsync();
         }
-       
 
+        public async Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+        }
 
         public async Task AddAsync(T entity)
            => await _context.Set<T>().AddAsync(entity);
@@ -34,6 +37,10 @@ namespace KonSanad.Repository.Repository
 
         public async Task<T> GetByIdAsync(int id)
        => await _context.Set<T>().FindAsync(id);
+
+        public async Task<T> GetUserIdAsync(string id)
+       => await _context.Set<T>().FindAsync(id);
+
 
     }
 }

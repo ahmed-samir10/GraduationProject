@@ -9,7 +9,8 @@ namespace KonSanad.Core.IRepositery
 {
     public interface IHelpRequestService
     {
-        Task<HelpRequestResponseDto> RequestExistingProductAsync(int beneficiaryId, ExistingProductRequestDto request);
-        Task<HelpRequestResponseDto> RequestNewProductAsync(int beneficiaryId, NewProductRequestDto request);
+        Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request);
+        Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request);
+        Task<string> JoinCampaignAsync(int id, JoinCampaignRequestDto request);
     }
 }

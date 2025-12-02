@@ -1,5 +1,6 @@
 ﻿
 using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
 using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -25,12 +26,14 @@ namespace KonSanad.Repository.Data.Persistence
         // Actors
         public DbSet<Beneficiary> Beneficiaries { get; set; }
         public DbSet<Donor> Donors { get; set; }
+
         public DbSet<Manager> Managers { get; set; }
         public DbSet<Volunteer> Volunteers { get; set; }
 
         // Campaign
         public DbSet<Campaign> Campaigns { get; set; }
         public DbSet<CampaignResult> CampaignResults { get; set; }
+        public DbSet<BeneficiaryCampaign> BeneficiaryCampaign { get; set; }
         public DbSet<CampaignVolunteer> CampaignVolunteers { get; set; } // Many To Many
 
         // Donations

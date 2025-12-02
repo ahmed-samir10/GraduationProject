@@ -2,17 +2,17 @@
 
 #nullable disable
 
-namespace KonSanad.Repository.Identity.migration
+namespace KonSanad.Repository.Data.migration
 {
     /// <inheritdoc />
-    public partial class rrr : Migration
+    public partial class image2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "FullName",
-                table: "AspNetUsers",
+                name: "ImageUrl",
+                table: "OrderItems",
                 type: "nvarchar(max)",
                 nullable: false,
                 defaultValue: "");
@@ -22,8 +22,8 @@ namespace KonSanad.Repository.Identity.migration
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "FullName",
-                table: "AspNetUsers");
+                name: "ImageUrl",
+                table: "OrderItems");
         }
     }
 }

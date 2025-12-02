@@ -1,4 +1,5 @@
-﻿using KonSanad.Core.Dtos;
+﻿using AutoMapper;
+using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
 using System;
@@ -12,11 +13,13 @@ namespace KonSanad.Services.Services
     {
         private readonly IDonationOrderService _orderService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public DonationService(IDonationOrderService orderService, IUnitOfWork unitOfWork)
+        public DonationService(IDonationOrderService orderService, IUnitOfWork unitOfWork , IMapper mapper)
         {
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _mapper = mapper;
         }
 
         // delegate creation to the existing order service (keeps single place for creation logic)
@@ -92,6 +95,7 @@ namespace KonSanad.Services.Services
                     CustomSupplyName = i.CustomSupplyName,
                     Quantity = i.Quantity,
                     Unit = i.Unit,
+                    ImageUrl = i.ImageUrl,
                     //DonationOrderId = i.DonationOrderId,
                     //SupplyId = i.SupplyId,
                     CreatedAt = i.CreatedAt,
@@ -99,7 +103,7 @@ namespace KonSanad.Services.Services
                     // Status = i.Status
                 })
                 .ToList();
-
+            var dtos = _mapper.Map<List<OrderItemDto>>(result);
             return result;
         }
         public async Task<OrderItemDto?> GetOrderItemByIdAsync(int id)
@@ -109,15 +113,8 @@ namespace KonSanad.Services.Services
 
             if (item == null) return null;
 
-            return new OrderItemDto
-            {
-                Id = item.Id,
-                CustomSupplyName = item.CustomSupplyName,
-                Quantity = item.Quantity,
-                Unit = item.Unit,
-                CreatedAt = item.CreatedAt,
-
-            };
+            var dtos = _mapper.Map<OrderItemDto>(item);
+            return dtos;
         }
 
     }

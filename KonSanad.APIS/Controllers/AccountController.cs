@@ -69,8 +69,17 @@ namespace KonSanad.APIS.Controllers
             if (!await _roleManager.RoleExistsAsync(role))
                 await _roleManager.CreateAsync(new IdentityRole(role));
 
-            var user = _mapper.Map<AppUser>(registerDto);
-            user.UserName = registerDto.Email;
+            var user = new AppUser
+            {
+                Email = registerDto.Email,
+                UserName = registerDto.Email,
+                PhoneNumber = registerDto.Phone,
+                Phone = registerDto.Phone,
+                Address = registerDto.Address,
+                NationalId = registerDto.NationalId,
+            };
+
+            user.FullName = registerDto.FullName;
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
@@ -80,7 +89,6 @@ namespace KonSanad.APIS.Controllers
             if (!roleResult.Succeeded)
                 return BadRequest(new ApiValidationErrorResponse { Errors = roleResult.Errors.Select(e => e.Description).ToArray() });
 
-            // هنا السحر: ننشئ حساب المستفيد أو المتبرع أو المتطوع تلقائيًا
             await CreateProfileBasedOnRole(user, role, registerDto);
 
             return Ok(await BuildUserResponseAsync(user));
@@ -111,7 +119,7 @@ namespace KonSanad.APIS.Controllers
                 FullName = user.FullName ?? "User",
                 Role = roles.FirstOrDefault() ?? "User",
 
-                Token = await _tokenService.CreateToken(user, _userManager)
+                Token =  _tokenService.GenerateJwtToken(user, roles)
             };
         }
 

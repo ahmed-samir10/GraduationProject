@@ -114,6 +114,51 @@ namespace KonSanad.Repository.Data.migration
                     b.ToTable("Categories", (string)null);
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.BeneficiaryCampaign", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BeneficiaryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BeneficiaryId");
+
+                    b.HasIndex("CampaignId");
+
+                    b.ToTable("BeneficiaryCampaign");
+                });
+
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
                 {
                     b.Property<int>("Id")
@@ -149,7 +194,8 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<string>("NationalId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -465,7 +511,7 @@ namespace KonSanad.Repository.Data.migration
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BeneficiaryId")
+                    b.Property<int>("BeneficiaryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -475,9 +521,6 @@ namespace KonSanad.Repository.Data.migration
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("ImageUrlsJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -692,6 +735,10 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<int>("DonationOrderId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -1005,6 +1052,25 @@ namespace KonSanad.Repository.Data.migration
                     b.Navigation("Volunteer");
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.BeneficiaryCampaign", b =>
+                {
+                    b.HasOne("KonSanad.Repository.Entities.Beneficiary", "Beneficiary")
+                        .WithMany()
+                        .HasForeignKey("BeneficiaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KonSanad.Repository.Entities.Campaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Beneficiary");
+
+                    b.Navigation("Campaign");
+                });
+
             modelBuilder.Entity("KonSanad.Repository.Entities.Campaign", b =>
                 {
                     b.HasOne("KonSanad.Core.Entities.Category", "Category")
@@ -1073,7 +1139,8 @@ namespace KonSanad.Repository.Data.migration
                     b.HasOne("KonSanad.Repository.Entities.Beneficiary", "Beneficiary")
                         .WithMany("HelpOrders")
                         .HasForeignKey("BeneficiaryId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.HasOne("KonSanad.Repository.Entities.Manager", "Manager")
                         .WithMany("HelpOrders")

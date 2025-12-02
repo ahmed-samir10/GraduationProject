@@ -5,22 +5,23 @@ using System.Text.Json;
 
 namespace KonSanad.APIS.Helpers
 {
-    public class ImageUrlsResolver : IValueResolver<NewProductRequestDto, HelpOrder, string?>
+    public class ImageUrlsResolver : IValueResolver<OrderItem, OrderItemDto, string>
     {
-        public string? Resolve(NewProductRequestDto source, HelpOrder destination, string destMember, ResolutionContext context)
+        private readonly IConfiguration _configuration;
+        public ImageUrlsResolver(IConfiguration configuration)
         {
-            if (source == null) return null;
-            if (string.IsNullOrWhiteSpace(source.ImageUrl)) return null;
+            _configuration = configuration;
+        }
 
-            // If frontend may send a comma separated list in ImageUrl, normalize to array.
-            if (source.ImageUrl.Contains(','))
-            {
-                var parts = source.ImageUrl
-                    .Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
-                return JsonSerializer.Serialize(parts);
-            }
+        public IConfiguration Configuration { get; }
 
-            return JsonSerializer.Serialize(new[] { source.ImageUrl });
+        public string Resolve(OrderItem source, OrderItemDto destination, string destMember, ResolutionContext context)
+        {
+
+            if (!string.IsNullOrEmpty(source.ImageUrl))
+                return $"{source.ImageUrl}";
+            return null;
+
         }
     }
 }

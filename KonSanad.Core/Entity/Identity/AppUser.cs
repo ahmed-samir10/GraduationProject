@@ -11,6 +11,7 @@ namespace KonSanad.Core.Entity.Identity
 {
     public class AppUser : IdentityUser
     {
+       
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string FullName
@@ -57,7 +58,7 @@ namespace KonSanad.Core.Entity.Identity
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
 
-        public int NationalId { get; set; }
+        public string NationalId { get; set; }
 
 
 

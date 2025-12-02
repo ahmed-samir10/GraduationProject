@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Repository.Entities;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Collections.Generic;
 
 namespace KonSanad.APIS.Helpers
 {
@@ -14,15 +15,7 @@ namespace KonSanad.APIS.Helpers
     {
         public MappingProfiles()
         {
-            CreateMap<RegisterDto, AppUser>()
-      .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
-      .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
-      .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-        .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Phone))
-          .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
-      .ForMember(dest => dest.NationalId, opt => opt.MapFrom(src => src.NationalId));
-     // .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
-     // .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
+
 
             CreateMap<RegisterDto, UserDto>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
@@ -34,6 +27,8 @@ namespace KonSanad.APIS.Helpers
             CreateMap<Beneficiary, BeneficiaryDto>();
             CreateMap<HelpOrder, HelpOrderDto>();
             CreateMap<HelpOrderItem, HelpOrderItemDto>();
+            CreateMap<OrderItem, OrderItemDto>()
+           .ForMember(d => d.ImageUrl, opt => opt.MapFrom<ImageUrlsResolver>());
             CreateMap<SupplyMovement, SupplyMovementDto>();
 
             CreateMap<OrderItem, SupplyDto>()
@@ -73,8 +68,8 @@ namespace KonSanad.APIS.Helpers
                 // readable description (no JSON)
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src =>
                     $"ProductName: {src.ProductName ?? string.Empty}; Condition: {src.Status ?? string.Empty}; Reason: {src.Reason ?? string.Empty}"))
-                // map image input using dedicated resolver (ImageUrlsResolver should return string? JSON array or single URL string)
-                .ForMember(dest => dest.ImageUrlsJson, opt => opt.MapFrom<ImageUrlsResolver>())
+                 // map image input using dedicated resolver (ImageUrlsResolver should return string? JSON array or single URL string)
+                // .ForMember(d => d.ImageUrl, opt => opt.MapFrom<ImageUrlsResolver>())
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Requested"))
                 .ForMember(dest => dest.ManagerId, opt => opt.Ignore())
                 .ForMember(dest => dest.BeneficiaryId, opt => opt.Ignore());
@@ -87,6 +82,12 @@ namespace KonSanad.APIS.Helpers
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Requested"))
                 .ForMember(dest => dest.ManagerId, opt => opt.Ignore())
                 .ForMember(dest => dest.BeneficiaryId, opt => opt.Ignore());
+
+
+
+            CreateMap<JoinCampaignRequestDto, BeneficiaryCampaign>()
+         
+            .ForMember(dest => dest.RequestedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
     }
 }

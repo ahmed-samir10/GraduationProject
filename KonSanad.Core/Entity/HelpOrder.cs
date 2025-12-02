@@ -11,12 +11,9 @@ namespace KonSanad.Repository.Entities
     {
         public string Description { get; set; } = null!;
 
-        // store image urls as JSON string (nullable)
-        public string? ImageUrlsJson { get; set; }
-
-        // This My Relations Between ( Beneficiary And HelpOrder )
-        public int? BeneficiaryId { get; set; }
-
+        
+        public int BeneficiaryId { get; set; }
+       
         [ForeignKey(nameof(BeneficiaryId))]
         public Beneficiary? Beneficiary { get; set; } // My Navigation Property
 

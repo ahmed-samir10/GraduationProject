@@ -1,6 +1,10 @@
-﻿using KonSanad.Core.Dtos;
+﻿using AutoMapper;
+using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -10,15 +14,17 @@ namespace KonSanad.Services.Services
     public class HelpRequestService : IHelpRequestService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public HelpRequestService(IUnitOfWork unitOfWork)
+        public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper)
         {
             _unitOfWork = unitOfWork;
+
         }
 
-        public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int beneficiaryId, ExistingProductRequestDto request)
+        public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
         {
-            if (beneficiaryId <= 0) throw new System.ArgumentException("Invalid beneficiary id", nameof(beneficiaryId));
+           
             if (request == null) throw new System.ArgumentNullException(nameof(request));
 
             // find the order item
@@ -45,10 +51,10 @@ namespace KonSanad.Services.Services
             // create HelpOrder with reason and reference to order item
             var helpOrder = new HelpOrder
             {
-                BeneficiaryId = beneficiaryId,
+                BeneficiaryId = id,
                 Description = $"Request for donated item Id={request.OrderItemId}. Reason: {request.Reason}" +
                               (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" (Item: {orderItem.CustomSupplyName})"),
-                Status = "Requested",
+                Status = request.Status,
                 IsDeleted = false
             };
 
@@ -97,35 +103,23 @@ namespace KonSanad.Services.Services
             };
         }
 
-        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int beneficiaryId, NewProductRequestDto request)
+        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
         {
-            if (beneficiaryId <= 0) throw new System.ArgumentException("Invalid beneficiary id", nameof(beneficiaryId));
-            if (request == null) throw new System.ArgumentNullException(nameof(request));
+            if (request == null) throw new ArgumentNullException(nameof(request));
 
-            // keep JSON payload in Description for quick reference
-            var payload = new
-            {
-                ProductName = request.ProductName,
-                Condition = request.Status,
-                Reason = request.Reason,
-                ImageUrl = request.ImageUrl
-            };
-            var json = JsonSerializer.Serialize(payload);
+            var imageUrl = await SaveImageAsync(request.ImageFile);
 
             var helpOrder = new HelpOrder
             {
-                BeneficiaryId = beneficiaryId,
+                BeneficiaryId = id,
                 Description = request.Reason,
                 Status = "Requested",
                 IsDeleted = false
             };
 
-            // persist help order first (follows existing pattern)
             await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
             await _unitOfWork.Complete();
 
-            // Create a Supply entry for the requested custom product so HelpOrderItem can reference it.
-            // Supply requires Name, Description and Unit per configuration, provide minimal sensible defaults.
             var supply = new Supply
             {
                 Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
@@ -137,13 +131,12 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
             await _unitOfWork.Complete();
 
-            // Create HelpOrderItem referencing the newly created Supply
             var helpItem = new HelpOrderItem
             {
                 HelpOrderId = helpOrder.Id,
                 SupplyId = supply.Id,
                 QuantityRequested = 1,
-                ImageUrl = request.ImageUrl
+                ImageUrl = imageUrl  // ← الصورة اللي اتخزنت
             };
 
             await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
@@ -155,5 +148,68 @@ namespace KonSanad.Services.Services
                 Message = "New product request submitted successfully."
             };
         }
+
+
+
+        public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
+        {
+            // تحقق لو المستفيد موجود
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>().GetByIdAsync(userid);
+            if (beneficiary == null)
+                throw new Exception("Beneficiary not found");
+
+            // تحقق لو الحملة موجودة
+            var campaign = await _unitOfWork.Repository<Campaign, int>().GetByIdAsync(request.CampaignId);
+            if (campaign == null)
+                throw new Exception("Campaign not found");
+
+            // تحقق لو المستفيد قدم طلب قبل كده لنفس الحملة
+            var existingRequest = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
+                .FirstOrDefaultAsync(bc => bc.BeneficiaryId == userid
+                                           && bc.CampaignId == request.CampaignId);
+            if (existingRequest != null)
+                throw new Exception("Already requested for this campaign");
+
+            var joinRequest = new BeneficiaryCampaign
+            {
+                BeneficiaryId = userid,
+                CampaignId = request.CampaignId,
+                RequestedAt = DateTime.UtcNow,
+              //  Reason = request.Reason
+            };
+
+            // joinRequest.Status = "Pending";
+
+
+            await _unitOfWork.Repository<BeneficiaryCampaign, int>().AddAsync(joinRequest);
+
+            // احفظ التغييرات
+            await _unitOfWork.Complete();
+
+            return "Request submitted successfully";
+        }
+
+
+
+        private async Task<string> SaveImageAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/uploads/{fileName}";
+        }
+
     }
 }

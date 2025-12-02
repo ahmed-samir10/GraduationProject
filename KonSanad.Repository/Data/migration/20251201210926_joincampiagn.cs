@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace KonSanad.Repository.Identity.migration
+namespace KonSanad.Repository.Data.migration
 {
     /// <inheritdoc />
-    public partial class full : Migration
+    public partial class joincampiagn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using KonSanad.APIS.Extenaction;
 using KonSanad.APIS.Helpers;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
@@ -20,6 +21,8 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddJwtAuthentication(builder.Configuration);
 // Add services to the container.
 builder.Services.AddControllers();
 
@@ -53,7 +56,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfiles));
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // register ImageUrls resolver (NewProductRequestDto -> HelpOrder.ImageUrlsJson)
-builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
+//builder.Services.AddTransient<AutoMapper.IValueResolver<KonSanad.Core.Dtos.NewProductRequestDto, KonSanad.Repository.Entities.HelpOrder, string?>, KonSanad.APIS.Helpers.ImageUrlsResolver>();
 
 // identity services
 builder.Services.AddIdentityCore<AppUser>(options =>
@@ -63,73 +66,29 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 })
        .AddRoles<IdentityRole>()
        .AddEntityFrameworkStores<AppIdentityDbContext>()
+       //.AddEntityFrameworkStores<AppIdentityDbContext>()
        .AddSignInManager<SignInManager<AppUser>>()
        .AddUserManager<UserManager<AppUser>>();
 
-// JWT auth configuration
-var jwtKey = builder.Configuration["JWT:Key"]
-             ?? "BackupSuperLongSecretKey1234567890ABCDEF1234567890";
-var jwtIssuer = builder.Configuration["JWT:ValidIssuer"];
-var jwtAudience = builder.Configuration["JWT:ValidAudience"];
+var testConn = builder.Configuration.GetConnectionString("IdentityConnection");
+Console.WriteLine("========================================");
+Console.WriteLine($"🔗 Identity Connection String: {testConn}");
+Console.WriteLine("========================================");
 
-builder.Services.AddAuthentication(options =>
+if (string.IsNullOrEmpty(testConn) || testConn.Contains("IdentityDb"))
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
+    throw new Exception("❌ ERROR: Still using old connection string!");
+}
 
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.FromSeconds(300)
-        //ValidateIssuer = true,
-        //ValidIssuer = jwtIssuer,
-        //ValidateAudience = true,
-        //ValidAudience = jwtAudience,
-        //ValidateIssuerSigningKey = true,
-        //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        //ValidateLifetime = true,
-        //ClockSkew = TimeSpan.FromSeconds(300) // allow small clock skew
-    };
 
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = ctx =>
-        {
-            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-            logger.LogError(ctx.Exception, "JWT authentication failed: {Message}", ctx.Exception.Message,ctx.Exception);
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = ctx =>
-        {
-            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-            logger.LogInformation("JWT validated for {sub}", ctx.Principal?.Identity?.Name ?? "(no name)");
-            return Task.CompletedTask;
-        },
-        OnChallenge = ctx =>
-        {
-            // keep the default 401 behavior but log
-            var logger = ctx.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JwtAuth");
-            logger.LogWarning("JWT OnChallenge: {Error} - {ErrorDescription}", ctx.Error, ctx.ErrorDescription);
-            return Task.CompletedTask;
-        }
-    };
-});
+
 
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,
+        Type = SecuritySchemeType.ApiKey,
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
@@ -144,6 +103,14 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+
+
+
+
+
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
