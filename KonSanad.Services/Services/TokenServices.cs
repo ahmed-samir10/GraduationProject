@@ -25,13 +25,15 @@ namespace KonSanad.Services.Services
             var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+            new Claim("Id", user.Id),
+            //new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+           new Claim("Email", user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, user.UserName ?? "")
+            new Claim("Name", user.UserName ?? "")
         };
 
             
-               claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+               claims.AddRange(roles.Select(role => new Claim("Role", role)));
 
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -44,9 +46,7 @@ namespace KonSanad.Services.Services
                 expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: creds
             );
-            Console.WriteLine("TOKEN ISSUER     = " + _configuration["Jwt:Issuer"]);
-            Console.WriteLine("TOKEN AUDIENCE   = " + _configuration["Jwt:Audience"]);
-            Console.WriteLine("TOKEN KEY        = " + _configuration["Jwt:Key"]);
+           
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 

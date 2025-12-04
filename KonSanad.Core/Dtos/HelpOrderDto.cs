@@ -12,11 +12,11 @@ namespace KonSanad.Core.Dtos
         public string Description { get; set; } = string.Empty;
         public int? BeneficiaryId { get; set; }
 
-        public List<string> ImageUrls { get; set; } = new List<string>();
-        public List<HelpOrderItemDto> Items { get; set; } = new List<HelpOrderItemDto>();
+       // public List<string> ImageUrls { get; set; } = new List<string>();
+      //  public List<HelpOrderItemDto> Items { get; set; } = new List<HelpOrderItemDto>();
 
         public DateTime? CreatedAt { get; set; }
         public string? Status { get; set; }
-        public int? ManagerId { get; set; }
+      //  public int? ManagerId { get; set; }
     }
 }

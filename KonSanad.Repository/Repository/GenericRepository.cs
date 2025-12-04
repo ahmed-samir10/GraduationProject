@@ -1,12 +1,13 @@
-﻿using System;
+﻿using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Data.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Data.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Repository.Repository
 {
@@ -23,9 +24,28 @@ namespace KonSanad.Repository.Repository
             return await _context.Set<T>().ToListAsync();
         }
 
-        public async Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        public async Task<T> FirstOrDefaultAsync(
+       Expression<Func<T, bool>> predicate,
+       Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
         {
-            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+            IQueryable<T> query = _context.Set<T>();
+
+            if (include != null)
+                query = include(query);
+
+            return await query.FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<IEnumerable<T>> FindAllAsync(
+     Expression<Func<T, bool>> predicate,
+     Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+        {
+            IQueryable<T> query = _context.Set<T>().Where(predicate);
+
+            if (include != null)
+                query = include(query);
+
+            return await query.ToListAsync();
         }
 
         public async Task AddAsync(T entity)

@@ -47,6 +47,7 @@ namespace KonSanad.APIS.Helpers
             // CreateDto -> Campaign entity (for create/update)
             CreateMap<CampaignCreateDto, Campaign>()
                 .ForMember(d => d.Id, opt => opt.Ignore());
+         
 
             // Campaign -> CampaignDto (presentation)
             CreateMap<Campaign, CampaignDto>()
@@ -66,8 +67,7 @@ namespace KonSanad.APIS.Helpers
             // Map a "new product" request into a HelpOrder (store details in Description / ImageUrlsJson)
             CreateMap<NewProductRequestDto, HelpOrder>()
                 // readable description (no JSON)
-                .ForMember(dest => dest.Description, opt => opt.MapFrom(src =>
-                    $"ProductName: {src.ProductName ?? string.Empty}; Condition: {src.Status ?? string.Empty}; Reason: {src.Reason ?? string.Empty}"))
+
                  // map image input using dedicated resolver (ImageUrlsResolver should return string? JSON array or single URL string)
                 // .ForMember(d => d.ImageUrl, opt => opt.MapFrom<ImageUrlsResolver>())
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Requested"))
@@ -88,6 +88,13 @@ namespace KonSanad.APIS.Helpers
             CreateMap<JoinCampaignRequestDto, BeneficiaryCampaign>()
          
             .ForMember(dest => dest.RequestedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+
+
+            CreateMap<Beneficiary, GetProfileDto>()
+    .ForMember(d => d.Email, opt => opt.MapFrom(s => s.Email));
+
+            CreateMap<UpdateProfileDto, Beneficiary>();
         }
     }
 }

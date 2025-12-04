@@ -1,4 +1,5 @@
 ﻿// KonSanad.Repository\Entities\Beneficiary.cs
+using KonSanad.Core.Entity.Identity;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +17,8 @@ namespace KonSanad.Repository.Entities
         public string NationalId { get; set; }
 
         public string AppUserId { get; set; }
+        public AppUser AppUser { get; set; }
+
 
         // Naviegation property
         public ICollection<HelpOrder> HelpOrders { get; set; } = new List<HelpOrder>();

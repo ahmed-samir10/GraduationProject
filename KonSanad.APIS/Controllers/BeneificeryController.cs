@@ -3,10 +3,12 @@ using Azure.Core;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
+using KonSanad.Repository.Repository;
 using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace KonSanad.APIS.Controllers
@@ -20,12 +22,15 @@ namespace KonSanad.APIS.Controllers
         private readonly IMapper _mapper;
         private readonly IHelpRequestService _helpRequestService;
         private readonly IDonationService _ORder;
-        public BeneificeryController(ICampaignService service, IMapper mapper, IDonationService ORder, IHelpRequestService helpRequestService)
+
+        private readonly IUnitOfWork _unitOfWork;
+        public BeneificeryController(ICampaignService service, IMapper mapper, IDonationService ORder, IUnitOfWork unitOfWork, IHelpRequestService helpRequestService)
         {
             _service = service;
             _mapper = mapper;
             _helpRequestService = helpRequestService;
             _ORder = ORder;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
@@ -36,6 +41,7 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = list } );
         }
 
+        [Authorize]
         [HttpGet("GetCampaignById")]
         public async Task<ActionResult<CampaignDto>> GetById(int id)
         {
@@ -47,16 +53,26 @@ namespace KonSanad.APIS.Controllers
             return Ok(campaignDto);
         }
 
+        [Authorize]
         [HttpPost("join-campaign")]
-        public async Task<IActionResult> JoinCampaign(int id, [FromBody] JoinCampaignRequestDto request)
+        public async Task<IActionResult> JoinCampaign( [FromBody] JoinCampaignRequestDto request)
         {
 
-          //  var userId = User.FindFirst("uid")?.Value;
-           
-         //   Console.WriteLine($"User ID from token: {userId}  , type {userId.GetType()}");
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+
+            var beneficiary = await _unitOfWork
+     .Repository<Beneficiary, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return BadRequest(new { Error = "No beneficiary found for this user" });
+
+            int beneficiaryId = beneficiary.Id;
+            //   Console.WriteLine($"User ID from token: {userId}  , type {userId.GetType()}");
             try
             {
-                var message = await _helpRequestService.JoinCampaignAsync(id, request);
+                var message = await _helpRequestService.JoinCampaignAsync(beneficiaryId, request);
                 return Ok(new { success = true, data = message });
             }
             catch (Exception ex)
@@ -65,6 +81,7 @@ namespace KonSanad.APIS.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("order-item")]
         public async Task<IActionResult> GetOrderItem()
         {
@@ -78,6 +95,7 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = orderItem });
         }
 
+        [Authorize]
         [HttpGet("order-item/{id:int}")]
         public async Task<IActionResult> GetOrderItemById(int id)
         {
@@ -90,15 +108,58 @@ namespace KonSanad.APIS.Controllers
         }
         // 1) Request an existing donated product (only reason required)
         // POST api/beneificery/{beneficiaryId}/request-existing
+
+        [Authorize]
+        [HttpGet("joined-campaigns")]
+        public async Task<IActionResult> GetJoinedCampaigns()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await _helpRequestService.GetJoinedCampaignsAsync(userId);
+
+            return Ok(new { success = true, data = result });
+        }
+      
+        [Authorize]
+        [HttpGet("my-requests")]
+        public async Task<IActionResult> GetMyRequests()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await _helpRequestService.GetMyHelpRequestsAsync(userId);
+
+            return Ok(new { success = true, data = result });
+        }
+       
+
+
+
+        [Authorize]
         [HttpPost("request-existing")]
-        public async Task<IActionResult> RequestExistingProduct(int id, [FromBody] ExistingProductRequestDto request)
+        public async Task<IActionResult> RequestExistingProduct( [FromBody] ExistingProductRequestDto request)
         {
             if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
             // هتتظبط  بعد لما نضيف المصادقة
 
-            var userId = User.FindFirst("uid")?.Value;
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
-            var result = await _helpRequestService.RequestExistingProductAsync( id, request);
+
+            var beneficiary = await _unitOfWork
+     .Repository<Beneficiary, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return BadRequest(new { Error = "No beneficiary found for this user" });
+
+            int beneficiaryId = beneficiary.Id;
+
+            var result = await _helpRequestService.RequestExistingProductAsync(beneficiaryId, request);
             if (result.HelpOrderId == 0) return NotFound(new { success = false, message = result.Message });
 
             // return Arabic confirmation as requested
@@ -107,16 +168,57 @@ namespace KonSanad.APIS.Controllers
 
         // 2) Request a new product (name, condition, reason, image)
         // POST api/beneificery/{beneficiaryId}/request-new
+
+
+        [Authorize]
         [HttpPost("request-new")]
-        public async Task<IActionResult> RequestNewProduct(int id, [FromForm] NewProductRequestDto request)
+        public async Task<IActionResult> RequestNewProduct( [FromForm] NewProductRequestDto request)
         {
             if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
             // هتتظبط  بعد لما نضيف المصادقة
 
-            var userId = User.FindFirst("uid")?.Value;
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
-            var result = await _helpRequestService.RequestNewProductAsync(id, request);
+
+            var beneficiary = await _unitOfWork
+     .Repository<Beneficiary, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return BadRequest(new { Error = "No beneficiary found for this user" });
+
+            int beneficiaryId = beneficiary.Id;
+
+            var result = await _helpRequestService.RequestNewProductAsync(beneficiaryId, request);
             return Ok(new { success = true, data = result });
+        }
+
+
+        [Authorize]
+        [HttpGet("GetProfile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await _helpRequestService.GetProfileAsync(userId);
+            return Ok(new { success = true, data = result });
+        }
+
+        [Authorize]
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var success = await _helpRequestService.UpdateProfileAsync(userId, dto);
+
+            return Ok(new { success, message = "Profile updated successfully" });
         }
     }
 }

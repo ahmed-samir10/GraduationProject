@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
+using KonSanad.Services.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
@@ -15,10 +18,12 @@ namespace KonSanad.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly UserManager<AppUser> _userManager;
 
-        public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper)
+        public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
 
         }
 
@@ -52,9 +57,8 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = $"Request for donated item Id={request.OrderItemId}. Reason: {request.Reason}" +
-                              (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" (Item: {orderItem.CustomSupplyName})"),
-                Status = request.Status,
+                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName})"),
+                Status = "معلقه",
                 IsDeleted = false
             };
 
@@ -112,7 +116,7 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = request.Reason,
+                Description = request.ProductName,
                 Status = "Requested",
                 IsDeleted = false
             };
@@ -188,7 +192,140 @@ namespace KonSanad.Services.Services
 
             return "Request submitted successfully";
         }
+        public async Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId)
+        {
+            // 1) نجيب المستفيد حسب AppUserId
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
+            if (beneficiary == null)
+                throw new Exception("Beneficiary not found");
+
+            // 2) نجيب العلاقات بين المستفيد والحملات مع Include
+            var joinedCampaigns = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
+    .FindAllAsync(
+        bc => bc.BeneficiaryId == beneficiary.Id,
+        include: q => q
+            .Include(x => x.Campaign)
+                .ThenInclude(c => c.DonationOrders)  // 👈 أضف هذا
+            .Include(x => x.Campaign)
+                .ThenInclude(c => c.Category)        // 👈 وهذا للـ CategoryName
+    );
+
+            // 3) نتأكد إن Campaign موجود
+            var campaignEntities = joinedCampaigns
+                .Where(j => j.Campaign != null)
+                .Select(j => j.Campaign)
+                .ToList();
+
+            // 4) Map
+            var campaignDtos = campaignEntities.Select(c => new CampaignDto
+            {
+                Id = c.Id,
+                Title = c.Title ?? string.Empty,
+                PictureUrl = c.PictureUrl ?? string.Empty,
+                ShortDescription = string.IsNullOrWhiteSpace(c.Description) ? string.Empty :
+         c.Description.Length > 180 ? c.Description.Substring(0, 180).Trim() + "…" : c.Description,
+                CategoryName = c.Category?.Name ?? string.Empty,
+                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
+                Status = CampaignMetrics.CalculateStatus(c),
+                DonorCount = CampaignMetrics.CalculateDonorCount(c)
+            }).ToList();
+            return campaignDtos;
+        }
+
+        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
+        {
+            // 1) هات المستفيد
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                throw new Exception("Beneficiary not found");
+
+            // 2) هات الطلبات مع Items و Supply
+            var requests = await _unitOfWork.Repository<HelpOrder, int>()
+                .FindAllAsync(
+                    h => h.BeneficiaryId == beneficiary.Id,
+                    include: q => q
+                        .Include(h => h.HelpOrderItems)
+                            .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
+                );
+
+            // 3) Map إلى DTO
+            var helpOrderDtos = requests.Select(h => new HelpOrderDto
+            {
+                Id = h.Id,
+                Description = h.Description ?? string.Empty,
+                BeneficiaryId = h.BeneficiaryId,
+               // ManagerId = h.ManagerId,
+                Status = "معلقه",
+                CreatedAt = h.CreatedAt,
+
+             
+
+
+            }).ToList();
+
+            return helpOrderDtos;
+        }
+
+
+
+
+        public async Task<GetProfileDto> GetProfileAsync(string userId)
+        {
+            // 1) استخدم UserManager للحصول على AppUser
+            var appUser = await _userManager.FindByIdAsync(userId);
+
+            if (appUser == null)
+                throw new Exception("User not found");
+
+            // 2) ثم احصل على Beneficiary
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                throw new Exception("Beneficiary not found");
+
+            // 3) Map to DTO
+            var profileDto = new GetProfileDto
+            {
+                
+                FullName = beneficiary.FullName ?? string.Empty,
+                Email = appUser.Email ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                Address = beneficiary.Address ?? string.Empty,
+                NationalId = beneficiary.NationalId ?? string.Empty
+               
+            };
+
+            return profileDto;
+        }
+
+
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        {
+            var beneficiaryRepo = _unitOfWork.Repository<Beneficiary, int>();
+
+            var beneficiary = await beneficiaryRepo.FirstOrDefaultAsync(
+                b => b.AppUserId == userId
+            );
+
+            if (beneficiary == null)
+                throw new Exception("Beneficiary not found");
+
+            // Update fields
+            beneficiary.FullName = dto.FullName ?? beneficiary.FullName;
+            beneficiary.NationalId = dto.NationalId ?? beneficiary.NationalId;
+            beneficiary.Phone = dto.PhoneNumber ?? beneficiary.Phone;
+            beneficiary.Address = dto.Address ?? beneficiary.Address;
+
+            _unitOfWork.Repository<Beneficiary, int>().Update(beneficiary);
+            await _unitOfWork.Complete();
+
+            return true;
+        }
 
 
         private async Task<string> SaveImageAsync(IFormFile file)
@@ -211,5 +348,6 @@ namespace KonSanad.Services.Services
             return $"/uploads/{fileName}";
         }
 
+        
     }
 }

@@ -12,5 +12,12 @@ namespace KonSanad.Core.IRepositery
         Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request);
         Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request);
         Task<string> JoinCampaignAsync(int id, JoinCampaignRequestDto request);
+        Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId);
+        Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId);
+
+        Task<GetProfileDto> GetProfileAsync(string userId);
+        Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+
+
     }
 }

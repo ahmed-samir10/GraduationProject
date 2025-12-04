@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Query;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,6 +19,11 @@ namespace KonSanad.Core.IRepositery
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
-        Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+         Task<T> FirstOrDefaultAsync(
+     Expression<Func<T, bool>> predicate,
+     Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
+        Task<IEnumerable<T>> FindAllAsync(
+              Expression<Func<T, bool>> predicate,
+              Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
     }
 }
