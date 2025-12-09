@@ -35,8 +35,7 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
 
-builder.Services.AddScoped<IDonationOrderService, DonationOrderService>();
-builder.Services.AddScoped<IDonationService, DonationService>();
+builder.Services.AddScoped<IDonorServices, DonorServices>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 
 // register DI

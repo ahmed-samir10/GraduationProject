@@ -13,6 +13,7 @@ namespace KonSanad.Core.Dtos
     {
         public string ProductName { get; set; } = string.Empty;
        // public string Status { get; set; } = string.Empty; // e.g. "New", "Used - Good" الحاله
+       public string ProductDescription { get; set; }
        public string Reason { get; set; } = string.Empty; // وصف
         public IFormFile? ImageFile { get; set; }
     }

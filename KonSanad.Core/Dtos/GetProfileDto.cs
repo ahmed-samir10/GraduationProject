@@ -8,6 +8,8 @@ namespace KonSanad.Core.Dtos
 {
     public class GetProfileDto
     {
+       
+       
         public string FullName { get; set; }
         public string NationalId { get; set; }
         public string PhoneNumber { get; set; }

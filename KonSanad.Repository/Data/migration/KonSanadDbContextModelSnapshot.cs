@@ -613,6 +613,10 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 

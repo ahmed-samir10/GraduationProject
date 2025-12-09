@@ -43,7 +43,7 @@ namespace KonSanad.Services.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddHours(234),
                 signingCredentials: creds
             );
            

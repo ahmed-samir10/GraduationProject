@@ -57,8 +57,8 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName})"),
-                Status = "معلقه",
+                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName}"),
+                Status = "قيد الانتظار ",
                 IsDeleted = false
             };
 
@@ -116,7 +116,8 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = request.ProductName,
+                Title = request.ProductName,
+                Description = request.ProductDescription,
                 Status = "Requested",
                 IsDeleted = false
             };
@@ -229,7 +230,8 @@ namespace KonSanad.Services.Services
                 CategoryName = c.Category?.Name ?? string.Empty,
                 ProgressPercentage = CampaignMetrics.CalculateProgress(c),
                 Status = CampaignMetrics.CalculateStatus(c),
-                DonorCount = CampaignMetrics.CalculateDonorCount(c)
+                DonorCount = CampaignMetrics.CalculateDonorCount(c),
+              CreateAt = c.CreatedAt
             }).ToList();
             return campaignDtos;
         }
@@ -256,11 +258,14 @@ namespace KonSanad.Services.Services
             var helpOrderDtos = requests.Select(h => new HelpOrderDto
             {
                 Id = h.Id,
+              
+                Title = h.Title,
                 Description = h.Description ?? string.Empty,
                 BeneficiaryId = h.BeneficiaryId,
-               // ManagerId = h.ManagerId,
-                Status = "معلقه",
+              
+                Status = "قيد الانتظار",
                 CreatedAt = h.CreatedAt,
+                
 
              
 
@@ -317,6 +322,8 @@ namespace KonSanad.Services.Services
 
             // Update fields
             beneficiary.FullName = dto.FullName ?? beneficiary.FullName;
+            beneficiary.Email = dto.Email ?? beneficiary.Email;
+
             beneficiary.NationalId = dto.NationalId ?? beneficiary.NationalId;
             beneficiary.Phone = dto.PhoneNumber ?? beneficiary.Phone;
             beneficiary.Address = dto.Address ?? beneficiary.Address;

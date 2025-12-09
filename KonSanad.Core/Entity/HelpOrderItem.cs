@@ -1,26 +1,29 @@
-﻿// KonSanad.Repository\Entities\HelpOrderItem.cs
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KonSanad.Repository.Entities
 {
-    [Table("HelpOrderItem")]
+    [Table("HelpOrderItems")]  // الأفضل جمع
     public class HelpOrderItem : BaseEntity<int>
     {
+        [Required]
         public int QuantityRequested { get; set; }
 
-        // This My Relations Between ( HelpOrder And HelpOrderItem ) One Order Have Many Items
+        // علاقة: One HelpOrder -> Many HelpOrderItems
+        [Required]
         public int HelpOrderId { get; set; }
-        [ForeignKey(nameof(HelpOrderId))]
-        public HelpOrder? HelpOrder { get; set; } // My Navigation Property
 
-        // This My Relations Between ( Supply And HelpOrderItem ) One Supply Can Be In Many Help OrderItem
+        [ForeignKey(nameof(HelpOrderId))]
+        public HelpOrder HelpOrder { get; set; } = null!;
+
+        // علاقة: One Supply -> Many HelpOrderItems
         [Required]
         public int SupplyId { get; set; }
-        [ForeignKey(nameof(SupplyId))]
-        public Supply? Supply { get; set; } // My Navigation Property
 
-        // new: optional image url for the requested item (nullable)
+        [ForeignKey(nameof(SupplyId))]
+        public Supply Supply { get; set; } = null!;
+
+        // الصورة (اختياري)
         public string? ImageUrl { get; set; }
     }
 }

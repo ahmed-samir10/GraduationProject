@@ -9,6 +9,7 @@ namespace KonSanad.Core.Dtos
     public class HelpOrderDto
     {
         public int Id { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; } = string.Empty;
         public int? BeneficiaryId { get; set; }
 
