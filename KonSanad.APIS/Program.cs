@@ -36,6 +36,7 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 });
 
 builder.Services.AddScoped<IDonorServices, DonorServices>();
+builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 
 // register DI
