@@ -15,7 +15,7 @@
     public class DonationResponseItemDto
     {
      
-        public int TotalItems { get; set; }
+        public int QuantityItems { get; set; }
         public List<DonationItemDto> Items { get; set; } = new();
         public string Message { get; set; } = string.Empty;
 

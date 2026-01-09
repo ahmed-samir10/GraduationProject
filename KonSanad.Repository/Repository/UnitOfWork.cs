@@ -1,5 +1,6 @@
 ﻿using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Data.Persistence;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,6 +20,8 @@ namespace KonSanad.Repository.Repository
         {
             _context = context;
         }
+
+      
         public async Task<int> Complete()
             => await _context.SaveChangesAsync();
 

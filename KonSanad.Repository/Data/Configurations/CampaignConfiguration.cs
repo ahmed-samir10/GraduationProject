@@ -16,8 +16,8 @@ namespace KonSanad.Repository.Data.Configurations
             builder.ToTable("Campaigns");
             builder.HasKey(c => c.Id);
 
-            builder.Property(c => c.Title).IsRequired().HasMaxLength(200);
-            builder.Property(c => c.Description).IsRequired().HasMaxLength(1000);
+            builder.Property(c => c.Title).IsRequired(false).HasMaxLength(200);
+            builder.Property(c => c.Description).IsRequired(false).HasMaxLength(1000);
             builder.Property(c => c.StartDate).IsRequired(false);
             builder.Property(c => c.EndDate).IsRequired(false);
             builder.Property(c => c.GoalCash).HasColumnType("decimal(18,2)");

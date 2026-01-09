@@ -50,7 +50,7 @@ namespace KonSanad.Services.Services
         // 3) Create Donation (Cash + Items)
         // ---------------------------------------------------------------------------
         public async Task<DonationResponseItemDto> CreateDonationItemAsync(
-          CreateDonationItemRequestDto request, int donorId)
+        CreateDonationItemRequestDto request, int donorId)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -59,7 +59,7 @@ namespace KonSanad.Services.Services
             var donationOrder = new DonationOrder
             {
                 DonorId = donorId,
-                CampaignId = request.CampaignId,
+                CampaignId = null,
                 ManagerId = 1,
                 CreatedAt = DateTime.Now,
                 OrderDate = DateTime.Now,
@@ -75,7 +75,7 @@ namespace KonSanad.Services.Services
             {
                 var donationItem = new OrderItem
                 {
-                    CustomSupplyName = item.CustomName,
+                    // CustomSupplyName = item.CustomName,
                     DonationOrderId = donationOrder.Id,
                     SupplyId = item.SupplyId,
                     Quantity = item.Quantity,
@@ -88,7 +88,7 @@ namespace KonSanad.Services.Services
                 var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(item.SupplyId);
                 if (supply != null)
                 {
-                    supply.StockQuantity += item.Quantity;
+                    supply.StockQuantity = supply.StockQuantity + item.Quantity;
                     _unitOfWork.Repository<Supply, int>().Update(supply);
                 }
             }
@@ -97,7 +97,7 @@ namespace KonSanad.Services.Services
 
             return new DonationResponseItemDto
             {
-                TotalItems = request.Items.Sum(i => i.Quantity),
+                QuantityItems = request.Items.Sum(i => i.Quantity),
                 Items = request.Items,
                 Message = "تم تسجيل التبرع بالمنتجات الموجودة ✔"
             };

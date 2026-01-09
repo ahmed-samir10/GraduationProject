@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+
 using KonSanad.APIS.Extenaction;
 using KonSanad.APIS.Helpers;
 using KonSanad.Core.Entity.Identity;
@@ -18,6 +19,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Security.Principal;
 using System.Text;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +36,7 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
-
+builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonorServices, DonorServices>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 
@@ -91,7 +93,8 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer {token}'"
+        Description = "Enter 'Bearer {token}'",
+        
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -101,6 +104,7 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+   // c.OperationFilter<SwaggerJsonBodyOperationFilter>();
 });
 
 
