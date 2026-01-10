@@ -88,5 +88,18 @@ namespace KonSanad.APIS.Controllers
         }
 
 
+        // ====================== Get Profile EndPoint ==========================
+        [Authorize]
+        [HttpGet("GetProfile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await donorServices.GetProfileAsync(userId);
+            return Ok(new { success = true, data = result });
+        }
     }
 }

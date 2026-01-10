@@ -15,5 +15,7 @@ namespace KonSanad.Core.IRepositery
         Task<DonationResponseItemDto> CreateDonationItemAsync(
             CreateDonationItemRequestDto request, int donorId);
 
+        Task<GetProfileDto> GetProfileAsync(string userId);
+
     }
 }

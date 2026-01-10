@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,15 +17,18 @@ namespace KonSanad.Services.Services
        // private readonly IDonorServices _orderService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly UserManager<AppUser> _userManager;
 
         public DonorServices(
          
             IUnitOfWork unitOfWork,
-            IMapper mapper)
+            IMapper mapper, UserManager<AppUser> userManager)
         {
          
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _userManager = userManager;
+
         }
 
 
@@ -183,8 +188,36 @@ namespace KonSanad.Services.Services
 
         }
 
-        
+        // ---------------------------------------------------------------------------
+        // 4) Get Profile To Donor 
+        // ---------------------------------------------------------------------------
+        public async Task<GetProfileDto> GetProfileAsync(string userId)
+        {
+            // 1) استخدم UserManager للحصول على AppUser
+            var appUser = await _userManager.FindByIdAsync(userId);
 
+            if (appUser == null)
+                throw new Exception("User not found");
+
+            // 2) ثم احصل على Donor
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+            if (donor is null)
+                throw new Exception("Donor not found");
+
+            // 3) Map to DTO
+            var profileDto = new GetProfileDto
+            {
+
+                FullName = donor.FullName ?? string.Empty,
+                NationalId = donor.NationalId ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                Address = donor.Address ?? string.Empty,
+                Email = appUser.Email ?? string.Empty
+            };
+            return profileDto;
+        }
     }
 }
 
