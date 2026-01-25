@@ -6,6 +6,7 @@ using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -100,6 +101,21 @@ namespace KonSanad.APIS.Controllers
 
             var result = await donorServices.GetProfileAsync(userId);
             return Ok(new { success = true, data = result });
+        }
+
+        // ====================== Update Profile EndPoint ==========================
+        [Authorize]
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var success = await donorServices.UpdateProfileAsync(userId, dto);
+
+            return Ok(new { success, message = "Profile updated successfully" });
         }
     }
 }

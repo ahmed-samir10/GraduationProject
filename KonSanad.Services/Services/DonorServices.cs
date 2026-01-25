@@ -218,6 +218,38 @@ namespace KonSanad.Services.Services
             };
             return profileDto;
         }
+
+
+        // ---------------------------------------------------------------------------
+        // 5) Update Profile To Donor
+        // ---------------------------------------------------------------------------
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto updateDto)
+        {
+            // 1) UserManager للحصول على AppUser استخدم
+            var appUser = await _userManager.FindByIdAsync(userId);
+            if (appUser == null)
+                throw new Exception("User not found");
+
+            // 2) Donor ثم احصل على 
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+            if (donor is null)
+                throw new Exception("Donor not found");
+
+            // 3) تحديث البيانات
+            donor.FullName = updateDto.FullName;
+            donor.NationalId = updateDto.NationalId;
+            donor.Address = updateDto.Address;
+            appUser.PhoneNumber = updateDto.PhoneNumber;
+            appUser.Email = updateDto.Email;
+
+            // 4) حفظ التغييرات
+            _unitOfWork.Repository<Donor, int>().Update(donor);
+            await _userManager.UpdateAsync(appUser);
+            await _unitOfWork.Complete();
+
+            return true;
+        }
     }
 }
 

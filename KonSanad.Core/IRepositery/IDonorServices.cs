@@ -17,5 +17,8 @@ namespace KonSanad.Core.IRepositery
 
         Task<GetProfileDto> GetProfileAsync(string userId);
 
+        Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+
+
     }
 }
