@@ -59,7 +59,7 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpPost("donateItem")]
-        public async Task<IActionResult> Donate([FromBody] CreateDonationItemRequestDto request)
+        public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
 
         {
             if (!ModelState.IsValid)
@@ -68,8 +68,8 @@ namespace KonSanad.APIS.Controllers
 
 
             var Donor = await _unitOfWork
-     .Repository<Donor, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+        .Repository<Donor, int>()
+        .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (Donor == null)
                 return BadRequest(new { Error = "No Donor found for this user" });

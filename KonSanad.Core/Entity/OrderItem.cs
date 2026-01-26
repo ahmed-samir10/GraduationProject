@@ -22,5 +22,8 @@ namespace KonSanad.Repository.Entities
         public DateTime CreatedAt { get; set; }
         public string? Status { get; set; }
         public string? ImageUrl { get; set; } = null!;
+
+        // new column for description
+        public string? Description { get; set; }
     }
 }
