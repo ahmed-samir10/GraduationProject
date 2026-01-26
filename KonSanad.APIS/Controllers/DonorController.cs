@@ -71,19 +71,20 @@ namespace KonSanad.APIS.Controllers
         }
 
 
-        /*
-         [Authorize]
-         [HttpPost("donateItem")]
-         public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request )
-         {
-             if (!ModelState.IsValid)
-                 return BadRequest(ModelState);
-             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+        [Authorize]
+        [HttpPost("donateItem")]
+        public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
+
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
 
-             var Donor = await _unitOfWork
-      .Repository<Donor, int>()
-      .FirstOrDefaultAsync(b => b.AppUserId == userId);
+            var Donor = await _unitOfWork
+        .Repository<Donor, int>()
+        .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
              if (Donor == null)
                  return BadRequest(new { Error = "No Donor found for this user" });
@@ -92,9 +93,9 @@ namespace KonSanad.APIS.Controllers
 
              var result = await donorServices.CreateDonationItemAsync(request, DonorID);
 
-             return Ok(new { success = true, data = result });
-         }
-          */
+            return Ok(new { success = true, data = result });
+        }
+
         [HttpGet("low-stock-supplies")]
         public async Task<IActionResult> GetLowStockSupplies()
         {

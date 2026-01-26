@@ -11,15 +11,15 @@ namespace KonSanad.Repository.Entities
     [Table("Campaigns")]
     public class Campaign : BaseEntity<int>
     {
-        public string Title { get; set; } = null!;
-        public string Description { get; set; } = null!;
+        public string? Title { get; set; }
+        public string? Description { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
     
 
-         public string PictureUrl { get; set; }
+         public string? PictureUrl { get; set; }
         // Category FK
         public int? CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
