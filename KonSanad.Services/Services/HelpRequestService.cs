@@ -262,7 +262,7 @@ namespace KonSanad.Services.Services
                 Title = h.Title,
                 Description = h.Description ?? string.Empty,
                 BeneficiaryId = h.BeneficiaryId,
-              
+                PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
                 Status = "قيد الانتظار",
                 CreatedAt = h.CreatedAt,
                 
@@ -320,13 +320,43 @@ namespace KonSanad.Services.Services
             if (beneficiary == null)
                 throw new Exception("Beneficiary not found");
 
-            // Update fields
-            beneficiary.FullName = dto.FullName ?? beneficiary.FullName;
-            beneficiary.Email = dto.Email ?? beneficiary.Email;
+            // Update fields only when a value is provided (non-null/non-whitespace)
+            if (!string.IsNullOrWhiteSpace(dto.FullName) && !(dto.FullName == "string"))
+                beneficiary.FullName = dto.FullName;
 
-            beneficiary.NationalId = dto.NationalId ?? beneficiary.NationalId;
-            beneficiary.Phone = dto.PhoneNumber ?? beneficiary.Phone;
-            beneficiary.Address = dto.Address ?? beneficiary.Address;
+            if (!string.IsNullOrWhiteSpace(dto.NationalId) && !(dto.NationalId == "string"))
+                beneficiary.NationalId = dto.NationalId;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+                beneficiary.Phone = dto.PhoneNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
+                beneficiary.Address = dto.Address;
+
+            // If email is provided, update Identity user email (and optionally beneficiary.Email)
+            if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))
+            {
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser == null)
+                    throw new Exception("App user not found");
+
+                if (!string.Equals(appUser.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.Email = dto.Email;
+                    // Do not change UserName unless your system expects it; uncomment if needed:
+                    // appUser.UserName = dto.Email;
+
+                    var result = await _userManager.UpdateAsync(appUser);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update identity user: {errors}");
+                    }
+                }
+
+                // Keep beneficiary.Email in sync if you store it there too
+                beneficiary.Email = dto.Email;
+            }
 
             _unitOfWork.Repository<Beneficiary, int>().Update(beneficiary);
             await _unitOfWork.Complete();

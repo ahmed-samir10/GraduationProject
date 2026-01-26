@@ -10,9 +10,9 @@ namespace KonSanad.Repository.Entities
     [Table("Supplies")]
     public class Supply : BaseEntity<int>
     {
-        public string Name { get; set; } = null!;
-        public string Description { get; set; } = null!;
-        public string Unit { get; set; } = null!;
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string? Unit { get; set; }
         public int? StockQuantity { get; set; } = 0;
         public int? MinimumLevel { get; set; } = 5;
      

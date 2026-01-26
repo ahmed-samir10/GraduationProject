@@ -138,7 +138,7 @@ namespace KonSanad.Services.Services
             new DonationItemDto
             {
                 SupplyId = request.SupplyId,
-                //ImageFile = imageUrl,
+                ImageFile = imageUrl,
                 Quantity = request.Quantity,
                 Status = donationItem.Status,
                 Description = donationItem.Description

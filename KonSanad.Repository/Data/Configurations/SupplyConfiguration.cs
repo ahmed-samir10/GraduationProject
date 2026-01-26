@@ -11,9 +11,9 @@ namespace KonSanad.Repository.Data.Configurations
             builder.ToTable("Supplies");
             builder.HasKey(s => s.Id);
 
-            builder.Property(s => s.Name).IsRequired().HasMaxLength(200);
-            builder.Property(s => s.Description).IsRequired().HasMaxLength(1000);
-            builder.Property(s => s.Unit).IsRequired().HasMaxLength(50);
+            builder.Property(s => s.Name).IsRequired(false).HasMaxLength(200);
+            builder.Property(s => s.Description).IsRequired(false).HasMaxLength(1000);
+            builder.Property(s => s.Unit).IsRequired(false).HasMaxLength(50);
             builder.Property(s => s.StockQuantity).IsRequired(false)
                 .HasDefaultValue(0); 
             builder.Property(s => s.MinimumLevel).IsRequired(false);
