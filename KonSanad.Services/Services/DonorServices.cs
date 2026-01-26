@@ -137,7 +137,8 @@ namespace KonSanad.Services.Services
         // ---------------------------------------------------------------------------
         // New: Get all DonationOrders made by the donor (cash and/or items)
         // ---------------------------------------------------------------------------
-        public async Task<IEnumerable<DonationItemDto>> GetMyDonationsAsync(string userId)
+
+        public async Task<IEnumerable<CashDonationDto>> GetMyCashDonationsAsync(string userId)
         {
             // 1) Get donor by AppUserId
             var donor = await _unitOfWork.Repository<Donor, int>()
@@ -146,37 +147,78 @@ namespace KonSanad.Services.Services
             if (donor == null)
                 throw new Exception("Donor not found");
 
-            // 2) Query DonationOrders for this donor, include items, supplies, cash donation and receipts
-            var donations = await _unitOfWork.Repository<DonationOrder, int>()
+            // 2) Query DonationOrders that have CashDonation only
+            var cashDonations = await _unitOfWork.Repository<DonationOrder, int>()
                 .FindAllAsync(
-                    d => d.DonorId == donor.Id,
+                    d => d.DonorId == donor.Id && d.CashDonation != null,
                     include: q => q
-                        .Include(d => d.OrderItems)
-                            .ThenInclude(oi => oi.Supply)
                         .Include(d => d.CashDonation)
                         .Include(d => d.Receipts)
                 );
 
             // 3) Map to DTO
-            var result = donations.Select(d => new DonationItemDto
+            var result = cashDonations.Select(d => new CashDonationDto
             {
                 Id = d.Id,
                 OrderDate = d.OrderDate,
                 CreatedAt = d.CreatedAt,
-                CashAmount = d.CashAmount,
                 Status = d.Status,
-                Items = d.OrderItems?.Select(oi => new DonationItemDto
+                CashAmount = d.CashAmount ?? 0,
+                ReceiptIds = d.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
+            }).ToList();
+
+            return result;
+        }
+        public async Task<IEnumerable<ItemDonationDto>> GetMyItemDonationsAsync(string userId)
+        {
+            // 1) Get donor by AppUserId
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+            if (donor == null)
+                throw new Exception("Donor not found");
+
+            // 2) Query DonationOrders that have Items only
+            var itemDonations = await _unitOfWork.Repository<DonationOrder, int>()
+                .FindAllAsync(
+                    d => d.DonorId == donor.Id && d.OrderItems.Any(),
+                    include: q => q
+                        .Include(d => d.OrderItems)
+                            .ThenInclude(oi => oi.Supply)
+                        .Include(d => d.Receipts)
+                );
+
+            // 3) Map to DTO
+            var result = itemDonations.Select(d => new ItemDonationDto
+            {
+                Id = d.Id,
+                OrderDate = d.OrderDate,
+                CreatedAt = d.CreatedAt,
+                Status = d.Status,
+                Items = d.OrderItems?.Select(oi => new DonationItemDetailDto
                 {
                     SupplyId = oi.SupplyId ?? 0,
                     Quantity = oi.Quantity,
                     CustomName = oi.CustomSupplyName,
                     ImageFile = oi.ImageUrl,
                     Unit = oi.Unit
-                }).ToList() ?? new List<DonationItemDto>(),
+                }).ToList() ?? new List<DonationItemDetailDto>(),
                 ReceiptIds = d.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
             }).ToList();
 
             return result;
+        }
+
+        public async Task<object> GetMyDonationsAsync(string userId)
+        {
+            var cashDonations = await GetMyCashDonationsAsync(userId);
+            var itemDonations = await GetMyItemDonationsAsync(userId);
+
+            return new
+            {
+                CashDonations = cashDonations,
+                ItemDonations = itemDonations
+            };
         }
         public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
         {
