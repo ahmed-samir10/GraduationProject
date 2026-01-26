@@ -47,7 +47,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
 builder.Services.AddTransient<CampaignUrlResolver>();
-builder.Services.AddTransient<ImageUrlsResolver>(); // if you have this resolver
+builder.Services.AddTransient<ImageUrlsResolver>(); 
 
 // register AutoMapper profiles (will now be created by AutoMapper using reflection + DI resolvers)
 builder.Services.AddAutoMapper(typeof(MappingProfiles));

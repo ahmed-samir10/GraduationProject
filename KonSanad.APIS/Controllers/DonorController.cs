@@ -6,6 +6,7 @@ using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -55,30 +56,45 @@ namespace KonSanad.APIS.Controllers
         }
 
 
-       /*
         [Authorize]
-        [HttpPost("donateItem")]
-        public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request )
+        [HttpGet("my-requests")]
+        public async Task<IActionResult> GetMyRequests()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            
-            var Donor = await _unitOfWork
-     .Repository<Donor, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
 
-            if (Donor == null)
-                return BadRequest(new { Error = "No Donor found for this user" });
-
-            int DonorID = Donor.Id;
-
-            var result = await donorServices.CreateDonationItemAsync(request, DonorID);
+            var result = await donorServices.GetMyDonationsAsync(userId);
 
             return Ok(new { success = true, data = result });
         }
-         */
+
+
+        /*
+         [Authorize]
+         [HttpPost("donateItem")]
+         public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request )
+         {
+             if (!ModelState.IsValid)
+                 return BadRequest(ModelState);
+             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+
+             var Donor = await _unitOfWork
+      .Repository<Donor, int>()
+      .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+             if (Donor == null)
+                 return BadRequest(new { Error = "No Donor found for this user" });
+
+             int DonorID = Donor.Id;
+
+             var result = await donorServices.CreateDonationItemAsync(request, DonorID);
+
+             return Ok(new { success = true, data = result });
+         }
+          */
         [HttpGet("low-stock-supplies")]
         public async Task<IActionResult> GetLowStockSupplies()
         {
