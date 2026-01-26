@@ -52,7 +52,102 @@ namespace KonSanad.Services.Services
             }).ToList();
         }
 
-      
+        // ---------------------------------------------------------------------------
+        // 3) Create Donation (Cash + Items)
+        // ---------------------------------------------------------------------------
+        public async Task<DonationResponseItemDto> CreateDonationItemAsync(
+              CreateDonationItemRequestDto request, int donorId)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            // Create donation order
+            var donationOrder = new DonationOrder
+            {
+                DonorId = donorId,
+                CampaignId = null,
+                ManagerId = 1,
+                CreatedAt = DateTime.Now,
+                OrderDate = DateTime.Now,
+                DonationCategoryStatus = "معلقة",
+                Status = "قيد المراجعة",
+            };
+
+            await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+            await _unitOfWork.Complete();
+
+            // ensure upload folder exists
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+
+
+
+            // Load supply to copy its Name and Unit into OrderItem
+            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
+
+
+
+            // Handle single donated object (CreateDonationItemRequestDto represents one item)
+            string? imageUrl = null;
+            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await request.ImageFile.CopyToAsync(stream);
+                }
+
+                imageUrl = "/uploads/" + fileName;
+            }
+
+            var donationItem = new OrderItem
+            {
+                DonationOrderId = donationOrder.Id,
+                SupplyId = request.SupplyId,
+                Quantity = request.Quantity,
+                ImageUrl = imageUrl,
+
+                // copy supply values into order item
+                CustomSupplyName = supply?.Name,
+                Unit = supply?.Unit ?? string.Empty,
+
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
+                Description = request.Description
+            };
+
+            await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
+
+            // Update stock
+            supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
+            if (supply != null)
+            {
+                supply.StockQuantity = supply.StockQuantity + request.Quantity;
+                _unitOfWork.Repository<Supply, int>().Update(supply);
+            }
+
+            await _unitOfWork.Complete();
+
+            return new DonationResponseItemDto
+            {
+                QuantityItems = request.Quantity,
+                Items = new List<DonationItemDto>
+        {
+            new DonationItemDto
+            {
+                SupplyId = request.SupplyId,
+                //ImageFile = imageUrl,
+                Quantity = request.Quantity,
+                Status = donationItem.Status,
+                Description = donationItem.Description
+            }
+        },
+                Message = "تم تسجيل التبرع بالمنتج ✔"
+            };
+        }
+
         public async Task<DonationResponseCashDto> CreateDonationCashAsync(
            CreateDonationCashRequestDto request, int donorId)
         {
