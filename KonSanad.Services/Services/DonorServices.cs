@@ -48,7 +48,10 @@ namespace KonSanad.Services.Services
                 Id = s.Id,
                 Name = s.Name,
                Quantity = s.StockQuantity ?? 0,
-                Unit = s.Unit
+               imageurl = s.ImageUrl,
+                Unit = s.Unit,
+                title = s.Title
+
             }).ToList();
         }
 
@@ -132,19 +135,101 @@ namespace KonSanad.Services.Services
 
             return new DonationResponseItemDto
             {
-                QuantityItems = request.Quantity,
-                Items = new List<DonationItemDto>
+                //QuantityItems = request.Quantity,
+                Items = new List<object>
         {
             new DonationItemDto
             {
                 SupplyId = request.SupplyId,
-                ImageFile = imageUrl,
+                //ImageFile = imageUrl,
                 Quantity = request.Quantity,
                 Status = donationItem.Status,
                 Description = donationItem.Description
             }
         },
                 Message = "تم تسجيل التبرع بالمنتج ✔"
+            };
+        }
+
+        
+        public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
+            CreateCustomDonationItemRequestDto request, int donorId)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            // Validate custom item name
+            if (string.IsNullOrWhiteSpace(request.CustomItemName))
+                throw new ArgumentException("اسم العنصر المخصص مطلوب", nameof(request.CustomItemName));
+
+            // Create donation order
+            var donationOrder = new DonationOrder
+            {
+                DonorId = donorId,
+                CampaignId = null,
+                ManagerId = 1,
+                CreatedAt = DateTime.Now,
+                OrderDate = DateTime.Now,
+                DonationCategoryStatus = "معلقة",
+                Status = "قيد المراجعة",
+            };
+
+            await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+            await _unitOfWork.Complete();
+
+            // Ensure upload folder exists
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            // Handle image upload
+            string? imageUrl = null;
+            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await request.ImageFile.CopyToAsync(stream);
+                }
+
+                imageUrl = "/uploads/" + fileName;
+            }
+
+            // Create donation item for CUSTOM item (SupplyId = null)
+            var donationItem = new OrderItem
+            {
+                DonationOrderId = donationOrder.Id,
+                SupplyId = null, 
+                Quantity = request.Quantity,
+                ImageUrl = imageUrl,
+                CustomSupplyName = request.CustomItemName, 
+                Unit = request.Unit ?? "قطعة", //
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
+                Description = request.Description
+            };
+
+            await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
+            await _unitOfWork.Complete();
+
+            return new DonationResponseItemDto
+            {
+                QuantityItems = request.Quantity,
+                Items = new List<object>
+        {
+            new DonationNewItemDto
+            {
+                //SupplyId = 0, // No supply ID for custom items
+                CustomName = request.CustomItemName,
+                Unit = donationItem.Unit,
+                Quantity = request.Quantity,
+                Status = donationItem.Status,
+                Description = donationItem.Description,
+                ImageFile = imageUrl
+            }
+        },
+                Message = "تم تسجيل التبرع بعنصر مخصص ✔"
             };
         }
 
@@ -304,17 +389,7 @@ namespace KonSanad.Services.Services
             return result;
         }
 
-        public async Task<object> GetMyDonationsAsync(string userId)
-        {
-            var cashDonations = await GetMyCashDonationsAsync(userId);
-            var itemDonations = await GetMyItemDonationsAsync(userId);
-
-            return new
-            {
-                CashDonations = cashDonations,
-                ItemDonations = itemDonations
-            };
-        }
+       
         public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
         {
             // 1) Get donor by AppUserId

@@ -55,17 +55,93 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
 
+    
+        [HttpPost("donate-custom-item")]
+        [Authorize]
+        public async Task<IActionResult> DonateCustomItem([FromForm] CreateCustomDonationItemRequestDto request)
+        {
+            try
+            {
+                // Get user ID from token
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "User not authenticated"
+                    });
+
+                // Get donor by AppUserId
+                var donor = await _unitOfWork.Repository<Donor, int>()
+                    .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+                if (donor == null)
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Donor not found"
+                    });
+
+                // Create custom item donation
+                var result = await donorServices.CreateCustomItemDonationAsync(request, donor.Id);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = result.Message,
+                    data = result
+                });
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "بيانات غير صحيحة: " + ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "حدث خطأ أثناء معالجة الطلب: " + ex.Message
+                });
+            }
+        }
 
         [Authorize]
-        [HttpGet("my-requests")]
-        public async Task<IActionResult> GetMyRequests()
+        [HttpGet("my-requestsItem")]
+        public async Task<IActionResult> GetMyItemRequests()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
                 return BadRequest(new { error = "User id not found in token" });
 
-            var result = await donorServices.GetMyDonationsAsync(userId);
+            var result = await donorServices.GetMyItemDonationsAsync(userId);
+
+            return Ok(new { success = true, data = result });
+        }
+        [Authorize]
+        [HttpGet("my-requestsCash")]
+        public async Task<IActionResult> GetMyCashRequests()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await donorServices.GetMyCashDonationsAsync(userId);
 
             return Ok(new { success = true, data = result });
         }

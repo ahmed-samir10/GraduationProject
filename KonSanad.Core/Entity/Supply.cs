@@ -15,8 +15,9 @@ namespace KonSanad.Repository.Entities
         public string? Unit { get; set; }
         public int? StockQuantity { get; set; } = 0;
         public int? MinimumLevel { get; set; } = 5;
-     
+        public string? Title { get; set; }
 
+        public string? ImageUrl { get; set; }
         // Link to Category
         public int? CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
