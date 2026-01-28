@@ -223,29 +223,67 @@ namespace KonSanad.Services.Services
         // ---------------------------------------------------------------------------
         // 5) Update Profile To Donor
         // ---------------------------------------------------------------------------
-        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto updateDto)
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
         {
-            // 1) UserManager للحصول على AppUser استخدم
-            var appUser = await _userManager.FindByIdAsync(userId);
-            if (appUser == null)
-                throw new Exception("User not found");
+            var donorRebo = _unitOfWork.Repository<Donor, int>();
 
-            // 2) Donor ثم احصل على 
-            var donor = await _unitOfWork.Repository<Donor, int>()
-                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+            var donor = await donorRebo.FirstOrDefaultAsync(
+                d => d.AppUserId == userId
+            );
+
+            //var dtos = dto;
+
+            //foreach (var prop in typeof(UpdateProfileDto).GetProperties())
+            //{
+            //    var value = prop.GetValue(dtos) as string;
+            //    if (value == "string")
+            //    {
+            //        prop.SetValue(dtos, null);
+            //    }
+            //}
+
             if (donor is null)
                 throw new Exception("Donor not found");
 
-            // 3) تحديث البيانات
-            donor.FullName = updateDto.FullName;
-            donor.NationalId = updateDto.NationalId;
-            donor.Address = updateDto.Address;
-            appUser.PhoneNumber = updateDto.PhoneNumber;
-            appUser.Email = updateDto.Email;
+            // Update fields only when a value is provided (non-null/non-whitespace)
+            if (!string.IsNullOrWhiteSpace(dto.FullName) && !(dto.FullName == "string"))
+                donor.FullName = dto.FullName;
 
-            // 4) حفظ التغييرات
+            if (!string.IsNullOrWhiteSpace(dto.NationalId) && !(dto.NationalId == "string"))
+                donor.NationalId = dto.NationalId;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+                donor.Phone = dto.PhoneNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
+                donor.Address = dto.Address;
+
+            // If email is provided, update Identity user email (and optionally beneficiary.Email)
+            if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))
+            {
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+
+                if (!string.Equals(appUser.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.Email = dto.Email;
+                    // Do not change UserName unless your system expects it; uncomment if needed:
+                    // appUser.UserName = dto.Email;
+
+                    var result = await _userManager.UpdateAsync(appUser);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update identity user: {errors}");
+                    }
+                }
+
+                // Keep beneficiary.Email in sync if you store it there too
+                donor.Email = dto.Email;
+            }
+
             _unitOfWork.Repository<Donor, int>().Update(donor);
-            await _userManager.UpdateAsync(appUser);
             await _unitOfWork.Complete();
 
             return true;
