@@ -16,7 +16,7 @@ namespace KonSanad.Repository.Data.Configurations
             builder.ToTable("HelpOrders");
             builder.HasKey(h => h.Id);
 
-            builder.Property(h => h.Description).IsRequired().HasMaxLength(1000);
+            builder.Property(h => h.Description).IsRequired(false).HasMaxLength(1000);
 
             // Relationship with Beneficiary
             builder.HasOne(h => h.Beneficiary)

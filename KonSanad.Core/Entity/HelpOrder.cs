@@ -9,14 +9,14 @@ namespace KonSanad.Repository.Entities
     [Table("HelpOrders")]
     public class HelpOrder : BaseEntity<int>
     {
-        public string Title { get; set; } = null!;
-        public string Description { get; set; } = null!;
+        public string? Title { get; set; }
+        public string? Description { get; set; }
 
         
         public int BeneficiaryId { get; set; }
        
         [ForeignKey(nameof(BeneficiaryId))]
-        public Beneficiary Beneficiary { get; set; } // My Navigation Property
+        public Beneficiary? Beneficiary { get; set; } // My Navigation Property
 
         // This My Relations Between ( Manager And HelpOrder )
         public int? ManagerId { get; set; }

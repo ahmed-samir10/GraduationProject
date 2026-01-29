@@ -1,6 +1,7 @@
 ﻿// KonSanad.Repository\Entities\OrderItem.cs
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 
 namespace KonSanad.Repository.Entities
 {
@@ -20,6 +21,9 @@ namespace KonSanad.Repository.Entities
         public string Unit { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public string? Status { get; set; }
-        public string ImageUrl { get; set; } = null!;
+        public string? ImageUrl { get; set; } = null!;
+
+        // new column for description
+        public string? Description { get; set; }
     }
 }

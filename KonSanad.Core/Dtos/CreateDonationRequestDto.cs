@@ -1,17 +1,29 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace KonSanad.Core.Dtos
 {
-    public class 
-        
-        CreateDonationItemRequestDto
+    
+
+
+   public class CreateDonationItemRequestDto
     {
-        public int? CampaignId { get; set; }
+       // public int? CampaignId { get; set; }
         public int? HelpOrderId { get; set; }
-      
+
+        public int SupplyId { get; set; }
         public IFormFile? ImageFile { get; set; }
-        
-        public List<DonationItemDto> Items { get; set; } = new();
+        public int Quantity { get; set; }
+
+
+        // new fields for Swagger input
+        public string? Status { get; set; }
+        public string? Description { get; set; }
+
+
+        // [Required(ErrorMessage = "يجب إضافة منتج واحد على الأقل")]
+        // [MinLength(1, ErrorMessage = "يجب إضافة منتج واحد على الأقل")]
+        //public List<DonationItemDto> Items { get; set; } = new List<DonationItemDto>();
     }
     public class CreateDonationCashRequestDto
     {

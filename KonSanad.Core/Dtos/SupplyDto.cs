@@ -12,6 +12,8 @@ namespace KonSanad.Core.Dtos
     {
         public int Id { get; set; }
         public string? Name { get; set; }
+        public string? imageurl { get; set; }
+        public string? title { get; set; }
         public int Quantity { get; set; }
         public string Unit { get; set; } = null!;
     }

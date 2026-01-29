@@ -13,9 +13,14 @@ namespace KonSanad.Core.IRepositery
         Task<DonationResponseCashDto> CreateDonationCashAsync(
            CreateDonationCashRequestDto request, int donorId);
         Task<DonationResponseItemDto> CreateDonationItemAsync(
-            CreateDonationItemRequestDto request, int donorId);
-
+                   CreateDonationItemRequestDto request, int donorId);
+        Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
+            CreateCustomDonationItemRequestDto request, int donorId);
         Task<GetProfileDto> GetProfileAsync(string userId);
+        Task<IEnumerable<ItemDonationDto>> GetMyItemDonationsAsync(string userId);
+        Task<IEnumerable<CashDonationDto>> GetMyCashDonationsAsync(string userId);
+       // Task<object> GetMyDonationsAsync(string userId);
+        Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId);
 
         Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
 
