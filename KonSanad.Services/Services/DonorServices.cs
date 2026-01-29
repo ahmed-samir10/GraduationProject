@@ -282,6 +282,26 @@ namespace KonSanad.Services.Services
                 // Keep beneficiary.Email in sync if you store it there too
                 donor.Email = dto.Email;
             }
+            // If PhoneNumber is provided, update Identity user phone number
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+            {
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+                if (!string.Equals(appUser.PhoneNumber, dto.PhoneNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    var result = await _userManager.SetPhoneNumberAsync(appUser, dto.PhoneNumber);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update phone number: {errors}");
+                    }
+                }
+
+                // Keep donor.Phone in sync
+                donor.Phone = dto.PhoneNumber;
+            }
+
 
             _unitOfWork.Repository<Donor, int>().Update(donor);
             await _unitOfWork.Complete();
