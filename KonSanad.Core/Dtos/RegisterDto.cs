@@ -16,7 +16,7 @@ namespace KonSanad.Core.Dtos
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
 
-
+        public string? Skills { get; set; } 
         public string NationalId { get; set; }
 
         // Add this to capture user type on registration:
