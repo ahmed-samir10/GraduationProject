@@ -9,22 +9,26 @@ namespace KonSanad.Repository.Entities
     public class Mission : BaseEntity<int>
     {
         public string Title { get; set; } = null!;
-        public string Description { get; set; } = null!;
+        public string? Description { get; set; }
+        public string Address { get; set; } = null!;
+        public string PhoneNumber { get; set; } = null!;
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
+        // Manager
         public int? ManagerId { get; set; }
-        [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; }
 
-        public int? VolunteerId { get; set; }
-        [ForeignKey(nameof(VolunteerId))]
-        public Volunteer? Volunteer { get; set; }
-
+        // Campaign
         public int? CampaignId { get; set; }
-        [ForeignKey(nameof(CampaignId))]
         public Campaign? Campaign { get; set; }
 
+        // HelpOrder
+        public int? HelpOrderId { get; set; }
+        public HelpOrder? HelpOrder { get; set; }
 
+        // Mission ↔ Volunteer (via VolunteerMission)
+        public ICollection<VolunteerMission> VolunteerMissions { get; set; }
+            = new List<VolunteerMission>();
     }
 }

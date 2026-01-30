@@ -22,11 +22,13 @@ namespace KonSanad.Repository.Data.Configurations
                 .HasForeignKey(m => m.ManagerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // Relationship with Volunteer
-            builder.HasOne(m => m.Volunteer)
-                .WithMany(v => v.Missions)
-                .HasForeignKey(m => m.VolunteerId)
-                .OnDelete(DeleteBehavior.NoAction);
+            // ----------------------------
+            // Mission ↔ VolunteerMission
+            // ----------------------------
+            builder.HasMany(m => m.VolunteerMissions)
+                   .WithOne(vm => vm.Mission)
+                   .HasForeignKey(vm => vm.MissionId)
+                   .OnDelete(DeleteBehavior.NoAction);
 
             // Relationship with Campaign
             builder.HasOne(m => m.Campaign)
