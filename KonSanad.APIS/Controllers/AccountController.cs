@@ -165,7 +165,10 @@ namespace KonSanad.APIS.Controllers
                 case "volunteer":
                     var volunteer = new Volunteer
                     {
+                        Email = user.Email,
+                        Password = user.PasswordHash,
                         AppUserId = user.Id,
+                        Skills = registerDto.Skills ?? "غير محدد", // مهم
                         FullName = registerDto.FullName ?? user.FullName ?? "volunteer User",
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false,
