@@ -5,8 +5,5 @@ namespace KonSanad.APIS.Controllers;
 [ApiController]
 public class VolunteersController : Controller
 {
-    public IActionResult Index()
-    {
-        return View();
-    }
+   
 }
