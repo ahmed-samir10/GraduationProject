@@ -1,7 +1,4 @@
 ﻿// KonSanad.Repository\Entities\HelpOrder.cs
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KonSanad.Repository.Entities
@@ -12,22 +9,20 @@ namespace KonSanad.Repository.Entities
         public string? Title { get; set; }
         public string? Description { get; set; }
 
-        
+        // This My Relations Between ( Beneficiary And HelpOrder )
         public int BeneficiaryId { get; set; }
        
         [ForeignKey(nameof(BeneficiaryId))]
-        public Beneficiary? Beneficiary { get; set; } // My Navigation Property
+        public Beneficiary? Beneficiary { get; set; } 
+
 
         // This My Relations Between ( Manager And HelpOrder )
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]
-        public Manager? Manager { get; set; } // My Navigation Property
+        public Manager? Manager { get; set; }
 
-        // metadata
-        public DateTime? CreatedAt { get; set; }
-        public string? Status { get; set; }
-        public bool IsDeleted { get; set; }
-       
+
+        // This My Relations Between ( HelpOrder And HelpOrderItems )
         public ICollection<HelpOrderItem> HelpOrderItems { get; set; } = new List<HelpOrderItem>();
     }
 }

@@ -15,16 +15,23 @@ namespace KonSanad.Repository.Entities
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
         public string Skills { get; set; } = null!;
-        public string AppUserId { get; set; }
+        public string? AppUserId { get; set; }
         public bool? Availability { get; set; }
-        public string NationalId { get; set; }
+        public string? NationalId { get; set; }
 
+
+        // Relationships Between Manager and Volunteer 
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; }
 
-        // Navigation
+
+        // Relationships Between Volunteer and CampaignVolunteer
         public ICollection<CampaignVolunteer> CampaignVolunteers { get; set; } = new List<CampaignVolunteer>();
-        public ICollection<Mission> Missions { get; set; } = new List<Mission>();
+
+
+        // Volunteer ↔ Mission (via VolunteerMission)
+        public ICollection<VolunteerMission> VolunteerMissions { get; set; }
+            = new List<VolunteerMission>();
     }
 }

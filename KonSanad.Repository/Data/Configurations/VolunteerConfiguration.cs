@@ -31,10 +31,13 @@ namespace KonSanad.Repository.Data.Configurations
                 .HasForeignKey(cv => cv.VolunteerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            builder.HasMany(v => v.Missions)
-                .WithOne(m => m.Volunteer)
-                .HasForeignKey(m => m.VolunteerId)
-                .OnDelete(DeleteBehavior.NoAction);
+            // ----------------------------
+            // Volunteer ↔ VolunteerMission
+            // ----------------------------
+            builder.HasMany(v => v.VolunteerMissions)
+                   .WithOne(vm => vm.Volunteer)
+                   .HasForeignKey(vm => vm.VolunteerId)
+                   .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }
