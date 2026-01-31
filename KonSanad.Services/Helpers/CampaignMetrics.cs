@@ -1,7 +1,4 @@
-﻿using KonSanad.Repository.Entities;
-using System;
-using System.Linq;
-
+﻿
 
 namespace KonSanad.Services.Helpers
 {

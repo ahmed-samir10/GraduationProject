@@ -1,25 +1,4 @@
-﻿using AutoMapper;
-
-using KonSanad.APIS.Extenaction;
-using KonSanad.APIS.Helpers;
-using KonSanad.Core.Entity.Identity;
-using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Data.Identity.ctx;
-using KonSanad.Repository.Data.Persistence;
-using KonSanad.Repository.Repository;
-using KonSanad.Services.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using System;
-using System.Security.Principal;
-using System.Text;
-using Swashbuckle.AspNetCore.SwaggerGen;
+﻿using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +19,12 @@ builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonorServices, DonorServices>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+
+// Register VolunteerServices
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,         KonSanad.Services.Services.VolunteerServices>();
+
+// register FileService implementation from Services project
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IFileService, KonSanad.Services.Services.FileService>();
 
 // register DI
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
@@ -184,4 +169,8 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+
 app.Run();

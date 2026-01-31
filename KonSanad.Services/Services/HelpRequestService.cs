@@ -1,17 +1,4 @@
-﻿using AutoMapper;
-using KonSanad.Core.Dtos;
-using KonSanad.Core.Entity;
-using KonSanad.Core.Entity.Identity;
-using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Entities;
-using KonSanad.Services.Helpers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-
+﻿
 namespace KonSanad.Services.Services
 {
     public class HelpRequestService : IHelpRequestService

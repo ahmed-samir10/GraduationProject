@@ -1,13 +1,4 @@
-﻿using AutoMapper;
-using KonSanad.Core.Dtos;
-using KonSanad.Core.IRepositery;
-using KonSanad.Repository.Data.Persistence;
-using KonSanad.Repository.Entities;
-using KonSanad.Repository.Repository;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿
 
 namespace KonSanad.Services.Services
 {
