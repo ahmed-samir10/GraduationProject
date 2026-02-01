@@ -52,7 +52,7 @@ namespace KonSanad.Repository.Data.Persistence
         // Category
         public DbSet<Category> Categories { get; set; }
         public DbSet<VolunteerMission> VolunteerMissions { get; set; }
-        public DbSet<MissionVolunteer> MissionVolunteers { get; set; }
+        public DbSet<MissionVolunteers> MissionVolunteers { get; set; }
 
 
         // Receipt
@@ -61,7 +61,7 @@ namespace KonSanad.Repository.Data.Persistence
         // Missions
         public DbSet<Mission> Missions { get; set; }
 
-        public DbSet<MissionVolunteer> MissionVolunteer { get; set; }
+        public DbSet<MissionVolunteers> MissionVolunteer { get; set; }
 
         #endregion
 

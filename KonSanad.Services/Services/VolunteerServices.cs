@@ -58,7 +58,7 @@ namespace KonSanad.Services.Services
                if (existing != null)
                    throw new Exception("Mission already started");*/
 
-            var MissionVolunteer = new MissionVolunteer
+            var MissionVolunteer = new MissionVolunteers
             {
                 VolunteerId = volunteerId,
                 MissionId = missionId,
@@ -66,7 +66,7 @@ namespace KonSanad.Services.Services
                 MissionStatus = MissionStatus.InProgress
             };
 
-            await _unitOfWork.Repository<MissionVolunteer, int>()
+            await _unitOfWork.Repository<MissionVolunteers, int>()
                 .AddAsync(MissionVolunteer);
 
             await _unitOfWork.Complete();

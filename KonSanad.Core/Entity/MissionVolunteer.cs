@@ -1,13 +1,15 @@
-﻿using System;
+﻿using KonSanad.Repository.Entities;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Repository.Entities;
 
 namespace KonSanad.Core.Entity
 {
-    public class MissionVolunteer : BaseEntity<int>
+    [Table("VolunteerMissions")]
+    public class MissionVolunteers : BaseEntity<int>
     {
 
         public int VolunteerId { get; set; }
