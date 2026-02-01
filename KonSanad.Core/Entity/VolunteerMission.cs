@@ -1,5 +1,5 @@
 ﻿using KonSanad.Repository.Entities;
-using KonSanad.Services.Services;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;

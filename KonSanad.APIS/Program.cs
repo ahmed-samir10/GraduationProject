@@ -48,7 +48,7 @@ builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
-builder.Services.AddScoped<IVolunteerService,VolunteerServices>();
+builder.Services.AddScoped<IVolunteerService,VolunteerService>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)

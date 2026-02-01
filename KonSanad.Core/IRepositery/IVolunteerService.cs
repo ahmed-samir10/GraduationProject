@@ -7,5 +7,6 @@ namespace KonSanad.Core.IServices
     public interface IVolunteerService
     {
         Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
+        Task StartMissionAsync(int volunteerId, int missionId);
     }
 }
