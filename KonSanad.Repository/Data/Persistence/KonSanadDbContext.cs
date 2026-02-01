@@ -58,6 +58,8 @@ namespace KonSanad.Repository.Data.Persistence
         // Missions
         public DbSet<Mission> Missions { get; set; }
 
+        public DbSet<MissionVolunteer> MissionVolunteer { get; set; }
+
         #endregion
 
         #region Catch All Configurations In My Assembly => My Project

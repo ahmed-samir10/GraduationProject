@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KonSanad.Core\KonSanad.Core.csproj" />
     <ProjectReference Include="..\KonSanad.Repository\KonSanad.Repository.csproj" />
     <ProjectReference Include="..\KonSanad.Services\KonSanad.Services.csproj" />
   </ItemGroup>

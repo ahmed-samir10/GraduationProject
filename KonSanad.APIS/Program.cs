@@ -1,9 +1,12 @@
-﻿using AutoMapper;
-
+﻿using System;
+using System.Security.Principal;
+using System.Text;
+using AutoMapper;
 using KonSanad.APIS.Extenaction;
 using KonSanad.APIS.Helpers;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
+using KonSanad.Core.IServices;
 using KonSanad.Repository.Data.Identity.ctx;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Repository;
@@ -16,9 +19,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Security.Principal;
-using System.Text;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +40,9 @@ builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonorServices, DonorServices>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+//volunteer service DI registration
+builder.Services.AddScoped<IVolunteerService, VolunteerService>();
+
 
 // register DI
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
