@@ -1,15 +1,4 @@
-﻿
-using KonSanad.Core.Entities;
-using KonSanad.Core.Entity;
-using KonSanad.Repository.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿ 
 namespace KonSanad.Repository.Data.Persistence
 {
     public class KonSanadDbContext : DbContext

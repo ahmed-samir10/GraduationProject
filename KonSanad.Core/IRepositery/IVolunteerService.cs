@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.Dtos;
 
-namespace KonSanad.Core.IServices
+using Microsoft.AspNetCore.Http;
+namespace KonSanad.Core.IRepositery;
+
+public interface IVolunteerService
 {
-    public interface IVolunteerService
-    {
-        Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
-        Task StartMissionAsync(int volunteerId, int missionId);
-    }
+    /// Submit a report file (image or pdf) for a volunteer on a mission.
+    /// Returns the saved file url (relative) on success.
+    Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null);
 }

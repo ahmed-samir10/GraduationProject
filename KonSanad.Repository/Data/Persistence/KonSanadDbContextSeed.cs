@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using KonSanad.Core.Entities;
-using KonSanad.Repository.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
 
 namespace KonSanad.Repository.Data.Persistence
 {

@@ -44,6 +44,12 @@ builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 
 
+// Register VolunteerServices
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,         KonSanad.Services.Services.VolunteerServices>();
+
+// register FileService implementation from Services project
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IFileService, KonSanad.Services.Services.FileService>();
+
 // register DI
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -188,4 +194,8 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+
 app.Run();
