@@ -8,5 +8,8 @@ namespace KonSanad.Core.IRepositery;
 
 public interface IVolunteerService
 {
-    // Define methods related to volunteer services here
+
+    Task StartMissionAsync(int volunteerId, int missionId);
+
+
 }

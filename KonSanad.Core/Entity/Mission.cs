@@ -1,4 +1,6 @@
 ﻿// KonSanad.Repository\Entities\Mission.cs
+using KonSanad.Core.Entity;
+using KonSanad.Services.Services;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +16,7 @@ namespace KonSanad.Repository.Entities
         public string PhoneNumber { get; set; } = null!;
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-
+        public MissionStatus status { get; set; }
         // Manager
         public int? ManagerId { get; set; }
         public Manager? Manager { get; set; }

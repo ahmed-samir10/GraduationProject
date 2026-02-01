@@ -51,6 +51,9 @@ namespace KonSanad.Repository.Data.Persistence
 
         // Category
         public DbSet<Category> Categories { get; set; }
+        public DbSet<VolunteerMission> VolunteerMissions { get; set; }
+        public DbSet<MissionVolunteer> MissionVolunteers { get; set; }
+
 
         // Receipt
         public DbSet<Receipt> Receipts { get; set; }

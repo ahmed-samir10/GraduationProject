@@ -1,4 +1,5 @@
-﻿using KonSanad.Repository.Entities;
+﻿using KonSanad.Core.Entity;
+using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -22,25 +23,14 @@ public class VolunteerMissionConfiguration : IEntityTypeConfiguration<VolunteerM
         // ----------------------------
         // Properties
         // ----------------------------
-        builder.Property(vm => vm.Title)
-               .IsRequired()
-               .HasMaxLength(200);
-
-        builder.Property(vm => vm.Description)
-               .HasMaxLength(1000)
-               .IsRequired(false);
-
-        builder.Property(vm => vm.Address)
-               .HasMaxLength(300)
-               .IsRequired(false);
-
-        builder.Property(vm => vm.PhoneNumber)
-               .HasMaxLength(20)
-               .IsRequired(false);
+      
 
         builder.Property(vm => vm.ResultMission)
                .HasMaxLength(1000)
                .IsRequired(false);
+        builder.Property(vm => vm.MissionStatus)
+
+             .IsRequired(true);
 
         builder.Property(vm => vm.StartDate)
                .IsRequired(false);

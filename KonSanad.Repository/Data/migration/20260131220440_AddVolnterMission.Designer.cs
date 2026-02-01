@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KonSanad.Repository.Data.migration
 {
     [DbContext(typeof(KonSanadDbContext))]
-    [Migration("20260130193431_UpdateTheVolunteerAndMission")]
-    partial class UpdateTheVolunteerAndMission
+    [Migration("20260131220440_AddVolnterMission")]
+    partial class AddVolnterMission
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -793,6 +793,9 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("status")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CampaignId");
@@ -1123,7 +1126,7 @@ namespace KonSanad.Repository.Data.migration
                     b.ToTable("Volunteers", (string)null);
                 });
 
-            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMission", b =>
+            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMissions", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1131,16 +1134,8 @@ namespace KonSanad.Repository.Data.migration
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
@@ -1151,9 +1146,8 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<int>("MissionId")
                         .HasColumnType("int");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("MissionStatus")
+                        .HasColumnType("int");
 
                     b.Property<string>("ResultMission")
                         .HasMaxLength(1000)
@@ -1171,11 +1165,6 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1472,7 +1461,7 @@ namespace KonSanad.Repository.Data.migration
                     b.Navigation("Manager");
                 });
 
-            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMission", b =>
+            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMissions", b =>
                 {
                     b.HasOne("KonSanad.Repository.Entities.Mission", "Mission")
                         .WithMany("VolunteerMissions")
