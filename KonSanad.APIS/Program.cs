@@ -6,7 +6,7 @@ using KonSanad.APIS.Extenaction;
 using KonSanad.APIS.Helpers;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
-using KonSanad.Core.IServices;
+
 using KonSanad.Repository.Data.Identity.ctx;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Repository;
@@ -45,7 +45,7 @@ builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 
 
 // Register VolunteerServices
-builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,         KonSanad.Services.Services.VolunteerServices>();
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,         KonSanad.Services.Services.VolunteerService>();
 
 // register FileService implementation from Services project
 builder.Services.AddScoped<KonSanad.Core.IRepositery.IFileService, KonSanad.Services.Services.FileService>();

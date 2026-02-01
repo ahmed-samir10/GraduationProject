@@ -35,6 +35,10 @@ namespace KonSanad.Repository.Repository
 
             return await query.FirstOrDefaultAsync(predicate);
         }
+        public async Task<T> FirstAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().FirstAsync(predicate);
+        }
 
         public async Task<IEnumerable<T>> FindAllAsync(
      Expression<Func<T, bool>> predicate,

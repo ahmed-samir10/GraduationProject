@@ -1,3 +1,4 @@
+
 ﻿using KonSanad.Core.Entity;
 using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace KonSanad.Repository.Data.Configurations;
+
 
 public class VolunteerMissionConfiguration : IEntityTypeConfiguration<MissionVolunteers>
 {
@@ -23,7 +25,7 @@ public class VolunteerMissionConfiguration : IEntityTypeConfiguration<MissionVol
         // ----------------------------
         // Properties
         // ----------------------------
-      
+        builder.Ignore(x => x.Status);
 
         builder.Property(vm => vm.ResultMission)
                .HasMaxLength(1000)
