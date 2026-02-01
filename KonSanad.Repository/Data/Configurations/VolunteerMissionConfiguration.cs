@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace KonSanad.Repository.Data.Configurations;
 
-public class VolunteerMissionConfiguration : IEntityTypeConfiguration<VolunteerMission>
+public class VolunteerMissionConfiguration : IEntityTypeConfiguration<MissionVolunteers>
 {
-    public void Configure(EntityTypeBuilder<VolunteerMission> builder)
+    public void Configure(EntityTypeBuilder<MissionVolunteers> builder)
     {
         // Table
-        builder.ToTable("VolunteerMission");
+        builder.ToTable("MissionVolunteers");
 
         // Primary Key
         builder.HasKey(vm => vm.Id);
@@ -31,12 +31,7 @@ public class VolunteerMissionConfiguration : IEntityTypeConfiguration<VolunteerM
         builder.Property(vm => vm.MissionStatus)
 
              .IsRequired(true);
-
-        builder.Property(vm => vm.StartDate)
-               .IsRequired(false);
-
-        builder.Property(vm => vm.EndDate)
-               .IsRequired(false);
+        builder.Property(x => x.CreatedAt).IsRequired();
 
         // ----------------------------
         // Relationships

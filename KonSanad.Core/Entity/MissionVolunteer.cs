@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 
 namespace KonSanad.Core.Entity
 {
-    [Table("VolunteerMissions")]
+    [Table("MissionVolunteers")]
     public class MissionVolunteers : BaseEntity<int>
     {
 
         public int VolunteerId { get; set; }
         public Volunteer Volunteer { get; set; } = null!;
+        public String ResultMission { get; set; } = string.Empty;
 
         public int MissionId { get; set; }
         public Mission Mission { get; set; } = null!;

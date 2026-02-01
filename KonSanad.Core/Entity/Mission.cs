@@ -33,7 +33,7 @@ namespace KonSanad.Repository.Entities
         public HelpOrder? HelpOrder { get; set; }
 
         // Mission ↔ Volunteer (via VolunteerMission)
-        public ICollection<VolunteerMission> VolunteerMissions { get; set; }
-            = new List<VolunteerMission>();
+        public ICollection<MissionVolunteers> VolunteerMissions { get; set; }
+            = new List<MissionVolunteers>();
     }
 }

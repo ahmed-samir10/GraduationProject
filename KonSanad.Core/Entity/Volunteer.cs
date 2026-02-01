@@ -32,7 +32,7 @@ namespace KonSanad.Repository.Entities
 
 
         // Volunteer ↔ Mission (via VolunteerMission)
-        public ICollection<VolunteerMission> VolunteerMissions { get; set; }
-            = new List<VolunteerMission>();
+        public ICollection<MissionVolunteers> VolunteerMissions { get; set; }
+            = new List<MissionVolunteers>();
     }
 }
