@@ -1,10 +1,5 @@
 ﻿using KonSanad.Core.Dtos;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 namespace KonSanad.Core.IRepositery;
 
 public interface IVolunteerService
@@ -17,4 +12,5 @@ public interface IVolunteerService
     Task StartMissionAsync(int volunteerId, int missionId);
     Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
     Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null);
+    Task<GetProfileDto> GetProfileAsync(string userId);
 }

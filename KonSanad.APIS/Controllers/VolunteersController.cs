@@ -1,9 +1,3 @@
-
-using KonSanad.Core.Dtos;
-using KonSanad.Repository.Entities;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-
 namespace KonSanad.APIS.Controllers
 {
     [ApiController]
@@ -13,14 +7,14 @@ namespace KonSanad.APIS.Controllers
         private readonly IVolunteerService _volunteerService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public VolunteerController(IVolunteerService volunteerService , IUnitOfWork unitOfWork)
+        public VolunteerController(IVolunteerService volunteerService, IUnitOfWork unitOfWork)
         {
             _volunteerService = volunteerService;
             _unitOfWork = unitOfWork;
         }
 
-        
 
+        // ----------------------------------------------------------
         // GET: api/Volunteer/missions
         [Authorize]
         [HttpGet("missions")]
@@ -29,7 +23,12 @@ namespace KonSanad.APIS.Controllers
             var missions = await _volunteerService.GetAllMissionsAsync();
             return Ok(missions);
         }
+        // ----------------------------------------------------------
 
+
+
+        // ----------------------------------------------------------
+        // POST: api/Volunteer/ReportSubmitted
         [HttpPost("ReportSubmitted")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ReportSubmitted([FromForm] DTOs.ReportSubmittedDto dto)
@@ -56,36 +55,41 @@ namespace KonSanad.APIS.Controllers
 
             // Further validations can be added here
             // Token handling and volunteer identification
-           // derive volunteer from authenticated user token (client must NOT send VolunteerId)
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { success = false, message = "User not authenticated" });
+            // derive volunteer from authenticated user token (client must NOT send VolunteerId)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { success = false, message = "User not authenticated" });
 
-                // find volunteer by AppUserId using injected unit of work
-                var volunteer = await _unitOfWork.Repository<Volunteer, int>()
-                                    .FirstOrDefaultAsync(v => v.AppUserId == userId);
+            // find volunteer by AppUserId using injected unit of work
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>()
+                                .FirstOrDefaultAsync(v => v.AppUserId == userId);
 
-                if (volunteer is null)
-                    return BadRequest(new { success = false, message = "Volunteer not found for authenticated user" });
+            if (volunteer is null)
+                return BadRequest(new { success = false, message = "Volunteer not found for authenticated user" });
 
-                // Call the service to handle the report submission
-                var fileUrl = await _volunteerService.SubmitMissionReportAsync(volunteer.Id, dto.MissionId, dto.File, dto.Notes);
+            // Call the service to handle the report submission
+            var fileUrl = await _volunteerService.SubmitMissionReportAsync(volunteer.Id, dto.MissionId, dto.File, dto.Notes);
 
 
-                return Ok(new { success = true, data = new { fileUrl } });
-           
-           /* // Handle specific exceptions as needed 
-          *//*  catch (ArgumentException ex)
-            {
-                return BadRequest(new { success = false, message = ex.Message });
-            }
-            // General exception handling
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }*/
+            return Ok(new { success = true, data = new { fileUrl } });
+
+            /* // Handle specific exceptions as needed 
+           *//*  catch (ArgumentException ex)
+             {
+                 return BadRequest(new { success = false, message = ex.Message });
+             }
+             // General exception handling
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }*/
         }
+        // ----------------------------------------------------------
 
+
+
+        // ----------------------------------------------------------
+        // PUT: api/Volunteer/{id}/start
         [Authorize]
         [HttpPut("{id}/start")]
         public async Task<IActionResult> StartTask(int id)
@@ -105,7 +109,7 @@ namespace KonSanad.APIS.Controllers
             int VolID = Vol.Id;
             try
             {
-                await _volunteerService.StartMissionAsync(VolID,id);
+                await _volunteerService.StartMissionAsync(VolID, id);
                 return Ok("Mission started successfully");
             }
             catch (ArgumentException ex)
@@ -113,8 +117,24 @@ namespace KonSanad.APIS.Controllers
                 return BadRequest(ex.Message); // هيرجع 400 مع الـ message
             }
         }
+        // ----------------------------------------------------------
 
 
 
+        // ----------------------------------------------------------
+        // profile of volunteer
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var result = await _volunteerService.GetProfileAsync(userId);
+            return Ok(new { success = true, data = result });
+        }
+        // ----------------------------------------------------------
     }
 }
