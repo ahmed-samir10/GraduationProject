@@ -1,23 +1,26 @@
 ﻿// KonSanad.Repository\Entities\Mission.cs
-using KonSanad.Core.Entity;
-using KonSanad.Services.Services;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Repository.Entities
 {
     [Table("Missions")]
     public class Mission : BaseEntity<int>
     {
-        public string Title { get; set; } = null!;
+        // Allow nulls because DB contains nulls for some rows
+        public string? Title { get; set; }
         public string? Description { get; set; }
-        public string Address { get; set; } = null!;
-        public string PhoneNumber { get; set; } = null!;
+        public string? Address { get; set; }
+        public string? PhoneNumber { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public MissionStatus status { get; set; }
+
+
         // Manager
+
+        public MissionStatus MissionStatus { get; set; }
         public int? ManagerId { get; set; }
         public Manager? Manager { get; set; }
 

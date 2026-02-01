@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using KonSanad.Core.Dtos;
 
-namespace KonSanad.Core.IRepositery;
-
-public interface IVolunteerService
+namespace KonSanad.Core.IServices
 {
-
-    Task StartMissionAsync(int volunteerId, int missionId);
-
-
+    public interface IVolunteerService
+    {
+        Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
+    }
 }

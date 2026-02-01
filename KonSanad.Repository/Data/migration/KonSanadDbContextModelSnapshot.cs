@@ -275,66 +275,7 @@ namespace KonSanad.Repository.Data.migration
 
                     b.HasIndex("VolunteerId");
 
-                    b.ToTable("MissionVolunteers");
-                });
-
-            modelBuilder.Entity("KonSanad.Core.Entity.VolunteerMission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Ahmed")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MissionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MissionStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ResultMission")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("VolunteerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MissionId");
-
-                    b.HasIndex("VolunteerId", "MissionId")
-                        .IsUnique();
-
-                    b.ToTable("VolunteerMission", (string)null);
+                    b.ToTable("MissionVolunteer");
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
@@ -843,8 +784,8 @@ namespace KonSanad.Repository.Data.migration
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("CampaignId")
                         .HasColumnType("int");
@@ -853,7 +794,6 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -869,9 +809,12 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<int?>("ManagerId")
                         .HasColumnType("int");
 
+                    b.Property<int>("MissionStatus")
+                        .HasColumnType("int");
+
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -887,15 +830,11 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("status")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1227,6 +1166,76 @@ namespace KonSanad.Repository.Data.migration
                     b.ToTable("Volunteers", (string)null);
                 });
 
+            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MissionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ResultMission")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VolunteerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MissionId");
+
+                    b.HasIndex("VolunteerId", "MissionId")
+                        .IsUnique();
+
+                    b.ToTable("VolunteerMission", (string)null);
+                });
+
             modelBuilder.Entity("KonSanad.Core.Entities.CampaignVolunteer", b =>
                 {
                     b.HasOne("KonSanad.Repository.Entities.Campaign", "Campaign")
@@ -1277,25 +1286,6 @@ namespace KonSanad.Repository.Data.migration
                         .WithMany()
                         .HasForeignKey("VolunteerId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Mission");
-
-                    b.Navigation("Volunteer");
-                });
-
-            modelBuilder.Entity("KonSanad.Core.Entity.VolunteerMission", b =>
-                {
-                    b.HasOne("KonSanad.Repository.Entities.Mission", "Mission")
-                        .WithMany("VolunteerMissions")
-                        .HasForeignKey("MissionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("KonSanad.Repository.Entities.Volunteer", "Volunteer")
-                        .WithMany("VolunteerMissions")
-                        .HasForeignKey("VolunteerId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Mission");
@@ -1542,6 +1532,25 @@ namespace KonSanad.Repository.Data.migration
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Manager");
+                });
+
+            modelBuilder.Entity("KonSanad.Repository.Entities.VolunteerMission", b =>
+                {
+                    b.HasOne("KonSanad.Repository.Entities.Mission", "Mission")
+                        .WithMany("VolunteerMissions")
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KonSanad.Repository.Entities.Volunteer", "Volunteer")
+                        .WithMany("VolunteerMissions")
+                        .HasForeignKey("VolunteerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Mission");
+
+                    b.Navigation("Volunteer");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entities.Category", b =>

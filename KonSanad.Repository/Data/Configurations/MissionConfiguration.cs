@@ -11,8 +11,13 @@ namespace KonSanad.Repository.Data.Configurations
             builder.ToTable("Missions");
             builder.HasKey(m => m.Id);
 
-            builder.Property(m => m.Title).IsRequired().HasMaxLength(200);
-            builder.Property(m => m.Description).IsRequired().HasMaxLength(1000);
+            // Mark Title, Address and PhoneNumber optional to match DB nulls
+            builder.Property(m => m.Title).IsRequired(false).HasMaxLength(200);
+            builder.Property(m => m.Description).IsRequired(false).HasMaxLength(1000);
+
+            builder.Property(m => m.Address).IsRequired(false).HasMaxLength(500);
+            builder.Property(m => m.PhoneNumber).IsRequired(false).HasMaxLength(50);
+
             builder.Property(m => m.StartDate).IsRequired(false);
             builder.Property(m => m.EndDate).IsRequired(false);
 

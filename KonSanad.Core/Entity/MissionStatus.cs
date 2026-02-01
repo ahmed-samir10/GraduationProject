@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KonSanad.Services.Services
+namespace KonSanad.Core.Entity
 {
     public enum MissionStatus
     {
@@ -12,5 +12,5 @@ namespace KonSanad.Services.Services
         InProgress = 1,
         Completed = 2
     }
-
 }
+
