@@ -9,7 +9,7 @@ namespace KonSanad.APIS.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = "Volunteer")]
+[Authorize]
 public class VolunteersController : ControllerBase
 {
     private readonly IVolunteerService _volunteerService;
