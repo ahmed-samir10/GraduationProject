@@ -1,28 +1,23 @@
-﻿using KonSanad.Core.Dtos;
-using KonSanad.Core.Entities;
-using KonSanad.Core.Entity;
-using KonSanad.Core.IRepositery;
-
-using KonSanad.Repository.Data.Persistence;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace KonSanad.Services.Services
+﻿namespace KonSanad.Services.Services
 {
     public class VolunteerService : IVolunteerService
     {
         private readonly KonSanadDbContext _context;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public VolunteerService(KonSanadDbContext context , IUnitOfWork unitOfWork , IFileService fileService)
+        public VolunteerService(KonSanadDbContext context , IUnitOfWork unitOfWork , IFileService fileService , UserManager<AppUser> userManager)
         {
             _context = context;
             _unitOfWork = unitOfWork;
             _fileService = fileService;
+            _userManager = userManager;
         }
+
+        
+        // Method to get all missions with beneficiary details
+        // ----------------------------------------------------------
         public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync()
         {
             var dtos = await _context.Missions
@@ -51,7 +46,12 @@ namespace KonSanad.Services.Services
 
             return dtos;
         }
+        // ----------------------------------------------------------
+    
 
+
+        // Method to start a mission for a volunteer
+        // ----------------------------------------------------------
         public async Task StartMissionAsync(int volunteerId, int missionId)
         {
             var existing = await _unitOfWork
@@ -74,6 +74,7 @@ namespace KonSanad.Services.Services
 
             await _unitOfWork.Complete();
         }
+        // ----------------------------------------------------------
 
         public async Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId)
         {
@@ -100,6 +101,7 @@ namespace KonSanad.Services.Services
             });
         }
         // ----------------------------------------------------------
+
         // Method to submit a mission report by a volunteer
         // ----------------------------------------------------------
         public async Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null)
@@ -158,6 +160,130 @@ namespace KonSanad.Services.Services
             return relativeUrl;
         }
         // ----------------------------------------------------------
+
+
+
+        // Method to get volunteer profile by user ID
+        // ----------------------------------------------------------
+        public async Task<GetProfileDto> GetProfileAsync(string userId)
+        {
+            // 1) استخدم UserManager للحصول على AppUser
+            var appUser = await _userManager.FindByIdAsync(userId);
+
+            if (appUser is null)
+                throw new Exception("User not found");
+
+            // 2) ثم احصل على Donor
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.AppUserId == userId);
+
+            if (volunteer is null)
+                throw new Exception("Volunteer not found");
+
+            // 3) Map to DTO
+            var profileDto = new GetProfileDto
+            {
+                FullName = volunteer.FullName ?? string.Empty,
+                NationalId = volunteer.NationalId ?? string.Empty,
+                Address = volunteer.Address ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                Email = appUser.Email ?? string.Empty
+            };
+            return profileDto;
+        }
+        // ----------------------------------------------------------
+
+
+
+        // Method to update volunteer profile
+        // ----------------------------------------------------------
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        {
+            // 1) Get Volunteer by AppUserId
+            var volunteerRebo = _unitOfWork.Repository<Volunteer, int>();
+
+            // 2) Get Volunteer
+            var volunteer = await volunteerRebo.FirstOrDefaultAsync(
+                d => d.AppUserId == userId
+            );
+
+            // 3) Validate Volunteer exists
+            if (volunteer is null)
+                throw new Exception("Volunteer not found");
+
+            // 4) Update fields if provided
+            if (!string.IsNullOrWhiteSpace(dto.FullName) && !(dto.FullName == "string"))
+                volunteer.FullName = dto.FullName;
+
+            if (!string.IsNullOrWhiteSpace(dto.NationalId) && !(dto.NationalId == "string"))
+                volunteer.NationalId = dto.NationalId;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+                volunteer.Phone = dto.PhoneNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
+                volunteer.Address = dto.Address;
+
+
+            // 5) If Email is provided, update Identity user email
+            if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))
+            {
+                // Get AppUser
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+
+                // Update email if different
+                if (!string.Equals(appUser.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.Email = dto.Email;
+
+                    // Optionally update UserName if your system uses email as username
+                    var result = await _userManager.UpdateAsync(appUser);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update identity user: {errors}");
+                    }
+                }
+
+                // Keep volunteer.Email in sync 
+                volunteer.Email = dto.Email;
+            }
+
+
+            // 6) If PhoneNumber is provided, update Identity user phone number
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+            {
+                // Get AppUser
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+
+                // Update phone number if different
+                if (!string.Equals(appUser.PhoneNumber, dto.PhoneNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.PhoneNumber = dto.PhoneNumber;
+
+                    // Update phone number in Identity system
+                    var result = await _userManager.SetPhoneNumberAsync(appUser, dto.PhoneNumber);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update phone number: {errors}");
+                    }
+                }
+
+                // Keep Volunteer.Phone in sync
+                volunteer.Phone = dto.PhoneNumber;
+            }
+
+            // 7) Save changes
+            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
+            await _unitOfWork.Complete();
+
+            return true;
+        }
         // ----------------------------------------------------------
 
 
