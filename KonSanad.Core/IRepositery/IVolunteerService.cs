@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -16,5 +17,7 @@ public interface IVolunteerService
 
     Task StartMissionAsync(int volunteerId, int missionId);
     Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
+    Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId);
+    Task<string> JoinCampaignAsync(int volunteerId, int campaignId);
     Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null);
 }

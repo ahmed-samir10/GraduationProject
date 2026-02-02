@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Dtos;
+using KonSanad.Core.Entities;
 using KonSanad.Core.Entity;
 using KonSanad.Core.IRepositery;
 
@@ -53,12 +54,12 @@ namespace KonSanad.Services.Services
 
         public async Task StartMissionAsync(int volunteerId, int missionId)
         {
-            /*   var existing = await _unitOfWork
-                .Repository<VolunteerMission, int>()
-                .FindAllAsync(x => x.MissionId == missionId);
+            var existing = await _unitOfWork
+             .Repository<MissionVolunteers, int>()
+             .FindAllAsync(x => x.MissionId == missionId);
 
-               if (existing != null)
-                   throw new Exception("Mission already started");*/
+            if (existing.Any())
+                throw new Exception("Mission already started");
 
             var MissionVolunteer = new MissionVolunteers
             {
@@ -74,7 +75,30 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Complete();
         }
 
+        public async Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId)
+        {
+            var missions = await _unitOfWork
+                .Repository<MissionVolunteers, int>()
+                .FindAllAsync(
+                    predicate: vm => vm.VolunteerId == volunteerId,
+                    include: q => q.Include(vm => vm.Mission)
+                );
 
+            if (!missions.Any())
+                throw new ArgumentException("No missions found for this volunteer");
+
+            return missions.Select(vm => new VolunteerMissionDto
+            {
+                Id = vm.Id,
+                MissionId = vm.MissionId,
+                Name = vm.Mission.Title,
+                MissionStatus = vm.MissionStatus,
+                CreatedAt = vm.CreatedAt,
+                Description = "مطلوب زياره ميدانيه",
+                ResultMission = vm.ResultMission,
+                Notes = vm.Notes
+            });
+        }
         // ----------------------------------------------------------
         // Method to submit a mission report by a volunteer
         // ----------------------------------------------------------
@@ -135,6 +159,62 @@ namespace KonSanad.Services.Services
         }
         // ----------------------------------------------------------
         // ----------------------------------------------------------
+
+
+
+        public async Task<string> JoinCampaignAsync(int volunteerId, int campaignId)
+        {
+            // تأكد الـ volunteer موجود
+            var volunteer = await _unitOfWork
+                .Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.Id == volunteerId);
+
+            if (volunteer is null)
+                throw new ArgumentException("Volunteer not found");
+
+            // تأكد الـ campaign موجودة
+            var campaign = await _unitOfWork
+                .Repository<Campaign, int>()
+                .FirstOrDefaultAsync(c => c.Id == campaignId);
+
+            if (campaign is null)
+                throw new ArgumentException("Campaign not found");
+
+            // تأكد الـ volunteer مش اتضمّن قبل
+            var existing = await _unitOfWork
+                .Repository<CampaignVolunteer, int>()
+                .FindAllAsync(cv => cv.VolunteerId == volunteerId && cv.CampaignId == campaignId);
+
+            if (existing.Any())
+                throw new ArgumentException("Volunteer already joined this campaign");
+
+            // اضيف الـ volunteer للـ campaign
+            var campaignVolunteer = new CampaignVolunteer
+            {
+                VolunteerId = volunteerId,
+                CampaignId = campaignId,
+                JoinedDate = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Status = "Pending"
+            };
+
+            await _unitOfWork
+                .Repository<CampaignVolunteer, int>()
+                .AddAsync(campaignVolunteer);
+
+            await _unitOfWork.Complete();
+
+            return "Joined campaign successfully";
+        }
+
+
+
+
+
+
+
+
 
     }
 }
