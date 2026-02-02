@@ -136,5 +136,22 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
         // ----------------------------------------------------------
+
+
+        // ----------------------------------------------------------
+        // Update profile of volunteer
+        [Authorize]
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var success = await _volunteerService.UpdateProfileAsync(userId, dto);
+
+            return Ok(new { success, message = "Profile updated successfully" });
+        }
     }
 }

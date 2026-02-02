@@ -169,5 +169,98 @@
         }
         // ----------------------------------------------------------
 
+
+
+        // Method to update volunteer profile
+        // ----------------------------------------------------------
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        {
+            // 1) Get Volunteer by AppUserId
+            var volunteerRebo = _unitOfWork.Repository<Volunteer, int>();
+
+            // 2) Get Volunteer
+            var volunteer = await volunteerRebo.FirstOrDefaultAsync(
+                d => d.AppUserId == userId
+            );
+
+            // 3) Validate Volunteer exists
+            if (volunteer is null)
+                throw new Exception("Volunteer not found");
+
+            // 4) Update fields if provided
+            if (!string.IsNullOrWhiteSpace(dto.FullName) && !(dto.FullName == "string"))
+                volunteer.FullName = dto.FullName;
+
+            if (!string.IsNullOrWhiteSpace(dto.NationalId) && !(dto.NationalId == "string"))
+                volunteer.NationalId = dto.NationalId;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+                volunteer.Phone = dto.PhoneNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
+                volunteer.Address = dto.Address;
+
+
+            // 5) If Email is provided, update Identity user email
+            if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))
+            {
+                // Get AppUser
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+
+                // Update email if different
+                if (!string.Equals(appUser.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.Email = dto.Email;
+
+                    // Optionally update UserName if your system uses email as username
+                    var result = await _userManager.UpdateAsync(appUser);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update identity user: {errors}");
+                    }
+                }
+
+                // Keep volunteer.Email in sync 
+                volunteer.Email = dto.Email;
+            }
+
+
+            // 6) If PhoneNumber is provided, update Identity user phone number
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && !(dto.PhoneNumber == "string"))
+            {
+                // Get AppUser
+                var appUser = await _userManager.FindByIdAsync(userId);
+                if (appUser is null)
+                    throw new Exception("App user not found");
+
+                // Update phone number if different
+                if (!string.Equals(appUser.PhoneNumber, dto.PhoneNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    appUser.PhoneNumber = dto.PhoneNumber;
+
+                    // Update phone number in Identity system
+                    var result = await _userManager.SetPhoneNumberAsync(appUser, dto.PhoneNumber);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(';', result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to update phone number: {errors}");
+                    }
+                }
+
+                // Keep Volunteer.Phone in sync
+                volunteer.Phone = dto.PhoneNumber;
+            }
+
+            // 7) Save changes
+            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
+            await _unitOfWork.Complete();
+
+            return true;
+        }
+        // ----------------------------------------------------------
+
     }
 }
