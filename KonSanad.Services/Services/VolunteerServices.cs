@@ -1,4 +1,6 @@
-﻿namespace KonSanad.Services.Services
+﻿using KonSanad.Core.Entities;
+
+namespace KonSanad.Services.Services
 {
     public class VolunteerService : IVolunteerService
     {
