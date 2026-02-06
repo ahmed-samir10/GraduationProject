@@ -13,23 +13,26 @@ namespace KonSanad.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<List<CampaignDto>> GetAllAsync()
+        public async Task<List<CampaignDto>> GetAllAsync(int pageNumber, int pageSize)
         {
             var campaigns = await _db.Campaigns
-       .Include(c => c.Category)
-       .Include(c => c.Manager)
-       .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
-       .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
-       .ThenInclude(oi => oi.Supply)
-       .Include(c => c.CampaignVolunteers)
-       .Include(c => c.Missions)
-       .Include(c => c.CampaignResults)
-       .AsNoTracking()
-       .ToListAsync();
+                .Include(c => c.Category)
+                .Include(c => c.Manager)
+                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
+                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
+                    .ThenInclude(oi => oi.Supply)
+                .Include(c => c.CampaignVolunteers)
+                .Include(c => c.Missions)
+                .Include(c => c.CampaignResults)
+                .AsNoTracking()
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             var dtos = _mapper.Map<List<CampaignDto>>(campaigns);
             return dtos;
         }
+
 
         public async Task<CampaignDto?> GetByIdAsync(int id)
         {

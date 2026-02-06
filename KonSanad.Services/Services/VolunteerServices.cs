@@ -298,7 +298,7 @@ namespace KonSanad.Services.Services
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
 
             if (volunteer is null)
-                throw new ArgumentException("Volunteer not found");
+                return "المطتوع غير موجود";
 
             // تأكد الـ campaign موجودة
             var campaign = await _unitOfWork
@@ -306,15 +306,14 @@ namespace KonSanad.Services.Services
                 .FirstOrDefaultAsync(c => c.Id == campaignId);
 
             if (campaign is null)
-                throw new ArgumentException("Campaign not found");
-
+                return "الحملة غير موجودة";
             // تأكد الـ volunteer مش اتضمّن قبل
             var existing = await _unitOfWork
                 .Repository<CampaignVolunteer, int>()
                 .FindAllAsync(cv => cv.VolunteerId == volunteerId && cv.CampaignId == campaignId);
 
             if (existing.Any())
-                throw new ArgumentException("Volunteer already joined this campaign");
+                return "تم تقديم طلب لهذه الحملة بالفعل";
 
             // اضيف الـ volunteer للـ campaign
             var campaignVolunteer = new CampaignVolunteer
@@ -333,7 +332,7 @@ namespace KonSanad.Services.Services
 
             await _unitOfWork.Complete();
 
-            return "Joined campaign successfully";
+            return "تم إرسال الطلب بنجاح";
         }
 
 

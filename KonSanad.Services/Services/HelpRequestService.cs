@@ -149,19 +149,19 @@ namespace KonSanad.Services.Services
             // تحقق لو المستفيد موجود
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>().GetByIdAsync(userid);
             if (beneficiary == null)
-                throw new Exception("Beneficiary not found");
+                return "المستفيد غير موجود";
 
             // تحقق لو الحملة موجودة
             var campaign = await _unitOfWork.Repository<Campaign, int>().GetByIdAsync(request.CampaignId);
             if (campaign == null)
-                throw new Exception("Campaign not found");
+                return "الحملة غير موجودة";
 
             // تحقق لو المستفيد قدم طلب قبل كده لنفس الحملة
             var existingRequest = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
                 .FirstOrDefaultAsync(bc => bc.BeneficiaryId == userid
                                            && bc.CampaignId == request.CampaignId);
             if (existingRequest != null)
-                throw new Exception("Already requested for this campaign");
+                return "تم تقديم طلب لهذه الحملة بالفعل";
 
             var joinRequest = new BeneficiaryCampaign
             {
@@ -179,7 +179,7 @@ namespace KonSanad.Services.Services
             // احفظ التغييرات
             await _unitOfWork.Complete();
 
-            return "Request submitted successfully";
+            return "تم إرسال الطلب بنجاح";
         }
         public async Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId)
         {

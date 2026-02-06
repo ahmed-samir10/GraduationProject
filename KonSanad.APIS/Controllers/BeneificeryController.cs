@@ -35,9 +35,10 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpGet("GetAllCampiagn")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
+ [FromQuery] int pageSize = 10)
         {
-            var list = await _service.GetAllAsync();
+            var list = await _service.GetAllAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list } );
         }
 
@@ -70,15 +71,11 @@ namespace KonSanad.APIS.Controllers
 
             int beneficiaryId = beneficiary.Id;
             //   Console.WriteLine($"User ID from token: {userId}  , type {userId.GetType()}");
-            try
-            {
+          
                 var message = await _helpRequestService.JoinCampaignAsync(beneficiaryId, request);
                 return Ok(new { success = true, data = message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Error = ex.Message });
-            }
+            
+           
         }
 
         [Authorize]

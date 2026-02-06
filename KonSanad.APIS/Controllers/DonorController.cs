@@ -17,9 +17,10 @@ public class DonorController : ControllerBase
 
     [Authorize]
     [HttpGet("GetAllCampiagn")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
+ [FromQuery] int pageSize = 10)
     {
-        var list = await _service.GetAllAsync();
+        var list = await _service.GetAllAsync(pageNumber, pageSize);
         return Ok(new { success = true, data = list });
     }
 

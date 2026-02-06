@@ -64,9 +64,10 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpGet("GetAllCampiagn")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
+ [FromQuery] int pageSize = 10)
         {
-            var list = await _campaignService.GetAllAsync();
+            var list = await _campaignService.GetAllAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list });
         }
         // ----------------------------------------------------------
@@ -173,8 +174,7 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("join-campaign/{campaignId}")]
         public async Task<IActionResult> JoinCampaign(int campaignId)
         {
-            try
-            {
+            
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
@@ -185,16 +185,14 @@ namespace KonSanad.APIS.Controllers
          .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
                 if (Vol == null)
-                    return BadRequest(new { Error = "No Donor found for this user" });
+                    return Ok(new { success = true, data = "المطتوع غير موجود" });
 
                 int VolID = Vol.Id;
                 var result = await _volunteerService.JoinCampaignAsync(VolID, campaignId);
                 return Ok(new { success = true, data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+           
+                
+           
         }
 
         // ----------------------------------------------------------
