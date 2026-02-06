@@ -230,6 +230,7 @@ namespace KonSanad.Services.Services
             var donationOrder = new DonationOrder
             {
                 DonorId = donorId,
+                HelpOrderid = request.HelpOrderId,
                 CampaignId = request.CampaignId,
                 ManagerId = 1, // Default manager assignment
                 OrderDate = DateTime.Now,

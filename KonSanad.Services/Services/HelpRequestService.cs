@@ -117,6 +117,7 @@ namespace KonSanad.Services.Services
                 Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
                 Description = string.IsNullOrWhiteSpace(request.Reason) ? "Requested via HelpOrder (new product)" : request.Reason,
                 Unit = "pcs",
+                Title ="غذائي",
                 StockQuantity = 0
             };
 
