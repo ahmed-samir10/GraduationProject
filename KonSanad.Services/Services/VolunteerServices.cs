@@ -54,27 +54,39 @@ namespace KonSanad.Services.Services
 
         // Method to start a mission for a volunteer
         // ----------------------------------------------------------
-        public async Task StartMissionAsync(int volunteerId, int missionId)
+        public async Task<string> StartMissionAsync(int volunteerId, int missionId)
         {
             var existing = await _unitOfWork
              .Repository<MissionVolunteers, int>()
              .FindAllAsync(x => x.MissionId == missionId);
 
             if (existing.Any())
-                throw new Exception("Mission already started");
+               return "تم تقديم طلب لهذه المهمة بالفعل";
+
+            var mission = await _unitOfWork
+       .Repository<Mission, int>()
+       .GetByIdAsync(missionId);
+
+            if (mission == null)
+                return "المهمة غير موجودة";
+
+            // 2️⃣ غيّر حالة المهمة
+            mission.MissionStatus = MissionStatus.InReview;
 
             var MissionVolunteer = new MissionVolunteers
             {
                 VolunteerId = volunteerId,
                 MissionId = missionId,
                 CreatedAt = DateTime.UtcNow,
-                MissionStatus = MissionStatus.InProgress
+                MissionStatus = MissionStatus.InReview
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>()
                 .AddAsync(MissionVolunteer);
 
+
             await _unitOfWork.Complete();
+            return "تم بدء المهمة بنجاح";
         }
         // ----------------------------------------------------------
 
@@ -111,7 +123,7 @@ namespace KonSanad.Services.Services
             // Validate volunteer exists
             var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
 
-            if (volunteer is null) throw new ArgumentException("Volunteer not found");
+            if (volunteer is null) return "المتطوع غير موجود";
 
 
 
@@ -120,14 +132,17 @@ namespace KonSanad.Services.Services
             var volunteerMission = await vmRepo.FirstAsync(vm => vm.VolunteerId == volunteerId && vm.MissionId == missionId);
 
             if (volunteerMission is null)
-                throw new ArgumentException("VolunteerMission not found for given volunteer and mission");
+              return "المتطوع غير مرتبط بهذه المهمة";
 
 
 
             // Optionally validate mission exists and dates (if needed)
             var mission = await _unitOfWork.Repository<Mission, int>().FirstAsync(m => m.Id == missionId);
-            if (mission is null)
-                throw new ArgumentException("Mission not found");
+            if (mission == null)
+                return "المهمة غير موجودة";
+
+            // 2️⃣ غيّر حالة المهمة
+            mission.MissionStatus = MissionStatus.Completed;
 
 
 
@@ -137,7 +152,7 @@ namespace KonSanad.Services.Services
                 var now = DateTime.UtcNow;
                 if (now < mission.StartDate.Value || now > mission.EndDate.Value)
                 {
-                    throw new ArgumentException("Cannot submit report outside mission active period");
+                   return "لا يمكن تقديم التقرير خارج فترة المهمة المحددة";
                 }
             }
 

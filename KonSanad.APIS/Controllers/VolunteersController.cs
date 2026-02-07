@@ -80,68 +80,58 @@ namespace KonSanad.APIS.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ReportSubmitted([FromForm] DTOs.ReportSubmittedDto dto)
         {
-            try
-            {
+            
                 // Basic validation of the incoming data 
                 if (dto is null)
-                    return BadRequest(new { success = false, message = "Invalid payload" });
+               return Ok (new { success = false, message = "Invalid data" });
 
 
-                // Validate required fields 
-                if (dto.File is null || dto.File.Length == 0)
-                    return BadRequest(new { success = false, message = "File is required" });
+            // Validate required fields 
+            if (dto.File is null || dto.File.Length == 0)
+                    return Ok(new { success = false, message = "File is required" });
 
-                // Basic file validations (type and size)
-                var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "application/pdf" };
+            // Basic file validations (type and size)
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "application/pdf" };
                 const long maxFileSize = 10 * 1024 * 1024; // 10 MB
 
                 // Check file type and size 
                 if (!allowedContentTypes.Contains(dto.File.ContentType))
-                    return BadRequest(new { success = false, message = "Unsupported file type. Allowed: jpeg, png, gif, pdf" });
+                    return Ok (new { success = false, message = "Invalid file type. Allowed types are JPEG, PNG, GIF, PDF." });
 
-                if (dto.File.Length > maxFileSize)
-                    return BadRequest(new { success = false, message = "File too large. Maximum allowed size is 10MB." });
+            if (dto.File.Length > maxFileSize)
+                    return Ok (new { success = false, message = "File size exceeds the maximum allowed size of 10 MB." });
 
             // Further validations can be added here
             // Token handling and volunteer identification
             // derive volunteer from authenticated user token (client must NOT send VolunteerId)
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { success = false, message = "User not authenticated" });
+                return Ok (new { success = false, message = "User id not found in token" });
 
             // find volunteer by AppUserId using injected unit of work
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                                 .FirstOrDefaultAsync(v => v.AppUserId == userId);
 
             if (volunteer is null)
-                return BadRequest(new { success = false, message = "Volunteer not found for authenticated user" });
+                return Ok (new { success = false, message = "Volunteer not found for the authenticated user" });
 
             // Call the service to handle the report submission
             var fileUrl = await _volunteerService.SubmitMissionReportAsync(volunteer.Id, dto.MissionId, dto.File, dto.Notes);
 
 
                 return Ok(new { success = true, data = "تم رفع الملف" });
-            }
+            
 
-            // Handle specific exceptions as needed 
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { success = false, message = ex.Message });
-            }
-            // General exception handling
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
+          
         }
         // ----------------------------------------------------------
 
 
 
         // ----------------------------------------------------------
-        // PUT: api/Volunteer/{id}/start
+     
         [Authorize]
-        [HttpPut("{id}/start")]
+        [HttpPost("{id}/start")]
         public async Task<IActionResult> StartTask(int id)
         {
             if (!ModelState.IsValid)
@@ -154,19 +144,15 @@ namespace KonSanad.APIS.Controllers
      .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (Vol == null)
-                return BadRequest(new { Error = "No Donor found for this user" });
+                return BadRequest(new { Error = "لا يوجد متطوع" });
 
             int VolID = Vol.Id;
-            try
-            {
-                await _volunteerService.StartMissionAsync(VolID,id);
+          
+              var data=  await _volunteerService.StartMissionAsync(VolID,id);
                
-                return Ok(new { success = true, data = "Mission started successfully" });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message); // هيرجع 400 مع الـ message
-            }
+                return Ok(new { success = true, data = data});
+            
+          
         }
         // ----------------------------------------------------------
 

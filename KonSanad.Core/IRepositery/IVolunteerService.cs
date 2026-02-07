@@ -10,7 +10,7 @@ public interface IVolunteerService
     /// 
 
 
-    Task StartMissionAsync(int volunteerId, int missionId);
+    Task<string> StartMissionAsync(int volunteerId, int missionId);
     Task<IEnumerable<MissionDto>> GetAllMissionsAsync();
     Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId);
     Task<string> JoinCampaignAsync(int volunteerId, int campaignId);
