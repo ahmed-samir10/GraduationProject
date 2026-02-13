@@ -65,7 +65,7 @@ namespace KonSanad.APIS.Controllers
         [Authorize]
         [HttpGet("GetAllCampiagn")]
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
- [FromQuery] int pageSize = 10)
+ [FromQuery] int pageSize = 8)
         {
             var list = await _campaignService.GetAllAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list });
@@ -181,6 +181,23 @@ namespace KonSanad.APIS.Controllers
            
         }
 
+
+
+        [Authorize]
+        [HttpGet("joined-campaigns")]
+        public async Task<IActionResult> GetJoinedCampaigns()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Ok(new { success = false, message = "User id not found in token" });
+
+            var result = await _volunteerService.GetJoinedCampaignsAsync(userId);
+            if (result == null)
+                return Ok(new { success = false, message = "No joined campaigns found for this user" });
+
+            return Ok(new { success = true, data = result });
+        }
         // ----------------------------------------------------------
         // profile of volunteer
         [Authorize]

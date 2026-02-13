@@ -46,11 +46,11 @@ namespace KonSanad.APIS.Controllers
         {
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
             if (user == null)
-                return Unauthorized(new ApiResponse(401, "Invalid email or password"));
+                return Ok(new { success = false, data = "  خطا في الايميل او الباسورد" });
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
             if (!result.Succeeded)
-                return Unauthorized(new ApiResponse(401, "Invalid email or password"));
+                return Ok(new { success = false, data = "  خطا في الايميل او الباسورد" });
 
             return Ok(await BuildUserResponseAsync(user));
         }
@@ -59,12 +59,12 @@ namespace KonSanad.APIS.Controllers
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
             if (await _userManager.FindByEmailAsync(registerDto.Email) != null)
-                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Email already in use" } });
+               return Ok(new { success = false, data = "  تم استخدام هذا الايميل من قبل" });
 
             var allowedRoles = new[] { "Donor", "Beneficiary", "Volunteer" };
             var role = registerDto.Role?.Trim();
             if (string.IsNullOrWhiteSpace(role) || !allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
-                return BadRequest(new ApiValidationErrorResponse { Errors = new[] { "Role must be Donor, Beneficiary, or Volunteer" } });
+                return Ok(new { success = false, data = "Role must be Donor, Beneficiary, or Volunteer" });
 
             if (!await _roleManager.RoleExistsAsync(role))
                 await _roleManager.CreateAsync(new IdentityRole(role));
@@ -169,6 +169,7 @@ namespace KonSanad.APIS.Controllers
                         Password = user.PasswordHash,
                         AppUserId = user.Id,
                         Skills = registerDto.Skills ?? "غير محدد", // مهم
+                        Availability = registerDto.Availability ?? "غير محدد", // مهم
                         FullName = registerDto.FullName ?? user.FullName ?? "volunteer User",
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false,

@@ -49,9 +49,10 @@ namespace KonSanad.APIS.Controllers
             var campaignDto = await _service.GetByIdAsync(id);
 
             if (campaignDto == null)
-                return NotFound(new ApiResponse(404, $"الحملة رقم {id} غير موجودة"));
+       return Ok(new { success = false, data = $"الحملة رقم {id} غير موجودة" });
 
-            return Ok(campaignDto);
+
+            return Ok(new { success = true, data = campaignDto });
         }
 
         [Authorize]
@@ -67,7 +68,7 @@ namespace KonSanad.APIS.Controllers
      .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary == null)
-                return BadRequest(new { Error = "No beneficiary found for this user" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             int beneficiaryId = beneficiary.Id;
             //   Console.WriteLine($"User ID from token: {userId}  , type {userId.GetType()}");
@@ -85,7 +86,8 @@ namespace KonSanad.APIS.Controllers
             var orderItem = await _ORder.GetAllDonationItemsAsync();
 
             if (orderItem == null)
-                return NotFound(new { success = false, message = "الصنف غير موجود" });
+         
+            return Ok(new { success = false, data = "الصنف غير موجود" });
 
             //var dto = _mapper.Map<OrderItemDto>(orderItem);
 
@@ -99,7 +101,8 @@ namespace KonSanad.APIS.Controllers
             var item = await _ORder.GetOrderItemByIdAsync(id);
 
             if (item == null)
-                return NotFound(new { success = false, message = $"الصنف رقم {id} غير موجود أو تم حذفه" });
+        
+            return Ok(new { success = false, data = $"الصنف رقم {id} غير موجود أو تم حذفه" });
 
             return Ok(new { success = true, data = item });
         }
@@ -113,7 +116,8 @@ namespace KonSanad.APIS.Controllers
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { error = "User id not found in token" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
+
 
             var result = await _helpRequestService.GetJoinedCampaignsAsync(userId);
 
@@ -127,7 +131,7 @@ namespace KonSanad.APIS.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { error = "User id not found in token" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             var result = await _helpRequestService.GetMyHelpRequestsAsync(userId);
 
@@ -141,7 +145,7 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("request-existing")]
         public async Task<IActionResult> RequestExistingProduct( [FromBody] ExistingProductRequestDto request)
         {
-            if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
+            if (request == null)   return Ok(new { success = false, data = " البيانات غير صحيحه" });
             // هتتظبط  بعد لما نضيف المصادقة
 
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
@@ -152,7 +156,7 @@ namespace KonSanad.APIS.Controllers
      .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary == null)
-                return BadRequest(new { Error = "No beneficiary found for this user" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             int beneficiaryId = beneficiary.Id;
 
@@ -171,7 +175,7 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("request-new")]
         public async Task<IActionResult> RequestNewProduct( [FromForm] NewProductRequestDto request)
         {
-            if (request == null) return BadRequest(new { success = false, message = "Invalid request body" });
+            if (request == null) return Ok(new { success = false, data = " البيانات غير صحيحه" });
             // هتتظبط  بعد لما نضيف المصادقة
 
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
@@ -182,7 +186,7 @@ namespace KonSanad.APIS.Controllers
      .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary == null)
-                return BadRequest(new { Error = "No beneficiary found for this user" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             int beneficiaryId = beneficiary.Id;
 
@@ -198,7 +202,7 @@ namespace KonSanad.APIS.Controllers
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { error = "User id not found in token" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             var result = await _helpRequestService.GetProfileAsync(userId);
             return Ok(new { success = true, data = result });
@@ -211,7 +215,7 @@ namespace KonSanad.APIS.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { error = "User id not found in token" });
+                return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             var success = await _helpRequestService.UpdateProfileAsync(userId, dto);
 

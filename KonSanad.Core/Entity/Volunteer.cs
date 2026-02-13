@@ -16,8 +16,9 @@ namespace KonSanad.Repository.Entities
         public string Phone { get; set; } = null!;
         public string Address { get; set; } = null!;
         public string Skills { get; set; } = null!;
+        
         public string? AppUserId { get; set; }
-        public bool? Availability { get; set; }
+        public string Availability { get; set; }
         public string? NationalId { get; set; }
 
 

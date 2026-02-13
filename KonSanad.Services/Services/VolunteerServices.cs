@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Entities;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace KonSanad.Services.Services
 {
@@ -349,6 +350,50 @@ namespace KonSanad.Services.Services
 
             return "تم إرسال الطلب بنجاح";
         }
+
+
+        public async Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId)
+        {
+            // 1) نجيب المستفيد حسب AppUserId
+            var beneficiary = await _unitOfWork.Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return null;
+            // 2) نجيب العلاقات بين المستفيد والحملات مع Include
+            var joinedCampaigns = await _unitOfWork.Repository<CampaignVolunteer, int>()
+    .FindAllAsync(
+        bc => bc.VolunteerId == beneficiary.Id,
+        include: q => q
+            .Include(x => x.Campaign)
+                .ThenInclude(c => c.DonationOrders)  // 👈 أضف هذا
+            .Include(x => x.Campaign)
+                .ThenInclude(c => c.Category)        // 👈 وهذا للـ CategoryName
+    );
+
+            // 3) نتأكد إن Campaign موجود
+            var campaignEntities = joinedCampaigns
+                .Where(j => j.Campaign != null)
+                .Select(j => j.Campaign)
+                .ToList();
+
+            // 4) Map
+            var campaignDtos = campaignEntities.Select(c => new CampaignDto
+            {
+                Id = c.Id,
+                Title = c.Title ?? string.Empty,
+                PictureUrl = c.PictureUrl ?? string.Empty,
+                ShortDescription = string.IsNullOrWhiteSpace(c.Description) ? string.Empty :
+         c.Description.Length > 180 ? c.Description.Substring(0, 180).Trim() + "…" : c.Description,
+                CategoryName = c.Category?.Name ?? string.Empty,
+                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
+                Status = CampaignMetrics.CalculateStatus(c),
+                DonorCount = CampaignMetrics.CalculateDonorCount(c),
+                CreateAt = c.CreatedAt
+            }).ToList();
+            return campaignDtos;
+        }
+
 
 
 
