@@ -249,10 +249,12 @@ namespace KonSanad.Services.Services
               
                 Title = h.Title,
                 Description = h.Description ?? string.Empty,
+               
                 BeneficiaryId = h.BeneficiaryId,
                 PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
                 Status = "قيد الانتظار",
                 CreatedAt = h.CreatedAt,
+                
                 
 
              

@@ -128,8 +128,31 @@ namespace KonSanad.APIS.Controllers
 
 
 
+        [HttpPut("update")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateMissionReport([FromForm] UpdateMissionReportDto requst)
+        {
+            var result = await _volunteerService
+                .UpdateMissionReportAsync(requst.VolunteerId,requst.MissionId ,requst.File , requst.Notes);
+
+            return Ok(new { success = true, data = "تم التعديل" });
+        }
+
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteMissionReport(
+      [FromQuery] int volunteerId,
+      [FromQuery] int missionId)
+        {
+            var result = await _volunteerService
+                .DeleteMissionReportAsync(volunteerId, missionId);
+
+            return Ok(new { success = true, data = "تم الحذف" });
+        }
+
+
+
         // ----------------------------------------------------------
-     
+
         [Authorize]
         [HttpPost("{id}/start")]
         public async Task<IActionResult> StartTask(int id)

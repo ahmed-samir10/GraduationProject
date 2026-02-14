@@ -12,6 +12,7 @@ namespace KonSanad.Core.Dtos
         public string Title { get; set; }
         public string Description { get; set; } = string.Empty;
         public int? BeneficiaryId { get; set; }
+        public string Reason { get; set; } = string.Empty;
 
         public string PictureUrl { get; set; }
 

@@ -18,4 +18,10 @@ public interface IVolunteerService
     Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null);
     Task<GetProfileDto> GetProfileAsync(string userId);
     Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+    Task<string> UpdateMissionReportAsync(
+      int volunteerId,
+      int missionId,
+      IFormFile? newFile,
+      string? notes = null);
+    Task<string> DeleteMissionReportAsync(int volunteerId, int missionId);
 }

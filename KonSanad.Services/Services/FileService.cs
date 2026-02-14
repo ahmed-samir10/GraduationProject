@@ -28,5 +28,16 @@ namespace KonSanad.Services.Services
 
             return $"/{folder}/{fileName}";
         }
+        public async Task DeleteFileAsync(string relativePath)
+        {
+            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+
+            await Task.CompletedTask;
+        }
     }
 }

@@ -6,4 +6,5 @@ namespace KonSanad.Core.IRepositery;
 public interface IFileService
 {
     Task<string> SaveFileAsync(IFormFile file, string folder = "uploads");
+    Task DeleteFileAsync(string relativePath);
 }

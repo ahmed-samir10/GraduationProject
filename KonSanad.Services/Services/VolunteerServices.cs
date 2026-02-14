@@ -397,7 +397,75 @@ namespace KonSanad.Services.Services
 
 
 
+        public async Task<string> UpdateMissionReportAsync(
+      int volunteerId,
+      int missionId,
+      IFormFile? newFile,
+      string? notes = null)
+        {
+            var vmRepo = _unitOfWork.Repository<MissionVolunteers, int>();
 
+            var volunteerMission = await vmRepo.FirstOrDefaultAsync(
+                vm => vm.VolunteerId == volunteerId &&
+                      vm.MissionId == missionId);
+
+            if (volunteerMission == null)
+                return "المهمة غير موجودة لهذا المتطوع";
+
+          
+            if (newFile != null)
+            {
+                if (!string.IsNullOrEmpty(volunteerMission.ResultMission))
+                {
+                    await _fileService.DeleteFileAsync(volunteerMission.ResultMission);
+                }
+
+                var newUrl = await _fileService.SaveFileAsync(newFile, "uploads");
+                volunteerMission.ResultMission = newUrl;
+            }
+
+            // ✏️ تحديث الملاحظات
+            if (!string.IsNullOrEmpty(notes))
+            {
+                volunteerMission.Notes = notes;
+            }
+
+            volunteerMission.UpdatedAt = DateTime.UtcNow;
+
+            vmRepo.Update(volunteerMission);
+            await _unitOfWork.Complete();
+
+            return "تم تحديث التقرير بنجاح";
+        }
+
+        public async Task<string> DeleteMissionReportAsync(int volunteerId, int missionId)
+        {
+            var vmRepo = _unitOfWork.Repository<MissionVolunteers, int>();
+
+            var volunteerMission = await vmRepo.FirstOrDefaultAsync(
+                vm => vm.VolunteerId == volunteerId &&
+                      vm.MissionId == missionId);
+
+            if (volunteerMission == null)
+                return "المهمة غير موجودة لهذا المتطوع";
+
+            if (string.IsNullOrEmpty(volunteerMission.ResultMission))
+                return "لا يوجد تقرير لحذفه";
+
+            // 🗑️ حذف الملف من السيرفر
+            await _fileService.DeleteFileAsync(volunteerMission.ResultMission);
+
+            // 🧹 مسح البيانات من DB
+            volunteerMission.ResultMission = null;
+            volunteerMission.Notes = null;
+            volunteerMission.MissionStatus = MissionStatus.New;
+            volunteerMission.Status = "Pending";
+
+            vmRepo.Update(volunteerMission);
+            await _unitOfWork.Complete();
+
+            return "تم حذف التقرير بنجاح";
+        }
 
 
 
