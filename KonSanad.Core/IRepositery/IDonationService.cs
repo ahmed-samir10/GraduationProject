@@ -9,8 +9,8 @@ namespace KonSanad.Core.IRepositery
 {
     public interface IDonationService
     {
-      
-        Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync();
+
+        Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync(int pagenum, int pagesize);
         Task<OrderItemDto?> GetOrderItemByIdAsync(int id);
 
     }

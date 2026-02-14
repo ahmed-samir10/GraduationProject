@@ -36,7 +36,7 @@ namespace KonSanad.APIS.Controllers
         [Authorize]
         [HttpGet("GetAllCampiagn")]
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
- [FromQuery] int pageSize = 10)
+ [FromQuery] int pageSize = 8)
         {
             var list = await _service.GetAllAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list } );
@@ -81,9 +81,9 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpGet("order-item")]
-        public async Task<IActionResult> GetOrderItem()
+        public async Task<IActionResult> GetOrderItem([FromQuery] int PageNu =1 , [FromQuery] int pagesize = 8)
         {
-            var orderItem = await _ORder.GetAllDonationItemsAsync();
+            var orderItem = await _ORder.GetAllDonationItemsAsync(PageNu,pagesize);
 
             if (orderItem == null)
          

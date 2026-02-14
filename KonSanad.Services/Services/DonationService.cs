@@ -19,7 +19,7 @@ namespace KonSanad.Services.Services
 
 
 
-        public async Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync()
+        public async Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync(int pagenum , int pagesize)
         {
             // Get all OrderItems
             var orderItems = await _unitOfWork.Repository<OrderItem, int>().GetAllAsync();
@@ -41,6 +41,8 @@ namespace KonSanad.Services.Services
                     // UpdatedAt = i.UpdatedAt,
                     // Status = i.Status
                 })
+                 .Skip((pagenum - 1) * pagesize)
+                 .Take(pagesize)
                 .ToList();
             var dtos = _mapper.Map<List<OrderItemDto>>(result);
             return result;
