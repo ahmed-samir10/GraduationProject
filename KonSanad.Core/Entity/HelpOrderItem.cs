@@ -19,6 +19,7 @@ namespace KonSanad.Repository.Entities
         // علاقة: One Supply -> Many HelpOrderItems
         [Required]
         public int SupplyId { get; set; }
+        public string reason { get; set; } = string.Empty; 
 
         [ForeignKey(nameof(SupplyId))]
         public Supply Supply { get; set; } = null!;

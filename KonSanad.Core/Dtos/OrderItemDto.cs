@@ -12,6 +12,7 @@ namespace KonSanad.Core.Dtos
         public int Id { get; set; }
         public string CustomSupplyName { get; set; }
         public int Quantity { get; set; }
+        public string Category { get; set; }
         public string? ImageUrl { get; set; }
         public string Unit { get; set; }
         // public int DonationOrderId { get; set; }

@@ -129,6 +129,7 @@ namespace KonSanad.Services.Services
                 HelpOrderId = helpOrder.Id,
                 SupplyId = supply.Id,
                 QuantityRequested = 1,
+                reason = request.Reason,
                 ImageUrl = imageUrl  // ← الصورة اللي اتخزنت
             };
 
@@ -250,7 +251,7 @@ namespace KonSanad.Services.Services
               
                 Title = h.Title,
                 Description = h.Description ?? string.Empty,
-               
+               Reason = h.HelpOrderItems.FirstOrDefault()?.reason ?? string.Empty,
                 BeneficiaryId = h.BeneficiaryId,
                 PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
                 Status = "قيد الانتظار",

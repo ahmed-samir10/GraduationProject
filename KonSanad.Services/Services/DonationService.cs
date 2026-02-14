@@ -34,6 +34,7 @@ namespace KonSanad.Services.Services
                     CustomSupplyName = i.CustomSupplyName,
                     Quantity = i.Quantity,
                     Unit = i.Unit,
+                    Category = i.Category,
                     ImageUrl = i.ImageUrl,
                     //DonationOrderId = i.DonationOrderId,
                     //SupplyId = i.SupplyId,

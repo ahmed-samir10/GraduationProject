@@ -81,9 +81,9 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpGet("order-item")]
-        public async Task<IActionResult> GetOrderItem([FromQuery] int PageNu =1 , [FromQuery] int pagesize = 8)
+        public async Task<IActionResult> GetOrderItem([FromQuery] int pageNumber = 1 , [FromQuery] int pageSize = 8)
         {
-            var orderItem = await _ORder.GetAllDonationItemsAsync(PageNu,pagesize);
+            var orderItem = await _ORder.GetAllDonationItemsAsync(pageNumber, pageSize);
 
             if (orderItem == null)
          

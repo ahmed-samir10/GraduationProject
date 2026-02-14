@@ -18,6 +18,7 @@ namespace KonSanad.Repository.Entities
 
         public string? CustomSupplyName { get; set; }
         public int Quantity { get; set; }
+        public string Category { get; set; } = null!;
         public string Unit { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public string? Status { get; set; }
