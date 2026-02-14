@@ -168,6 +168,7 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
                 RequestedAt = DateTime.UtcNow,
+                    Status = " قيد الانتظار"
               //  Reason = request.Reason
             };
 
