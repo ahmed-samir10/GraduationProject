@@ -48,7 +48,7 @@ namespace KonSanad.APIS.Controllers
      .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (Vol == null)
-                return BadRequest(new { Error = "No Donor found for this user" });
+                return BadRequest(new { Error = "No vol found for this user" });
 
             int VolID = Vol.Id;
 
@@ -127,28 +127,60 @@ namespace KonSanad.APIS.Controllers
         // ----------------------------------------------------------
 
 
-
         [HttpPut("update")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UpdateMissionReport([FromForm] UpdateMissionReportDto requst)
         {
+
+
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+
+            var Vol = await _unitOfWork
+     .Repository<Volunteer, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (Vol == null)
+                return BadRequest(new { Error = "لا يوجد متطوع" });
+
+            int VolID = Vol.Id;
+
             var result = await _volunteerService
-                .UpdateMissionReportAsync(requst.VolunteerId,requst.MissionId ,requst.File , requst.Notes);
+                .UpdateMissionReportAsync(VolID, requst.MissionId, requst.File, requst.Notes);
 
             return Ok(new { success = true, data = "تم التعديل" });
         }
 
-        [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteMissionReport(
-      [FromQuery] int volunteerId,
-      [FromQuery] int missionId)
+
+
+
+        [Authorize]
+        [HttpDelete("delete-report/{missionId}")]
+        public async Task<IActionResult> DeleteMissionReport(int missionId)
         {
+            // get user id from token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { success = false, message = "User id not found in token" });
+
+            // get volunteer by AppUserId
+            var volunteer = await _unitOfWork
+                .Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.AppUserId == userId);
+
+            if (volunteer is null)
+                return BadRequest(new { success = false, message = "Volunteer not found" });
+
+            // call service
             var result = await _volunteerService
-                .DeleteMissionReportAsync(volunteerId, missionId);
+                .DeleteMissionReportAsync(volunteer.Id, missionId);
 
-            return Ok(new { success = true, data = "تم الحذف" });
+            return Ok(new { success = true, data = result });
         }
-
 
 
         // ----------------------------------------------------------

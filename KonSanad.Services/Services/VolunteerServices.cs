@@ -170,9 +170,10 @@ namespace KonSanad.Services.Services
                 volunteerMission.Notes = notes;
             }
 
-            vmRepo.Update(volunteerMission);
+            //vmRepo.Update(volunteerMission);
             volunteerMission.MissionStatus = MissionStatus.Completed;
             volunteerMission.Status ="Completed";
+            vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
 
             return relativeUrl;
@@ -449,24 +450,19 @@ namespace KonSanad.Services.Services
             if (volunteerMission == null)
                 return "المهمة غير موجودة لهذا المتطوع";
 
-            if (string.IsNullOrEmpty(volunteerMission.ResultMission))
-                return "لا يوجد تقرير لحذفه";
+            // 🗑️ حذف الملف من السيرفر لو موجود
+            if (!string.IsNullOrEmpty(volunteerMission.ResultMission))
+            {
+                await _fileService.DeleteFileAsync(volunteerMission.ResultMission);
+            }
 
-            // 🗑️ حذف الملف من السيرفر
-            await _fileService.DeleteFileAsync(volunteerMission.ResultMission);
+            // ✅ حذف الصف نفسه من DB
+            vmRepo.Delete(volunteerMission);
 
-            // 🧹 مسح البيانات من DB
-            volunteerMission.ResultMission = null;
-            volunteerMission.Notes = null;
-            volunteerMission.MissionStatus = MissionStatus.New;
-            volunteerMission.Status = "Pending";
+            var rows = await _unitOfWork.Complete();
 
-            vmRepo.Update(volunteerMission);
-            await _unitOfWork.Complete();
-
-            return "تم حذف التقرير بنجاح";
+            return $" تم الحذف ";
         }
-
 
 
 
