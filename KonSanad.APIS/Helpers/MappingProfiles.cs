@@ -44,6 +44,16 @@ namespace KonSanad.APIS.Helpers
                 .ForMember(d => d.Phone, opt => opt.MapFrom(s => s.Phone))
                 .ForMember(d => d.Address, opt => opt.MapFrom(s => s.Address));
 
+
+
+            CreateMap<CartItem, CartItemResponseDto>()
+               .ForMember(dest => dest.ProductName,
+                   opt => opt.MapFrom(src => src.supply != null ? src.supply.Name : null));
+          
+
+            CreateMap<Cart, CartResponseDto>()
+                .ForMember(dest => dest.CartId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.CartItems));
             // CreateDto -> Campaign entity (for create/update)
             CreateMap<CampaignCreateDto, Campaign>()
                 .ForMember(d => d.Id, opt => opt.Ignore());

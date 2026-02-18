@@ -1,12 +1,8 @@
-﻿using System;
-using System.Security.Principal;
-using System.Text;
-using AutoMapper;
+﻿using AutoMapper;
 using KonSanad.APIS.Extenaction;
 using KonSanad.APIS.Helpers;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
-
 using KonSanad.Repository.Data.Identity.ctx;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Repository;
@@ -19,7 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.Security.Principal;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 // Add services to the container.
 builder.Services.AddControllers();
+
 
 builder.Services.AddDbContext<KonSanadDbContext>(option =>
 {
@@ -55,6 +56,7 @@ builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService,VolunteerService>();
+builder.Services.AddScoped<ICartService, CartServices>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
@@ -134,6 +136,16 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowCredentials();
     });
+});
+
+
+// redies 
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = ConfigurationOptions.Parse("localhost:6379");
+    config.AbortOnConnectFail = false;
+
+    return ConnectionMultiplexer.Connect(config);
 });
 var app = builder.Build();
 
