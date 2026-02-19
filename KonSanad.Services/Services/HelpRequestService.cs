@@ -147,6 +147,8 @@ namespace KonSanad.Services.Services
 
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
+
+
             // تحقق لو المستفيد موجود
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>().GetByIdAsync(userid);
             if (beneficiary == null)
@@ -157,10 +159,19 @@ namespace KonSanad.Services.Services
             if (campaign == null)
                 return "الحملة غير موجودة";
 
+            /////////////////////////////////////////////////
+            //if ((int)campaign.CampaignStatus == 1)
+            //{
+            //    return "الحملة غير نشطة حالياً ولا يمكن الانضمام لها";
+            //}
+
             // تحقق لو المستفيد قدم طلب قبل كده لنفس الحملة
             var existingRequest = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
                 .FirstOrDefaultAsync(bc => bc.BeneficiaryId == userid
                                            && bc.CampaignId == request.CampaignId);
+
+           
+
             if (existingRequest != null)
                 return "تم تقديم طلب لهذه الحملة بالفعل";
 
@@ -177,6 +188,8 @@ namespace KonSanad.Services.Services
 
 
             await _unitOfWork.Repository<BeneficiaryCampaign, int>().AddAsync(joinRequest);
+
+           
 
             // احفظ التغييرات
             await _unitOfWork.Complete();
