@@ -1,9 +1,4 @@
 ﻿using KonSanad.Core.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KonSanad.Core.IRepositery
 {
@@ -13,7 +8,13 @@ namespace KonSanad.Core.IRepositery
 
         Task AddItemAsync(int userId, AddToCartDto dto);
 
+        Task AddItemsAsync(int userId, IEnumerable<AddToCartDto> dtos);
+
         Task<string> RemoveItemAsync(int userId, int productId);
+
+        Task<string> RemoveItemsAsync(int userId, IEnumerable<int> productIds);
+
+        Task<string> UpdateItemsQuantityAsync(int userId, IEnumerable<UpdateCartItemDto> items);
 
         Task<string> ClearCartAsync(int userId);
     }
