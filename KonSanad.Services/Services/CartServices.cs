@@ -9,6 +9,7 @@ using KonSanad.Core.Dtos;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using KonSanad.Repository.Entities;
 
 namespace KonSanad.Services.Services
 {
@@ -272,6 +273,133 @@ namespace KonSanad.Services.Services
                 await _database.StringSetAsync(GetCartKey(userId), json);
             }
             return "تم التعديل";
+        }
+
+
+        // =========================
+        // Submit Cart: create a HelpOrder from current cart, save to DB and clear cart
+        // Returns the created HelpOrderDto
+        // =========================
+        public async Task<SubmitResultDto> SubmitCartAsync(int userId, IEnumerable<AddToCartDto>? items = null)
+        {
+            var result = new SubmitResultDto();
+
+            // Validate provided final items before merging
+            if (items != null && items.Any())
+            {
+                var invalidProvided = new List<string>();
+
+                var providedIds = items.Select(i => i.ProductId).ToList();
+                var providedOrderItems = await _dbContext.OrderItems
+                    .Where(o => providedIds.Contains(o.Id))
+                    .ToListAsync();
+
+                foreach (var dto in items)
+                {
+                    if (dto.QuantityRequested <= 0)
+                        invalidProvided.Add($"Product {dto.ProductId} has invalid quantity {dto.QuantityRequested}.");
+
+                    var found = providedOrderItems.Any(o => o.Id == dto.ProductId);
+                    if (!found)
+                        invalidProvided.Add($"Product {dto.ProductId} not found.");
+                }
+
+                if (invalidProvided.Any())
+                {
+                    result.Success = false;
+                    result.Errors.AddRange(invalidProvided);
+                    return result;
+                }
+
+                // merge now that provided items are valid
+                await AddItemsAsync(userId, items);
+            }
+
+            var cart = await GetCartAsync(userId);
+
+            if (cart.Items == null || !cart.Items.Any())
+            {
+                result.Success = false;
+                result.Errors.Add("Cart is empty.");
+                return result;
+            }
+
+            // Validate cart items
+            var errors = new List<string>();
+            foreach (var cartItem in cart.Items)
+            {
+                if (cartItem.Quantity <= 0)
+                    errors.Add($"Product {cartItem.ProductId} has invalid quantity {cartItem.Quantity}.");
+            }
+
+            var productIds = cart.Items.Select(i => i.ProductId).ToList();
+            var orderItems = await _dbContext.OrderItems
+                .Where(o => productIds.Contains(o.Id))
+                .ToListAsync();
+
+            var missing = productIds.Except(orderItems.Select(o => o.Id)).ToList();
+            foreach (var id in missing)
+                errors.Add($"Product {id} not found.");
+
+            if (errors.Any())
+            {
+                result.Success = false;
+                result.Errors.AddRange(errors);
+                return result;
+            }
+
+            // Create HelpOrder entity
+            var helpOrder = new HelpOrder
+            {
+                BeneficiaryId = userId,
+                Title = "طلب مساعده من سلة المشتريات",
+                Description = "تم انشاء الطلب من سلة المشتريات",
+            };
+
+            foreach (var cartItem in cart.Items)
+            {
+                var orderItem = orderItems.FirstOrDefault(o => o.Id == cartItem.ProductId);
+
+                var helpOrderItem = new HelpOrderItem
+                {
+                    QuantityRequested = cartItem.Quantity,
+                    SupplyId = orderItem?.SupplyId ?? 0,
+                    ImageUrl = cartItem.ImagUrl,
+                    reason = orderItem?.Description ?? string.Empty
+                };
+
+                helpOrder.HelpOrderItems.Add(helpOrderItem);
+            }
+
+            // Save help order
+            _dbContext.HelpOrders.Add(helpOrder);
+            await _dbContext.SaveChangesAsync();
+
+            // Clear cart
+            await ClearCartAsync(userId);
+
+            // Map to DTO
+            var dtoResult = new HelpOrderDto
+            {
+                Id = helpOrder.Id,
+                BeneficiaryId = helpOrder.BeneficiaryId,
+                Title = helpOrder.Title,
+                Description = helpOrder.Description,
+                CreatedAt = DateTime.UtcNow,
+                Status = "Pending",
+                Items = helpOrder.HelpOrderItems.Select(h => new HelpOrderItemDto
+                {
+                    Id = h.Id,
+                    HelpOrderId = h.HelpOrderId,
+                    SupplyId = h.SupplyId,
+                    Quantity = h.QuantityRequested,
+                    ImageUrl = h.ImageUrl
+                }).ToList()
+            };
+
+            result.Success = true;
+            result.HelpOrder = dtoResult;
+            return result;
         }
 
 
