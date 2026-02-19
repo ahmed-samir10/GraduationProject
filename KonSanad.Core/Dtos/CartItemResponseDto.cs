@@ -7,5 +7,7 @@
       public string ImagUrl { get; set; }
         public int Quantity { get; set; }
         public string Reason { get; set; }
+        public string Catgorey { get; set; }
     }
+
 }

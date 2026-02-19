@@ -73,6 +73,7 @@ namespace KonSanad.Services.Services
                     {
                         item.ProductName = orderItem.Supply?.Name ?? orderItem.CustomSupplyName ?? "Unknown";
                         item.ImagUrl = orderItem.ImageUrl ?? orderItem.Supply?.ImageUrl;
+                        item.Catgorey = orderItem.Category;
                     }
                 }
             }
@@ -114,8 +115,10 @@ namespace KonSanad.Services.Services
                     ProductName = orderItem.Supply?.Name ?? orderItem.CustomSupplyName ?? "Unknown",
                     ImagUrl = orderItem.ImageUrl ?? orderItem.Supply?.ImageUrl,
                     Quantity = dto.QuantityRequested,
+                    Catgorey =orderItem.Category
                     
                 });
+                
             }
             else if (item.Quantity < orderItem.Quantity)
             {

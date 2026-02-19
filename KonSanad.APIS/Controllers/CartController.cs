@@ -23,6 +23,7 @@ namespace KonSanad.APIS.Controllers
         // Get Cart By UserId
         // =========================
         [HttpGet]
+        [CachedAttribute(600)]
         public async Task<ActionResult<CartResponseDto>> GetCart()
         {
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
