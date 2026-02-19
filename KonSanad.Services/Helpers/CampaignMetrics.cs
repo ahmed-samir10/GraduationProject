@@ -118,6 +118,7 @@ namespace KonSanad.Services.Helpers
             if (beneficiaryCount >= c.MaxBeneficiaries)
                 return 1;
 
+            else
             return 0;
         }
 

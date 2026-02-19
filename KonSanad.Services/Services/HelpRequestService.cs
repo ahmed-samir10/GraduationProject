@@ -155,15 +155,21 @@ namespace KonSanad.Services.Services
                 return "المستفيد غير موجود";
 
             // تحقق لو الحملة موجودة
-            var campaign = await _unitOfWork.Repository<Campaign, int>().GetByIdAsync(request.CampaignId);
+            // var campaign = await _unitOfWork.Repository<Campaign, int>().GetByIdAsync(request.CampaignId);
+
+            var campaign = await _unitOfWork.Repository<Campaign, int>()
+    .FirstOrDefaultAsync(
+        c => c.Id == request.CampaignId,
+        include: q => q.Include(c => c.BeneficiaryCampaigns)
+    );
             if (campaign == null)
                 return "الحملة غير موجودة";
 
             /////////////////////////////////////////////////
-            //if ((int)campaign.CampaignStatus == 1)
-            //{
-            //    return "الحملة غير نشطة حالياً ولا يمكن الانضمام لها";
-            //}
+            if (CampaignMetrics.DetermineCampaignStatus(campaign) == 1)
+            {
+                return "الحملة غير نشطة حالياً ولا يمكن الانضمام لها";
+            }
 
             // تحقق لو المستفيد قدم طلب قبل كده لنفس الحملة
             var existingRequest = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
