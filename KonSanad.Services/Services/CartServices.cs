@@ -321,7 +321,8 @@ namespace KonSanad.Services.Services
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
                     SupplyId = cartItem.ProductId,
                     ImageUrl = cartItem.ImagUrl,
-                    reason = finalReason
+                    reason = finalReason,
+                     Status = "قيد الانتظار",
                 };
 
                 helpOrder.HelpOrderItems.Add(helpOrderItem);
