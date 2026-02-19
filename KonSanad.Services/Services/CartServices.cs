@@ -257,6 +257,13 @@ namespace KonSanad.Services.Services
             var cart = await GetCartAsync(userId);
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
 
+            var orderItem = await _dbContext.OrderItems
+                .Include(o => o.Supply)
+                .FirstOrDefaultAsync(o => o.Id == productId);
+            if (quantity > orderItem.Quantity)
+            {
+                return  "خطا في الكميه";
+            }
             if (item != null)
             {
                 item.Quantity = quantity;
