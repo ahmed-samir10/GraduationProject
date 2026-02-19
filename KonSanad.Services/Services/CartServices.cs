@@ -277,6 +277,7 @@ namespace KonSanad.Services.Services
 
             var productIds = cart.Items.Select(i => i.ProductId).ToList();
             var orderItems = await _dbContext.OrderItems
+                .Include(o => o.Supply)
                 .Where(o => productIds.Contains(o.Id))
                 .ToListAsync();
 
@@ -297,18 +298,30 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = userId,
                 Title = "طلب مساعده من سلة المشتريات",
                 Description = "تم انشاء الطلب من سلة المشتريات",
+                Status = "قيد الانتظار",
             };
 
             foreach (var cartItem in cart.Items)
             {
                 var orderItem = orderItems.FirstOrDefault(o => o.Id == cartItem.ProductId);
 
+                var rawReason = !string.IsNullOrWhiteSpace(cartItem.Reason)
+                    ? cartItem.Reason
+                    : (!string.IsNullOrWhiteSpace(orderItem?.Description) ? orderItem.Description : null);
+
+                // sanitize accidental literal "string"
+                if (!string.IsNullOrWhiteSpace(rawReason) && rawReason.Trim().ToLower() == "string")
+                    rawReason = null;
+
+                var finalReason = !string.IsNullOrWhiteSpace(rawReason) ? rawReason : "Not specified";
+
                 var helpOrderItem = new HelpOrderItem
                 {
                     QuantityRequested = cartItem.Quantity,
-                    SupplyId = orderItem?.SupplyId ?? 0,
+                    // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
+                    SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
                     ImageUrl = cartItem.ImagUrl,
-                    reason = orderItem?.Description ?? string.Empty
+                    reason = finalReason
                 };
 
                 helpOrder.HelpOrderItems.Add(helpOrderItem);
@@ -329,7 +342,7 @@ namespace KonSanad.Services.Services
                 Title = helpOrder.Title,
                 Description = helpOrder.Description,
                 CreatedAt = DateTime.UtcNow,
-                Status = "Pending",
+                Status = helpOrder.Status ?? "قيد الانتظار",
                 Items = helpOrder.HelpOrderItems.Select(h => new HelpOrderItemDto
                 {
                     Id = h.Id,
