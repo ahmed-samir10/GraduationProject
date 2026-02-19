@@ -56,7 +56,7 @@ namespace KonSanad.APIS.Controllers
 
 
 
-
+/*
         // =========================
         // Add multiple items in one request
         // =========================
@@ -72,7 +72,7 @@ namespace KonSanad.APIS.Controllers
             await _cartService.AddItemsAsync(beneficiary.Id, dtos);
             return Ok(new { success = true, data = "تم الاضافه" });
         }
-
+*/
 
 
 
@@ -93,7 +93,7 @@ namespace KonSanad.APIS.Controllers
         }
 
 
-
+/*
 
         // =========================
         // Remove multiple items
@@ -110,7 +110,7 @@ namespace KonSanad.APIS.Controllers
             var res = await _cartService.RemoveItemsAsync(beneficiary.Id, productIds);
             return Ok(new { success = true, data = res });
         }
-
+*/
 
 
 
@@ -118,7 +118,7 @@ namespace KonSanad.APIS.Controllers
         // Update multiple items quantities
         // =========================
         [HttpPut("UpdateItems")]
-        public async Task<IActionResult> UpdateItems([FromBody] IEnumerable<UpdateCartItemDto> items)
+        public async Task<IActionResult> UpdateItems([FromBody] UpdateCartItemDto Updated)
         {
             var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
@@ -126,7 +126,7 @@ namespace KonSanad.APIS.Controllers
                 .Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            var res = await _cartService.UpdateItemsQuantityAsync(beneficiary.Id, items);
+            var res = await _cartService.UpdateItemQuantityAsync(beneficiary.Id, Updated.ProductId , Updated.Quantity);
             return Ok(new { success = true, data = res });
         }
 

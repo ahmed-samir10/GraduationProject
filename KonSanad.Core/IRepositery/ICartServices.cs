@@ -14,7 +14,7 @@ namespace KonSanad.Core.IRepositery
 
         Task<string> RemoveItemsAsync(int userId, IEnumerable<int> productIds);
 
-        Task<string> UpdateItemsQuantityAsync(int userId, IEnumerable<UpdateCartItemDto> items);
+        Task<string> UpdateItemQuantityAsync(int userId, int productId, int quantity);
 
         Task<string> ClearCartAsync(int userId);
     }
