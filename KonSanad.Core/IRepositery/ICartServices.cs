@@ -8,11 +8,11 @@ namespace KonSanad.Core.IRepositery
 
         Task<string> AddItemAsync(int userId, AddToCartDto dto);
 
-        Task AddItemsAsync(int userId, IEnumerable<AddToCartDto> dtos);
+     
 
         Task<string> RemoveItemAsync(int userId, int productId);
 
-        Task<string> RemoveItemsAsync(int userId, IEnumerable<int> productIds);
+
 
         Task<string> UpdateItemQuantityAsync(int userId, int productId, int quantity);
 

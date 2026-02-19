@@ -121,13 +121,13 @@ namespace KonSanad.Services.Services
                 });
                 
             }
-            else if (item.Quantity < orderItem.Quantity)
+            else if (dto.QuantityRequested + item.Quantity <= orderItem.Quantity)
             {
                 item.Quantity += dto.QuantityRequested;
             }
             else
             {
-                return "  كميه غير صحيحه";
+                return "كميه غير صحيحه";
             }
 
                 // Serialize بطريقة مرتبة
@@ -145,54 +145,6 @@ namespace KonSanad.Services.Services
 
 
 
-        // =========================
-        // Add multiple items in one request
-        // =========================
-        public async Task AddItemsAsync(int userId, IEnumerable<AddToCartDto> dtos)
-        {
-            if (dtos is null) throw new ArgumentNullException(nameof(dtos));
-
-            var cart = await GetCartAsync(userId);
-
-            foreach (var dto in dtos)
-            {
-                if (dto is null) continue;
-
-                var orderItem = await _dbContext.OrderItems
-                    .Include(o => o.Supply)
-                    .FirstOrDefaultAsync(o => o.Id == dto.ProductId);
-
-                if (orderItem is null) continue; // skip missing items
-
-                var item = cart.Items.FirstOrDefault(x => x.ProductId == orderItem.Id);
-
-                if (item is null)
-                {
-                    cart.Items.Add(new CartItemResponseDto
-                    {
-                        ProductId = orderItem.Id,
-                        ProductName = orderItem.Supply?.Name ?? orderItem.CustomSupplyName ?? "Unknown",
-                        ImagUrl = orderItem.ImageUrl ?? orderItem.Supply?.ImageUrl,
-                        Quantity = dto.QuantityRequested,
-                    });
-                }
-                else
-                {
-                    item.Quantity += dto.QuantityRequested;
-                }
-            }
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            };
-
-            var json = JsonSerializer.Serialize(cart, options);
-            await _database.StringSetAsync(GetCartKey(userId), json);
-        }
-
-
 
 
         // =========================
@@ -202,32 +154,23 @@ namespace KonSanad.Services.Services
         {
             var cart = await GetCartAsync(userId);
 
-            cart.Items.RemoveAll(x => x.ProductId == productId);
+            if (cart == null || cart.Items == null || !cart.Items.Any())
+                return "الكارت فاضي";
+
+            var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+
+            if (item == null)
+                return "المنتج مش موجود في الكارت";
+
+            cart.Items.Remove(item);
 
             var json = JsonSerializer.Serialize(cart);
             await _database.StringSetAsync(GetCartKey(userId), json);
-            return "تم الحذف";
+
+            return "تم الحذف بنجاح";
         }
 
 
-
-
-        // =========================
-        // Remove multiple items  => Focus To The ToHashSet()
-        // =========================
-        public async Task<string> RemoveItemsAsync(int userId, IEnumerable<int> productIds)
-        {
-            if (productIds is null) throw new ArgumentNullException(nameof(productIds));
-
-            var cart = await GetCartAsync(userId);
-
-            var ids = productIds.ToHashSet();
-            cart.Items.RemoveAll(x => ids.Contains(x.ProductId));
-
-            var json = JsonSerializer.Serialize(cart);
-            await _database.StringSetAsync(GetCartKey(userId), json);
-            return "تم الحذف";
-        }
 
 
 
@@ -312,7 +255,7 @@ namespace KonSanad.Services.Services
                 }
 
                 // merge now that provided items are valid
-                await AddItemsAsync(userId, items);
+               // await AddItemsAsync(userId, items);
             }
 
             var cart = await GetCartAsync(userId);
@@ -405,37 +348,6 @@ namespace KonSanad.Services.Services
 
 
 
-        // =========================
-        // Update multiple items quantities  => Focus To The ToDictionary()
-        // =========================
-        public async Task<string> UpdateItemsQuantityAsync(int userId, IEnumerable<UpdateCartItemDto> items)
-        {
-            if (items is null) throw new ArgumentNullException(nameof(items));
-
-            var cart = await GetCartAsync(userId);
-
-            var map = items.ToDictionary(i => i.ProductId, i => i.Quantity); // Key: ProductId, Value: Quantity
-
-            foreach (var cartItem in cart.Items.ToList())
-            {
-                if (map.TryGetValue(cartItem.ProductId, out var qty))
-                {
-                    if (qty <= 0)
-                    {
-                        // remove
-                        cart.Items.Remove(cartItem);
-                    }
-                    else
-                    {
-                        cartItem.Quantity = qty;
-                    }
-                }
-            }
-
-            var json = JsonSerializer.Serialize(cart);
-            await _database.StringSetAsync(GetCartKey(userId), json);
-            return "تم التعديل";
-        }
     }
 
 }
