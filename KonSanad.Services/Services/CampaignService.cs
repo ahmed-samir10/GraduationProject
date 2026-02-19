@@ -113,7 +113,8 @@ namespace KonSanad.Services.Services
                 Status = CampaignMetrics.CalculateStatus(c),
                 CampaignStatus = (CampaignStatus)CampaignMetrics.DetermineCampaignStatus(c), // هنا enum مباشرة
                 DonorCount = CampaignMetrics.CalculateDonorCount(c),
-               // PictureUrl = _mapper.Map<CampaignUrlResolver>(c) // لو محتاج resolver
+                CategoryName = c.Category.Name ?? string.Empty,
+                 PictureUrl = c.PictureUrl ?? string.Empty,
             }).ToList();
             return dtos;
         }
