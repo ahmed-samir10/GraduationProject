@@ -16,6 +16,8 @@ namespace KonSanad.Core.Dtos
 
         public string PictureUrl { get; set; }
 
+        public List<HelpOrderItemDto> Items { get; set; } = new List<HelpOrderItemDto>();
+
         // public List<string> ImageUrls { get; set; } = new List<string>();
         //  public List<HelpOrderItemDto> Items { get; set; } = new List<HelpOrderItemDto>();
 
