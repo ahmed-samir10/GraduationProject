@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using KonSanad.Core.Dtos;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -17,6 +19,18 @@ namespace KonSanad.APIS.Controllers
             _unitOfWork = unitOfWork;
         }
 
+        private async Task<int?> GetBeneficiaryIdAsync()
+        {
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            if (string.IsNullOrEmpty(userId)) return null;
+
+            var ben = await _unitOfWork
+                .Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            return ben?.Id;
+        }
+
       
 
         // =========================
@@ -25,12 +39,10 @@ namespace KonSanad.APIS.Controllers
         [HttpGet]
         public async Task<ActionResult<CartResponseDto>> GetCart()
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId is null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var Ben = await _unitOfWork .Repository<Beneficiary, int>().FirstOrDefaultAsync(b => b.AppUserId == userId); 
-           
-            var cart = await _cartService.GetCartAsync(Ben.Id);
-
+            var cart = await _cartService.GetCartAsync(benId.Value);
             return Ok(new { success = true, data = cart });
         }
 
@@ -43,14 +55,11 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("Additems")]
         public async Task<IActionResult> AddItemToCart([FromBody] AddToCartDto dto)
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId is null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var Ben = await _unitOfWork
-                 .Repository<Beneficiary, int>()
-                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-          var res =   await _cartService.AddItemAsync(Ben.Id, dto);
-            return Ok(new { success = true, data = res });
+            await _cartService.AddItemAsync(benId.Value, dto);
+            return Ok(new { success = true, data = "تم الاضافه" });
         }
 
 
@@ -62,13 +71,10 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("AddItemsBulk")]
         public async Task<IActionResult> AddItemsBulk([FromBody] IEnumerable<AddToCartDto> dtos)
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var beneficiary = await _unitOfWork
-                    .Repository<Beneficiary, int>()
-                    .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            await _cartService.AddItemsAsync(beneficiary.Id, dtos);
+            await _cartService.AddItemsAsync(benId.Value, dtos);
             return Ok(new { success = true, data = "تم الاضافه" });
         }
 
@@ -81,13 +87,10 @@ namespace KonSanad.APIS.Controllers
         [HttpDelete("Delitems/{productId}")]
         public async Task<IActionResult> RemoveItem(int productId)
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var Ben = await _unitOfWork
-                    .Repository<Beneficiary, int>()
-                    .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            var res= await _cartService.RemoveItemAsync(Ben.Id, productId);
+            var res= await _cartService.RemoveItemAsync(benId.Value, productId);
             return Ok(new { success = true, data = res });
         }
 
@@ -100,13 +103,10 @@ namespace KonSanad.APIS.Controllers
         [HttpDelete("Delitems")]
         public async Task<IActionResult> RemoveItems([FromBody] IEnumerable<int> productIds)
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var beneficiary = await _unitOfWork
-                .Repository<Beneficiary, int>()
-                .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            var res = await _cartService.RemoveItemsAsync(beneficiary.Id, productIds);
+            var res = await _cartService.RemoveItemsAsync(benId.Value, productIds);
             return Ok(new { success = true, data = res });
         }
 
@@ -119,13 +119,10 @@ namespace KonSanad.APIS.Controllers
         [HttpPut("UpdateItems")]
         public async Task<IActionResult> UpdateItems([FromBody] IEnumerable<UpdateCartItemDto> items)
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var beneficiary = await _unitOfWork
-                .Repository<Beneficiary, int>()
-                .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            var res = await _cartService.UpdateItemsQuantityAsync(beneficiary.Id, items);
+            var res = await _cartService.UpdateItemsQuantityAsync(benId.Value, items);
             return Ok(new { success = true, data = res });
         }
 
@@ -138,14 +135,30 @@ namespace KonSanad.APIS.Controllers
         [HttpDelete("ClearCart")]
         public async Task<IActionResult> ClearCart()
         {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
 
-            var Ben = await _unitOfWork
-                .Repository<Beneficiary, int>()
-                .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            var res = await _cartService.ClearCartAsync(Ben.Id);
+            var res = await _cartService.ClearCartAsync(benId.Value);
             return Ok(new { success = true, data = res });
+        }
+
+
+        // =========================
+        // Submit Cart (retrieve all cart data in one request)
+        // Front-end should call this when user clicks Submit to get final cart snapshot
+        // and basic validation (missing items or invalid quantities).
+        // =========================
+        [HttpPost("SubmitCart")]
+        public async Task<IActionResult> SubmitCart()
+        {
+            var benId = await GetBeneficiaryIdAsync();
+            if (benId is null) return Unauthorized(new { success = false, message = "User not found" });
+
+            var submitResult = await _cartService.SubmitCartAsync(benId.Value);
+            if (!submitResult.Success)
+                return BadRequest(new { success = false, errors = submitResult.Errors });
+
+            return Ok(new { success = true, data = submitResult.HelpOrder });
         }
     }
 }
