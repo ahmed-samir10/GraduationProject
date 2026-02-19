@@ -38,7 +38,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
  [FromQuery] int pageSize = 8)
         {
-            var list = await _service.GetAllAsync(pageNumber,pageSize);
+            var list = await _service.GetAllCampaignBeneficiaryAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list } );
         }
 
