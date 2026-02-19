@@ -12,5 +12,6 @@ namespace KonSanad.Core.Entity
         public Supply supply { get; set; }
 
         public int Quantity { get; set; }
+        public string Reason { get; set; }
     }
 }

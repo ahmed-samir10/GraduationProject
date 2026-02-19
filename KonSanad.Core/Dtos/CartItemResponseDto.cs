@@ -6,5 +6,6 @@
         public string ProductName { get; set; }
       public string ImagUrl { get; set; }
         public int Quantity { get; set; }
+        public string Reason { get; set; }
     }
 }

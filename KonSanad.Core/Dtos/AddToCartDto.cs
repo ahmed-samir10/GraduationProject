@@ -10,5 +10,6 @@ namespace KonSanad.Core.Dtos
     {
         public int ProductId { get; set; }
         public int QuantityRequested {  get; set; }
+        public string Reason { get; set; }
     }
 }

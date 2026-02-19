@@ -6,7 +6,7 @@ namespace KonSanad.Core.IRepositery
     {
         Task<CartResponseDto> GetCartAsync(int userId);
 
-        Task AddItemAsync(int userId, AddToCartDto dto);
+        Task<string> AddItemAsync(int userId, AddToCartDto dto);
 
         Task AddItemsAsync(int userId, IEnumerable<AddToCartDto> dtos);
 

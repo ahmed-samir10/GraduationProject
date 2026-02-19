@@ -49,8 +49,8 @@ namespace KonSanad.APIS.Controllers
                  .Repository<Beneficiary, int>()
                  .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            await _cartService.AddItemAsync(Ben.Id, dto);
-            return Ok(new { success = true, data = "تم الاضافه" });
+          var res =   await _cartService.AddItemAsync(Ben.Id, dto);
+            return Ok(new { success = true, data = res });
         }
 
 
