@@ -292,18 +292,41 @@ namespace KonSanad.Services.Services
                 return result;
             }
 
-            // Create HelpOrder entity
+            // Retrive Title and Description from supplies 
+            var supplyInfos = orderItems.Select(o => new
+            {
+                OrderItem = o,
+                SupplyId = o.Supply?.Id ?? o.SupplyId,
+                SupplyName = o.Supply?.Name ?? o.CustomSupplyName ?? "Unknown",
+                SupplyDescription = o.Supply?.Description ?? "Unknown",
+            }).ToDictionary(x => x.OrderItem.Id);
+
+            var titleParts = new List<string>();
+            var descParts = new List<string>();
+
+            foreach (var cartItem in cart.Items)
+            {
+                if (!supplyInfos.TryGetValue(cartItem.ProductId, out var info)) continue;
+
+                titleParts.Add(info.SupplyName);
+                var desc = info.SupplyDescription ?? "";
+                descParts.Add($"{info.SupplyName} - {desc} (الكمية: {cartItem.Quantity})");
+            }
+
+
+            // Create HelpOrder
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = userId,
-                Title = "طلب مساعده من سلة المشتريات",
-                Description = "تم انشاء الطلب من سلة المشتريات",
+                Title = string.Join(", ", titleParts.Distinct()),
+                Description = string.Join(" | ", descParts.Distinct()),
                 Status = "قيد الانتظار",
             };
 
             foreach (var cartItem in cart.Items)
             {
                 var orderItem = orderItems.FirstOrDefault(o => o.Id == cartItem.ProductId);
+                if (orderItem == null) continue;
 
                 var rawReason = !string.IsNullOrWhiteSpace(cartItem.Reason)
                     ? cartItem.Reason
@@ -313,16 +336,15 @@ namespace KonSanad.Services.Services
                 if (!string.IsNullOrWhiteSpace(rawReason) && rawReason.Trim().ToLower() == "string")
                     rawReason = null;
 
-                var finalReason = cartItem.Reason;
+                var finalReason = !string.IsNullOrWhiteSpace(rawReason) ? rawReason : "Not specified";
 
                 var helpOrderItem = new HelpOrderItem
                 {
                     QuantityRequested = cartItem.Quantity,
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
-                    SupplyId = cartItem.ProductId,
+                    SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
                     ImageUrl = cartItem.ImagUrl,
-                    reason = finalReason,
-                     Status = "قيد الانتظار",
+                    reason = finalReason
                 };
 
                 helpOrder.HelpOrderItems.Add(helpOrderItem);
