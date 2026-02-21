@@ -87,7 +87,7 @@ namespace KonSanad.Services.Services
 
 
             await _unitOfWork.Complete();
-            return "تم بدء المهمة بنجاح";
+            return "تم استقبال طلبك";
         }
         // ----------------------------------------------------------
 
