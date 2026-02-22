@@ -19,7 +19,7 @@ namespace KonSanad.Core.Entity
 
             public int MissionId { get; set; }
             public Mission Mission { get; set; } = null!;
-            public MissionStatus MissionStatus { get; set; }
+            public VolunteerMissionStatus MissionStatus { get; set; }
 
 
             public DateTime? StartDate { get; set; }

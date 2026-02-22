@@ -18,17 +18,48 @@ namespace KonSanad.Services.Services
             _userManager = userManager;
         }
 
-        
+
         // Method to get all missions with beneficiary details
         // ----------------------------------------------------------
-        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync()
+        /*   public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync()
+           {
+               var dtos = await _context.Missions
+                   .AsNoTracking()
+                   .Select(m => new MissionDto
+                   {
+                       Id = m.Id,
+
+                       Title = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
+                           ? m.HelpOrder.Beneficiary.FullName
+                           : (m.Title ?? string.Empty),
+
+                       PhoneNumber = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
+                           ? m.HelpOrder.Beneficiary.Phone
+                           : (m.PhoneNumber ?? string.Empty),
+
+                       Address = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
+                           ? m.HelpOrder.Beneficiary.Address
+                           : (m.Address ?? string.Empty),
+
+                       Description = "مطلوب زياره ميدانيه",
+                       StartDate = m.CreatedAt,
+                       MissionStatus = m.MissionStatus
+                   })
+                   .ToListAsync();
+
+               return dtos;
+           }*/
+        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId)
         {
             var dtos = await _context.Missions
                 .AsNoTracking()
+                // مهمات New فقط ومتعلقة بالمتطوع ده
+                .Where(m => m.MissionStatus == MissionStatus.New
+                            && !_context.MissionVolunteers
+                                .Any(vm => vm.MissionId == m.Id && vm.VolunteerId == volunteerId))
                 .Select(m => new MissionDto
                 {
                     Id = m.Id,
-
                     Title = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
                         ? m.HelpOrder.Beneficiary.FullName
                         : (m.Title ?? string.Empty),
@@ -49,46 +80,50 @@ namespace KonSanad.Services.Services
 
             return dtos;
         }
+
+
         // ----------------------------------------------------------
-    
+
 
 
         // Method to start a mission for a volunteer
         // ----------------------------------------------------------
         public async Task<string> StartMissionAsync(int volunteerId, int missionId)
         {
-            var existing = await _unitOfWork
-             .Repository<MissionVolunteers, int>()
-             .FindAllAsync(x => x.MissionId == missionId);
-
-            if (existing.Any())
-               return "تم تقديم طلب لهذه المهمة بالفعل";
-
             var mission = await _unitOfWork
-       .Repository<Mission, int>()
-       .GetByIdAsync(missionId);
+                .Repository<Mission, int>()
+                .GetByIdAsync(missionId);
 
             if (mission == null)
                 return "المهمة غير موجودة";
 
-            // 2️⃣ غيّر حالة المهمة
-            mission.MissionStatus = MissionStatus.InReview;
+            if (mission.MissionStatus != MissionStatus.New)
+                return "المهمة تم إسنادها بالفعل";
 
-            var MissionVolunteer = new MissionVolunteers
+            var existing = await _unitOfWork
+                .Repository<MissionVolunteers, int>()
+                .FindAllAsync(x => x.MissionId == missionId
+                                && x.VolunteerId == volunteerId);
+
+            if (existing.Any())
+                return "تم تقديم طلب لهذه المهمة بالفعل";
+
+            var missionVolunteer = new MissionVolunteers
             {
                 VolunteerId = volunteerId,
                 MissionId = missionId,
                 CreatedAt = DateTime.UtcNow,
-                MissionStatus = MissionStatus.InReview
+                MissionStatus = VolunteerMissionStatus.Applied,
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>()
-                .AddAsync(MissionVolunteer);
-
+                .AddAsync(missionVolunteer);
 
             await _unitOfWork.Complete();
-            return "تم بدء المهمة بنجاح";
+
+            return "تم تقديم الطلب بنجاح";
         }
+
         // ----------------------------------------------------------
 
         public async Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId)
@@ -118,67 +153,49 @@ namespace KonSanad.Services.Services
         // ----------------------------------------------------------
 
         // Method to submit a mission report by a volunteer
-        // ----------------------------------------------------------
         public async Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null)
         {
-            // Validate volunteer exists
             var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
-
             if (volunteer is null) return "المتطوع غير موجود";
 
-
-
-            // Validate volunteer-mission relation exists Or not
             var vmRepo = _unitOfWork.Repository<MissionVolunteers, int>();
-            var volunteerMission = await vmRepo.FirstAsync(vm => vm.VolunteerId == volunteerId && vm.MissionId == missionId);
+            var volunteerMission = await vmRepo.FirstOrDefaultAsync(vm => vm.VolunteerId == volunteerId && vm.MissionId == missionId);
 
             if (volunteerMission is null)
-              return "المتطوع غير مرتبط بهذه المهمة";
+                return "المتطوع غير مرتبط بهذه المهمة";
 
-
-
-            // Optionally validate mission exists and dates (if needed)
-            var mission = await _unitOfWork.Repository<Mission, int>().FirstAsync(m => m.Id == missionId);
+            var mission = await _unitOfWork.Repository<Mission, int>().FirstOrDefaultAsync(m => m.Id == missionId);
             if (mission == null)
                 return "المهمة غير موجودة";
 
-            // 2️⃣ غيّر حالة المهمة
-            mission.MissionStatus = MissionStatus.Completed;
-
-
-
-            // If mission has start/end dates, you can prevent reporting outside mission window
+            // تحقق من فترة المهمة لو محددة
             if (mission.StartDate.HasValue && mission.EndDate.HasValue)
             {
                 var now = DateTime.UtcNow;
                 if (now < mission.StartDate.Value || now > mission.EndDate.Value)
-                {
-                   return "لا يمكن تقديم التقرير خارج فترة المهمة المحددة";
-                }
+                    return "لا يمكن تقديم التقرير خارج فترة المهمة المحددة";
             }
 
-
-            // Save file
+            // حفظ الملف
             var relativeUrl = await _fileService.SaveFileAsync(file, "uploads");
-
-
-            // Store the result (for now store a single URL).
-            // If multiple files are needed consider storing JSON or separate table.
             volunteerMission.ResultMission = relativeUrl;
             if (!string.IsNullOrEmpty(notes))
-            {
                 volunteerMission.Notes = notes;
-            }
 
-            //vmRepo.Update(volunteerMission);
-            volunteerMission.MissionStatus = MissionStatus.Completed;
-            volunteerMission.Status ="Completed";
+            // تحديث حالة المهمة للمتطوع
+            volunteerMission.MissionStatus = VolunteerMissionStatus.Submitted;
+          //  mission.MissionStatus = MissionStatus.Completed;
+
+            // تحديث حالة المهمة بشكل عام (تختفي من الباقي)
+            mission.MissionStatus = MissionStatus.Completed;
+
             vmRepo.Update(volunteerMission);
+            _unitOfWork.Repository<Mission, int>().Update(mission);
             await _unitOfWork.Complete();
 
             return relativeUrl;
         }
-        // ----------------------------------------------------------
+
 
 
 

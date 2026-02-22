@@ -29,7 +29,21 @@ namespace KonSanad.APIS.Controllers
         [HttpGet("missions")]
         public async Task<IActionResult> GetMissions()
         {
-            var missions = await _volunteerService.GetAllMissionsAsync();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+
+            var Vol = await _unitOfWork
+     .Repository<Volunteer, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (Vol == null)
+                return BadRequest(new { Error = "No vol found for this user" });
+
+            int VolID = Vol.Id;
+
+            var missions = await _volunteerService.GetAllMissionsAsync(VolID);
             return Ok(new { success = true, data = missions });
         }
 

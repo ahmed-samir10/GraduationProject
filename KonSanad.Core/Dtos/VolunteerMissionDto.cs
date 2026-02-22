@@ -12,7 +12,7 @@ namespace KonSanad.Core.Dtos
         public int Id { get; set; }
         public int MissionId { get; set; }
         public string Name { get; set; }
-        public MissionStatus MissionStatus { get; set; }
+        public VolunteerMissionStatus MissionStatus { get; set; }
         public DateTime CreatedAt { get; set; }
        
         public string  Description { get; set; }

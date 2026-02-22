@@ -168,9 +168,10 @@ namespace KonSanad.Services.Services
             {
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
-                RequestedAt = DateTime.UtcNow,
-                    Status = " قيد الانتظار"
-              //  Reason = request.Reason
+                RequestedAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                    Status = " قيد الانتظار",
+               Reason = request.Reason
             };
 
             // joinRequest.Status = "Pending";

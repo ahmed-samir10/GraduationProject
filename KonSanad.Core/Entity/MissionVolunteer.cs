@@ -18,6 +18,6 @@ namespace KonSanad.Core.Entity
         public String Notes { get; set; } = string.Empty;
         public int MissionId { get; set; }
         public Mission Mission { get; set; } = null!;
-        public MissionStatus MissionStatus { get; set; }
+        public VolunteerMissionStatus MissionStatus { get; set; }
     }
 }
