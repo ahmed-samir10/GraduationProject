@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Repository.Entities
 {
@@ -17,6 +18,8 @@ namespace KonSanad.Repository.Entities
         public DateTime? EndDate { get; set; }
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
+
+        public CampaignStatus CampaignStatus {  get; set; } = 0;
     
 
          public string? PictureUrl { get; set; }
@@ -31,10 +34,16 @@ namespace KonSanad.Repository.Entities
         public Manager? Manager { get; set; }  // Navigation property
 
 
+        public int MaxBeneficiaries { get; set; } = 50;
+
         // Navigations
         public ICollection<DonationOrder> DonationOrders { get; set; } = new List<DonationOrder>();
         public ICollection<CampaignResult> CampaignResults { get; set; } = new List<CampaignResult>();
         public ICollection<Mission> Missions { get; set; } = new List<Mission>();
         public ICollection<CampaignVolunteer> CampaignVolunteers { get; set; } = new List<CampaignVolunteer>();
+
+
+        public ICollection<BeneficiaryCampaign> BeneficiaryCampaigns { get; set; }
+
     }
 }

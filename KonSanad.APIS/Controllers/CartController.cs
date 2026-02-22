@@ -207,7 +207,7 @@ namespace KonSanad.APIS.Controllers
             if (!submitResult.Success)
                 return BadRequest(new { success = false, errors = submitResult.Errors });
 
-            return Ok(new { success = true, data = submitResult.HelpOrder });
+            return Ok(new { success = true, message = "تم إرسال الطلب بنجاح" });
         }
     }
 }

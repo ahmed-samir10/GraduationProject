@@ -97,5 +97,33 @@ namespace KonSanad.Services.Helpers
 
             return "نشطة";
         }
+
+        #region calculateBeneficiaryCount&STATUS
+        public static int CalculateBeneficiaryCount(Campaign c)
+        {
+            if (c?.BeneficiaryCampaigns == null)
+                return 0;
+
+            var beneficiaries = c.BeneficiaryCampaigns
+                                 .Select(bc => bc.BeneficiaryId)
+                                 .Distinct()
+                                 .Count();
+
+            return beneficiaries;
+        }
+        public static int DetermineCampaignStatus(Campaign c)
+        {
+            int beneficiaryCount = CalculateBeneficiaryCount(c);
+
+            if (beneficiaryCount >= c.MaxBeneficiaries)
+                return 1;
+
+            else
+            return 0;
+        }
+
+        #endregion
+
+
     }
 }

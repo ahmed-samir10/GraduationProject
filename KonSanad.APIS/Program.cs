@@ -138,13 +138,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-// redies 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var config = ConfigurationOptions.Parse("localhost:6379");
+    var connectionString = builder.Configuration.GetConnectionString("Redis");
+    var config = ConfigurationOptions.Parse(connectionString);
     config.AbortOnConnectFail = false;
-
+    config.Ssl = false;
     return ConnectionMultiplexer.Connect(config);
 });
 var app = builder.Build();

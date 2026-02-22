@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KonSanad.Services.Helpers;
+
 using System.Text.Json;
 
 namespace KonSanad.APIS.Helpers
@@ -72,6 +74,24 @@ namespace KonSanad.APIS.Helpers
 
                 // resolve PictureUrl via resolver registered in DI (CampaignUrlResolver depends on IConfiguration)
                 .ForMember(d => d.PictureUrl, opt => opt.MapFrom<CampaignUrlResolver>());
+
+            #region newMap
+            // Campaign -> CampaignDto (presentation)
+            CreateMap<Campaign, CampaignBeneficiaryDto>()
+                .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
+                .ForMember(d => d.ShortDescription, opt => opt.MapFrom(s =>
+                    string.IsNullOrWhiteSpace(s.Description) ? string.Empty :
+                    s.Description.Length > 180 ? s.Description.Substring(0, 180).Trim() + "…" : s.Description))
+                .ForMember(d => d.Title, opt => opt.MapFrom(s => s.Title ?? string.Empty))
+                .ForMember(d => d.ProgressPercentage, opt => opt.MapFrom(s => CampaignMetrics.CalculateProgress(s)))
+                 .ForMember(d => d.Status, opt => opt.MapFrom(s => CampaignMetrics.CalculateStatus(s)))
+                .ForMember(d => d.CampaignStatus, opt => opt.MapFrom(s => Services.Helpers.CampaignMetrics.DetermineCampaignStatus(s)))
+                .ForMember(d => d.DonorCount, opt => opt.MapFrom(s => CampaignMetrics.CalculateDonorCount(s)))
+
+                // resolve PictureUrl via resolver registered in DI (CampaignUrlResolver depends on IConfiguration)
+                .ForMember(d => d.PictureUrl, opt => opt.MapFrom<CampaignUrlResolver>());
+
+            #endregion
 
             // --- New DTO -> Entity mappings (help requests) ---
             // Map a "new product" request into a HelpOrder (store details in Description / ImageUrlsJson)
