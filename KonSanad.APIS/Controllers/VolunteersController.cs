@@ -43,7 +43,7 @@ namespace KonSanad.APIS.Controllers
 
             int VolID = Vol.Id;
 
-            var missions = await _volunteerService.GetAllMissionsAsync(VolID);
+            var missions = await _volunteerService.GetAllMissionsAsync();
             return Ok(new { success = true, data = missions });
         }
 

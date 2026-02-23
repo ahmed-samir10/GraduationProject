@@ -321,6 +321,7 @@ namespace KonSanad.Services.Services
                 Title = string.Join(", ", titleParts.Distinct()),
                 Description = string.Join(" | ", descParts.Distinct()),
                 Status = "قيد الانتظار",
+                CreatedAt = DateTime.Now,
             };
 
             foreach (var cartItem in cart.Items)
@@ -344,6 +345,8 @@ namespace KonSanad.Services.Services
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
                     SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
                     ImageUrl = cartItem.ImagUrl,
+                    Status = "قيد الانتظار",
+                    CreatedAt= DateTime.Now,
                     reason = finalReason
                 };
 

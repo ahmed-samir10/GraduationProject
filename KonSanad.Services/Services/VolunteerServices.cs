@@ -79,7 +79,7 @@ namespace KonSanad.Services.Services
                 VolunteerId = volunteerId,
                 MissionId = missionId,
                 CreatedAt = DateTime.UtcNow,
-                MissionStatus = MissionStatus.InReview
+                MissionStatus =VolunteerMissionStatus.Applied,
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>()
@@ -171,7 +171,7 @@ namespace KonSanad.Services.Services
             }
 
             //vmRepo.Update(volunteerMission);
-            volunteerMission.MissionStatus = MissionStatus.Completed;
+            volunteerMission.MissionStatus =VolunteerMissionStatus.Submitted;
             volunteerMission.Status ="Completed";
             vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
