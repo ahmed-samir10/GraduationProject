@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+
 namespace KonSanad.Services.Services
 {
     public class HelpRequestService : IHelpRequestService
@@ -44,7 +46,7 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName}"),
+              
                 HelpOrderStatus = KonSanad.Core.Entity.HelpOrderStatus.Pending,
                 IsDeleted = false
             };
@@ -94,7 +96,7 @@ namespace KonSanad.Services.Services
             };
         }
 
-        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
+       /* public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
@@ -144,7 +146,7 @@ namespace KonSanad.Services.Services
         }
 
 
-
+*/
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
 
@@ -246,77 +248,49 @@ namespace KonSanad.Services.Services
             return campaignDtos;
         }
 
-        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
+      
+        public async Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
         {
-            // 1) هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary is null)
                 throw new Exception("Beneficiary not found");
 
-            // 2) هات الطلبات مع Items و Supply
-            var requests = await _unitOfWork.Repository<HelpOrder, int>()
-                .FindAllAsync(
-                    h => h.BeneficiaryId == beneficiary.Id,
-                    include: q => q
-                        .Include(h => h.HelpOrderItems)
-                        .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
-                );
-
-            // apply pagination
             var skip = (Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1);
-            var pagedRequests = requests.Skip(skip).Take(Math.Max(pageSize, 1)).ToList();
+            var take = Math.Max(pageSize, 1);
 
-            // 3) Map إلى DTO
-            var helpOrderDtos = pagedRequests.Select(h =>
-            {
-                var firstItem = h.HelpOrderItems?.FirstOrDefault();
+            var query = _unitOfWork
+       .Repository<HelpOrder, int>()
+       .GetQueryable()
+       .AsNoTracking()
+       .Where(h => h.BeneficiaryId == beneficiary.Id);
 
-                // Build title from help order title or from item supply names
-                string title;
-                if (!string.IsNullOrWhiteSpace(h.Title))
-                    title = h.Title;
-                else if (h.HelpOrderItems != null && h.HelpOrderItems.Any())
-                    title = string.Join(", ", h.HelpOrderItems.Select(i => i.Supply?.Name ?? i.SupplyId.ToString()).Distinct());
-                else
-                    title = "طلب مساعدة";
-
-                // Build description: prefer HelpOrder.Description, otherwise compose from first item
-                string description = !string.IsNullOrWhiteSpace(h.Description)
-                    ? h.Description
-                    : (firstItem?.Supply?.Description ?? string.Empty);
-
-                var dto = new HelpOrderDto
+            var result = await query
+                .OrderByDescending(h => h.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Select(h => new
                 {
-                    Id = h.Id,
-                    Title = title,
-                    Description = description,
-                    Reason = firstItem?.reason ?? string.Empty,
-                    BeneficiaryId = h.BeneficiaryId,
-                    PictureUrl = firstItem?.ImageUrl ?? string.Empty,
+                    HelpOrderId = h.Id,
                     CreatedAt = h.CreatedAt,
-                    // Map status from enum property directly
-                    Status = h.HelpOrderStatus
-                };
-
-                // Populate items in DTO
-                if (h.HelpOrderItems != null && h.HelpOrderItems.Any())
-                {
-                    dto.Items = h.HelpOrderItems.Select(i => new HelpOrderItemDto
+                    Items = h.HelpOrderItems.Select(i => new HelpOrderItemDto
                     {
                         Id = i.Id,
                         HelpOrderId = i.HelpOrderId,
                         SupplyId = i.SupplyId,
                         Quantity = i.QuantityRequested,
                         ImageUrl = i.ImageUrl,
-                    }).ToList();
-                }
+                        Status = i.HelpOrderStatus,
+                        Title = i.Title,
+                        Reason = i.reason
+                        
+                    }).ToList()
+                })
+                .ToListAsync();
 
-                return dto;
-            }).ToList();
 
-            return helpOrderDtos;
+            return result;
         }
 
 

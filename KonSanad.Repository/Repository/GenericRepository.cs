@@ -65,6 +65,11 @@ namespace KonSanad.Repository.Repository
         public async Task<T> GetUserIdAsync(string id)
        => await _context.Set<T>().FindAsync(id);
 
+        public IQueryable<T> GetQueryable()
+        {
+            return _context.Set<T>();
+        }
+
 
     }
 }

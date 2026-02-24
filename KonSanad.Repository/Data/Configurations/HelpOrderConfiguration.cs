@@ -7,8 +7,7 @@ public class HelpOrderConfiguration : IEntityTypeConfiguration<HelpOrder>
         builder.ToTable("HelpOrders");
         builder.HasKey(h => h.Id);
 
-        builder.Property(h => h.Description).IsRequired(false).HasMaxLength(1000);
-
+       
         // Relationship with Beneficiary
         builder.HasOne(h => h.Beneficiary)
             .WithMany(b => b.HelpOrders)

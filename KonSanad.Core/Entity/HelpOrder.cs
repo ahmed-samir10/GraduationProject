@@ -7,8 +7,7 @@ namespace KonSanad.Repository.Entities
     [Table("HelpOrders")]
     public class HelpOrder : BaseEntity<int>
     {
-        public string? Title { get; set; }
-        public string? Description { get; set; }
+      
 
         // The status of the help order (Pending, Rejected, Approved)
         public HelpOrderStatus HelpOrderStatus { get; set; } = HelpOrderStatus.Pending;

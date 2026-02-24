@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using KonSanad.Core.Entity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KonSanad.Repository.Entities
@@ -6,6 +7,10 @@ namespace KonSanad.Repository.Entities
     [Table("HelpOrderItems")]  // الأفضل جمع
     public class HelpOrderItem : BaseEntity<int>
     {
+
+        public string? Title { get; set; }
+
+        public HelpOrderStatus HelpOrderStatus { get; set; } = HelpOrderStatus.Pending;
         [Required]
         public int QuantityRequested { get; set; }
 

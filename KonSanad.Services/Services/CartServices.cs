@@ -319,8 +319,7 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = userId,
-                Title = string.Join(", ", titleParts.Distinct()),
-                Description = string.Join(" | ", descParts.Distinct()),
+                CreatedAt = DateTime.Now,
                 HelpOrderStatus = HelpOrderStatus.Pending,
             };
 
@@ -345,7 +344,10 @@ namespace KonSanad.Services.Services
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
                     SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
                     ImageUrl = cartItem.ImagUrl,
-                    reason = finalReason
+                    reason = finalReason,
+                    Title=cartItem.ProductName,
+                    CreatedAt = DateTime.Now,
+
                 };
 
                 helpOrder.HelpOrderItems.Add(helpOrderItem);
@@ -363,8 +365,7 @@ namespace KonSanad.Services.Services
             {
                 Id = helpOrder.Id,
                 BeneficiaryId = helpOrder.BeneficiaryId,
-                Title = helpOrder.Title,
-                Description = helpOrder.Description,
+              
                 CreatedAt = DateTime.UtcNow,
                 Status = helpOrder.HelpOrderStatus,
                 Items = helpOrder.HelpOrderItems.Select(h => new HelpOrderItemDto

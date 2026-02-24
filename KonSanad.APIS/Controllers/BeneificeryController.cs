@@ -194,7 +194,7 @@ namespace KonSanad.APIS.Controllers
 
 
 
-        [Authorize]
+       /* [Authorize]
         [HttpPost("request-new")]
         public async Task<IActionResult> RequestNewProduct( [FromForm] NewProductRequestDto request)
         {
@@ -216,7 +216,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _helpRequestService.RequestNewProductAsync(beneficiaryId, request);
             return Ok(new { success = true, data = result });
         }
-
+*/
 
 
 
