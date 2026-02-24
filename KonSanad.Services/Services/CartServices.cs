@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using KonSanad.Repository.Entities;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Services.Services
 {
@@ -320,8 +321,7 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = userId,
                 Title = string.Join(", ", titleParts.Distinct()),
                 Description = string.Join(" | ", descParts.Distinct()),
-                Status = "قيد الانتظار",
-                CreatedAt = DateTime.Now,
+                HelpOrderStatus = HelpOrderStatus.Pending,
             };
 
             foreach (var cartItem in cart.Items)
@@ -345,8 +345,6 @@ namespace KonSanad.Services.Services
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
                     SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
                     ImageUrl = cartItem.ImagUrl,
-                    Status = "قيد الانتظار",
-                    CreatedAt= DateTime.Now,
                     reason = finalReason
                 };
 
@@ -368,7 +366,7 @@ namespace KonSanad.Services.Services
                 Title = helpOrder.Title,
                 Description = helpOrder.Description,
                 CreatedAt = DateTime.UtcNow,
-                Status = helpOrder.Status ?? "قيد الانتظار",
+                Status = helpOrder.HelpOrderStatus,
                 Items = helpOrder.HelpOrderItems.Select(h => new HelpOrderItemDto
                 {
                     Id = h.Id,

@@ -33,14 +33,18 @@ namespace KonSanad.APIS.Controllers
             _unitOfWork = unitOfWork;
         }
 
+
+       
         [Authorize]
         [HttpGet("GetAllCampiagn")]
-        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,
- [FromQuery] int pageSize = 8)
+        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 8)
         {
             var list = await _service.GetAllCampaignBeneficiaryAsync(pageNumber,pageSize);
             return Ok(new { success = true, data = list } );
         }
+
+
+
 
         [Authorize]
         [HttpGet("GetCampaignById")]
@@ -54,6 +58,9 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = campaignDto });
         }
+
+
+
 
         [Authorize]
         [HttpPost("join-campaign")]
@@ -79,6 +86,9 @@ namespace KonSanad.APIS.Controllers
            
         }
 
+
+
+
         [Authorize]
         [HttpGet("order-item")]
         public async Task<IActionResult> GetOrderItem([FromQuery] int pageNumber = 1 , [FromQuery] int pageSize = 8)
@@ -93,6 +103,9 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = orderItem });
         }
+
+
+
 
         [Authorize]
         [HttpGet("order-item/{id:int}")]
@@ -109,6 +122,9 @@ namespace KonSanad.APIS.Controllers
         // 1) Request an existing donated product (only reason required)
         // POST api/beneificery/{beneficiaryId}/request-existing
 
+
+
+
         [Authorize]
         [HttpGet("joined-campaigns")]
         public async Task<IActionResult> GetJoinedCampaigns()
@@ -124,18 +140,23 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
       
+
+
+
         [Authorize]
         [HttpGet("my-requests")]
-        public async Task<IActionResult> GetMyRequests()
+        public async Task<IActionResult> GetMyRequests([FromQuery] int pageNumber = 1,
+ [FromQuery] int pageSize = 8)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
                 return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
-            var result = await _helpRequestService.GetMyHelpRequestsAsync(userId);
+            var result = await _helpRequestService.GetMyHelpRequestsAsync(userId, pageNumber, pageSize);
 
-            return Ok(new { success = true, data = result });
+            // Return paginated shape similar to GetAllCampaign
+            return Ok(new { success = true, data = result, pageNumber, pageSize });
         }
        
 
@@ -171,6 +192,8 @@ namespace KonSanad.APIS.Controllers
         // POST api/beneificery/{beneficiaryId}/request-new
 
 
+
+
         [Authorize]
         [HttpPost("request-new")]
         public async Task<IActionResult> RequestNewProduct( [FromForm] NewProductRequestDto request)
@@ -195,6 +218,8 @@ namespace KonSanad.APIS.Controllers
         }
 
 
+
+
         [Authorize]
         [HttpGet("GetProfile")]
         public async Task<IActionResult> GetProfile()
@@ -207,6 +232,9 @@ namespace KonSanad.APIS.Controllers
             var result = await _helpRequestService.GetProfileAsync(userId);
             return Ok(new { success = true, data = result });
         }
+
+
+
 
         [Authorize]
         [HttpPut("UpdateProfile")]
