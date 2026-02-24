@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+
 namespace KonSanad.Services.Services
 {
     public class HelpRequestService : IHelpRequestService
@@ -44,8 +46,8 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName}"),
-                Status = "قيد الانتظار ",
+              
+                HelpOrderStatus = KonSanad.Core.Entity.HelpOrderStatus.Pending,
                 IsDeleted = false
             };
 
@@ -94,7 +96,7 @@ namespace KonSanad.Services.Services
             };
         }
 
-        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
+       /* public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
@@ -105,7 +107,7 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = id,
                 Title = request.ProductName,
                 Description = request.ProductDescription,
-                Status = "Requested",
+                HelpOrderStatus = KonSanad.Core.Entity.HelpOrderStatus.Pending,
                 IsDeleted = false
             };
 
@@ -144,7 +146,7 @@ namespace KonSanad.Services.Services
         }
 
 
-
+*/
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
 
@@ -185,9 +187,10 @@ namespace KonSanad.Services.Services
             {
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
-                RequestedAt = DateTime.UtcNow,
-                    Status = " قيد الانتظار"
-              //  Reason = request.Reason
+                RequestedAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                    Status = " قيد الانتظار",
+               Reason = request.Reason
             };
 
             // joinRequest.Status = "Pending";
@@ -245,45 +248,49 @@ namespace KonSanad.Services.Services
             return campaignDtos;
         }
 
-        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
+      
+        public async Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
         {
-            // 1) هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            if (beneficiary == null)
+            if (beneficiary is null)
                 throw new Exception("Beneficiary not found");
 
-            // 2) هات الطلبات مع Items و Supply
-            var requests = await _unitOfWork.Repository<HelpOrder, int>()
-                .FindAllAsync(
-                    h => h.BeneficiaryId == beneficiary.Id,
-                    include: q => q
-                        .Include(h => h.HelpOrderItems)
-                            .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
-                );
+            var skip = (Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1);
+            var take = Math.Max(pageSize, 1);
 
-            // 3) Map إلى DTO
-            var helpOrderDtos = requests.Select(h => new HelpOrderDto
-            {
-                Id = h.Id,
-              
-                Title = h.Title,
-                Description = h.Description ?? string.Empty,
-               Reason = h.HelpOrderItems.FirstOrDefault()?.reason ?? string.Empty,
-                BeneficiaryId = h.BeneficiaryId,
-                PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                Status = "قيد الانتظار",
-                CreatedAt = h.CreatedAt,
-                
-                
+            var query = _unitOfWork
+       .Repository<HelpOrder, int>()
+       .GetQueryable()
+       .AsNoTracking()
+       .Where(h => h.BeneficiaryId == beneficiary.Id);
 
-             
+            var result = await query
+                .OrderByDescending(h => h.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Select(h => new
+                {
+                    HelpOrderId = h.Id,
+                    CreatedAt = h.CreatedAt,
+                    Items = h.HelpOrderItems.Select(i => new HelpOrderItemDto
+                    {
+                        Id = i.Id,
+                        HelpOrderId = i.HelpOrderId,
+                        SupplyId = i.SupplyId,
+                        Quantity = i.QuantityRequested,
+                        ImageUrl = i.ImageUrl,
+                        Status = i.HelpOrderStatus,
+                        Title = i.Title,
+                        Reason = i.reason
+                        
+                    }).ToList()
+                })
+                .ToListAsync();
 
 
-            }).ToList();
-
-            return helpOrderDtos;
+            return result;
         }
 
 

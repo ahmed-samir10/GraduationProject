@@ -107,8 +107,7 @@ namespace KonSanad.APIS.Helpers
 
             // Map an "existing product" request (references an OrderItem) into a HelpOrder (short description)
             CreateMap<ExistingProductRequestDto, HelpOrder>()
-                .ForMember(dest => dest.Description, opt => opt.MapFrom(src =>
-                    $"Request for donated item Id={src.OrderItemId}. Reason: {src.Reason ?? string.Empty}"))
+                
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Requested"))
                 .ForMember(dest => dest.ManagerId, opt => opt.Ignore())
                 .ForMember(dest => dest.BeneficiaryId, opt => opt.Ignore());
