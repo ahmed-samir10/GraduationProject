@@ -245,7 +245,7 @@ namespace KonSanad.Services.Services
             return campaignDtos;
         }
 
-        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
+        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
         {
             // 1) هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
@@ -263,8 +263,12 @@ namespace KonSanad.Services.Services
                         .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
                 );
 
+            // apply pagination
+            var skip = (Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1);
+            var pagedRequests = requests.Skip(skip).Take(Math.Max(pageSize, 1)).ToList();
+
             // 3) Map إلى DTO
-            var helpOrderDtos = requests.Select(h =>
+            var helpOrderDtos = pagedRequests.Select(h =>
             {
                 var firstItem = h.HelpOrderItems?.FirstOrDefault();
 

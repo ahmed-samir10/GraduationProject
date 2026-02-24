@@ -145,16 +145,18 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpGet("my-requests")]
-        public async Task<IActionResult> GetMyRequests()
+        public async Task<IActionResult> GetMyRequests([FromQuery] int pageNumber = 1,
+ [FromQuery] int pageSize = 8)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
                 return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
-            var result = await _helpRequestService.GetMyHelpRequestsAsync(userId);
+            var result = await _helpRequestService.GetMyHelpRequestsAsync(userId, pageNumber, pageSize);
 
-            return Ok(new { success = true, data = result });
+            // Return paginated shape similar to GetAllCampaign
+            return Ok(new { success = true, data = result, pageNumber, pageSize });
         }
        
 
