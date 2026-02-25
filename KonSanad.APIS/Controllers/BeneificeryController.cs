@@ -180,7 +180,7 @@ namespace KonSanad.APIS.Controllers
         }
 
         [Authorize]
-        [HttpPut("update-quantity")]
+        [HttpPut("update-MyRequst")]
         public async Task<IActionResult> UpdateQuantity(int helpOrderId, int newQuantity)
         {
             var result = await _helpRequestService.UpdateHelpOrderQuantityAsync(helpOrderId, newQuantity);
@@ -195,7 +195,7 @@ namespace KonSanad.APIS.Controllers
         #endregion
 
 
-        [Authorize]
+     /*   [Authorize]
         [HttpPost("request-existing")]
         public async Task<IActionResult> RequestExistingProduct( [FromBody] ExistingProductRequestDto request)
         {
@@ -220,7 +220,7 @@ namespace KonSanad.APIS.Controllers
             // return Arabic confirmation as requested
             return Ok(new { success = true, message = "تم استقبال طلبك", data = result });
         }
-
+*/
         // 2) Request a new product (name, condition, reason, image)
         // POST api/beneificery/{beneficiaryId}/request-new
 
@@ -266,9 +266,6 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
 
-<<<<<<< HEAD
-
-
 
         [Authorize]
         [HttpPut("UpdateProfile")]
@@ -283,8 +280,6 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success, message = "Profile updated successfully" });
         }
-=======
-       
->>>>>>> solybranch
+
     }
 }

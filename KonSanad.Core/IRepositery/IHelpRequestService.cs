@@ -7,9 +7,9 @@ namespace KonSanad.Core.IRepositery
 {
     public interface IHelpRequestService
     {
-        Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request);
+       /* Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request);
         Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request);
-
+*/
         //new delete 
         Task<(bool Success, string Message)> DeleteMyRequestAsync(string userId, int orderItemId);
         //new update

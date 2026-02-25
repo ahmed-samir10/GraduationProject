@@ -16,7 +16,7 @@ namespace KonSanad.Services.Services
 
         }
 
-        public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
+     /*   public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
         {
            
             if (request == null) throw new System.ArgumentNullException(nameof(request));
@@ -95,7 +95,7 @@ namespace KonSanad.Services.Services
                 Message = "Request submitted successfully."
             };
         }
-
+*/
         #region Update & Delete item
 
         //Delete item from my request
@@ -336,7 +336,7 @@ namespace KonSanad.Services.Services
         }
 
         //------------------------------------------------------------------
-
+/*
         public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
         {
             // 1) هات المستفيد
@@ -373,7 +373,7 @@ namespace KonSanad.Services.Services
             return helpOrderDtos;
         }
 
-
+*/
 
 
         public async Task<GetProfileDto> GetProfileAsync(string userId)
