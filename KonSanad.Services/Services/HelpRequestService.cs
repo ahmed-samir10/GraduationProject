@@ -169,7 +169,7 @@ namespace KonSanad.Services.Services
 
         #endregion
 
-        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
+     /*   public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
@@ -219,7 +219,7 @@ namespace KonSanad.Services.Services
         }
 
 
-
+*/
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
 
