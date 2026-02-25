@@ -150,6 +150,9 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("campaignRequestStatus")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BeneficiaryId");
@@ -157,6 +160,99 @@ namespace KonSanad.Repository.Data.migration
                     b.HasIndex("CampaignId");
 
                     b.ToTable("BeneficiaryCampaign");
+                });
+
+            modelBuilder.Entity("KonSanad.Core.Entity.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId1");
+
+                    b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("KonSanad.Core.Entity.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SupplyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("imageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("SupplyId");
+
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.Identity.AppUser", b =>
@@ -416,6 +512,9 @@ namespace KonSanad.Repository.Data.migration
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CampaignStatus")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
@@ -439,6 +538,9 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("bit");
 
                     b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxBeneficiaries")
                         .HasColumnType("int");
 
                     b.Property<string>("PictureUrl")
@@ -583,6 +685,9 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("DonorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HelpOrderid")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
@@ -771,6 +876,10 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("HelpOrderId");
@@ -916,6 +1025,10 @@ namespace KonSanad.Repository.Data.migration
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1168,8 +1281,8 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<string>("AppUserId")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool?>("Availability")
-                        .HasColumnType("bit");
+                    b.Property<string>("Availability")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1256,7 +1369,7 @@ namespace KonSanad.Repository.Data.migration
                         .IsRequired();
 
                     b.HasOne("KonSanad.Repository.Entities.Campaign", "Campaign")
-                        .WithMany()
+                        .WithMany("BeneficiaryCampaigns")
                         .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1264,6 +1377,34 @@ namespace KonSanad.Repository.Data.migration
                     b.Navigation("Beneficiary");
 
                     b.Navigation("Campaign");
+                });
+
+            modelBuilder.Entity("KonSanad.Core.Entity.Cart", b =>
+                {
+                    b.HasOne("KonSanad.Core.Entity.Identity.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("KonSanad.Core.Entity.CartItem", b =>
+                {
+                    b.HasOne("KonSanad.Core.Entity.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KonSanad.Repository.Entities.Supply", "supply")
+                        .WithMany()
+                        .HasForeignKey("SupplyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("supply");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.MissionVolunteers", b =>
@@ -1552,6 +1693,11 @@ namespace KonSanad.Repository.Data.migration
                     b.Navigation("Supplies");
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.Cart", b =>
+                {
+                    b.Navigation("CartItems");
+                });
+
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
                 {
                     b.Navigation("HelpOrders");
@@ -1563,6 +1709,8 @@ namespace KonSanad.Repository.Data.migration
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Campaign", b =>
                 {
+                    b.Navigation("BeneficiaryCampaigns");
+
                     b.Navigation("CampaignResults");
 
                     b.Navigation("CampaignVolunteers");

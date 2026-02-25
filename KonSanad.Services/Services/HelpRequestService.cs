@@ -46,8 +46,8 @@ namespace KonSanad.Services.Services
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = id,
-              
-                HelpOrderStatus = KonSanad.Core.Entity.HelpOrderStatus.Pending,
+                Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName}"),
+                Status = "قيد الانتظار ",
                 IsDeleted = false
             };
 
@@ -96,7 +96,80 @@ namespace KonSanad.Services.Services
             };
         }
 
-       /* public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
+        #region Update & Delete item
+
+        //Delete item from my request
+        public async Task<(bool Success, string Message)> DeleteMyRequestAsync(string userId, int helpOrderId)
+        {
+            // 1️⃣ هات المستفيد
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return (false, "المستفيد غير موجود");
+
+            // 2️⃣ هات الـ HelpOrder
+            var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
+                .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+
+            if (helpOrder == null)
+                return (false, "الطلب غير موجود");
+
+            // 3️⃣ تحقق الأمان
+            if (helpOrder.BeneficiaryId != beneficiary.Id)
+                return (false, "غير مسموح بحذف هذا الطلب");
+
+            // 4️⃣ هات كل الـ Items المرتبطة بالطلب
+            var items = await _unitOfWork.Repository<HelpOrderItem, int>()
+                .FindAllAsync(i => i.HelpOrderId == helpOrderId);
+
+            // 5️⃣ امسح الـ Items
+            foreach (var item in items)
+            {
+                _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
+            }
+
+            // 6️⃣ امسح الـ Order نفسه
+            _unitOfWork.Repository<HelpOrder, int>().Delete(helpOrder);
+
+            // 7️⃣ Save مرة واحدة
+            await _unitOfWork.Complete();
+
+            return (true, "Deleted successfully");
+        }
+
+
+        //update item in my request (Quantity)
+
+        public async Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(int helpOrderId, int newQuantity)
+        {
+            var helpOrderItem = await _unitOfWork.Repository<HelpOrderItem, int>()
+                .FirstOrDefaultAsync(h => h.HelpOrderId == helpOrderId);
+
+            if (helpOrderItem == null)
+                return (false, "HelpOrderItem مش موجود", null);
+
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .FirstOrDefaultAsync(s => s.Id == helpOrderItem.SupplyId);
+
+            if (supply == null)
+                return (false, "Supply مش موجود", null);
+
+            if (newQuantity > supply.StockQuantity)
+                return (false, $"الكمية المطلوبة ({newQuantity}) أكبر من المتاح ({supply.StockQuantity})", null);
+
+            helpOrderItem.QuantityRequested = newQuantity;
+            _unitOfWork.Repository<HelpOrderItem, int>().Update(helpOrderItem);
+            await _unitOfWork.Complete();
+
+            return (true, "تم التحديث بنجاح", helpOrderItem);
+        }
+
+
+
+        #endregion
+
+        public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
@@ -107,7 +180,7 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = id,
                 Title = request.ProductName,
                 Description = request.ProductDescription,
-                HelpOrderStatus = KonSanad.Core.Entity.HelpOrderStatus.Pending,
+                Status = "Requested",
                 IsDeleted = false
             };
 
@@ -146,7 +219,7 @@ namespace KonSanad.Services.Services
         }
 
 
-*/
+
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
 
@@ -187,10 +260,9 @@ namespace KonSanad.Services.Services
             {
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
-                RequestedAt = DateTime.Now,
-                CreatedAt = DateTime.Now,
+                RequestedAt = DateTime.UtcNow,
                     Status = " قيد الانتظار",
-               Reason = request.Reason
+              //  Reason = request.Reason
             };
 
             // joinRequest.Status = "Pending";
@@ -205,92 +277,100 @@ namespace KonSanad.Services.Services
 
             return "تم إرسال الطلب بنجاح";
         }
+
+        // 👇 القديمة للمطابقة مع Interface القديم
         public async Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId)
         {
-            // 1) نجيب المستفيد حسب AppUserId
+            var result = await GetJoinedCampaignsWithStatusAsync(userId);
+            return result.Cast<CampaignDto>();
+        }
+
+        // 👇 الجديدة مع الـ enum من الداتابيز
+        public async Task<IEnumerable<BeneficiaryJoinedCampaignDto>> GetJoinedCampaignsWithStatusAsync(string userId)
+        {
+            // 1️⃣ جلب المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary == null)
                 throw new Exception("Beneficiary not found");
 
-            // 2) نجيب العلاقات بين المستفيد والحملات مع Include
+            // 2️⃣ جلب العلاقات بين المستفيد والحملات
             var joinedCampaigns = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
-    .FindAllAsync(
-        bc => bc.BeneficiaryId == beneficiary.Id,
-        include: q => q
-            .Include(x => x.Campaign)
-                .ThenInclude(c => c.DonationOrders)  // 👈 أضف هذا
-            .Include(x => x.Campaign)
-                .ThenInclude(c => c.Category)        // 👈 وهذا للـ CategoryName
-    );
+                .FindAllAsync(
+                    bc => bc.BeneficiaryId == beneficiary.Id,
+                    include: q => q
+                        .Include(x => x.Campaign)
+                            .ThenInclude(c => c.DonationOrders)
+                        .Include(x => x.Campaign)
+                            .ThenInclude(c => c.Category)
+                );
 
-            // 3) نتأكد إن Campaign موجود
-            var campaignEntities = joinedCampaigns
+            // 3️⃣ نتأكد إن الحملات موجودة
+            var campaignDtos = joinedCampaigns
                 .Where(j => j.Campaign != null)
-                .Select(j => j.Campaign)
-                .ToList();
+                .Select(j => new BeneficiaryJoinedCampaignDto
+                {
+                    Id = j.Campaign.Id,
+                    Title = j.Campaign.Title ?? string.Empty,
+                    PictureUrl = j.Campaign.PictureUrl ?? string.Empty,
 
-            // 4) Map
-            var campaignDtos = campaignEntities.Select(c => new CampaignDto
-            {
-                Id = c.Id,
-                Title = c.Title ?? string.Empty,
-                PictureUrl = c.PictureUrl ?? string.Empty,
-                ShortDescription = string.IsNullOrWhiteSpace(c.Description) ? string.Empty :
-         c.Description.Length > 180 ? c.Description.Substring(0, 180).Trim() + "…" : c.Description,
-                CategoryName = c.Category?.Name ?? string.Empty,
-                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
-                Status = CampaignMetrics.CalculateStatus(c),
-                DonorCount = CampaignMetrics.CalculateDonorCount(c),
-              CreateAt = c.CreatedAt
-            }).ToList();
+                    ShortDescription = string.IsNullOrWhiteSpace(j.Campaign.Description)
+                        ? string.Empty
+                        : j.Campaign.Description.Length > 180
+                            ? j.Campaign.Description.Substring(0, 180).Trim() + "…"
+                            : j.Campaign.Description,
+
+                    CategoryName = j.Campaign.Category?.Name ?? string.Empty,
+
+                    ProgressPercentage = CampaignMetrics.CalculateProgress(j.Campaign),
+                    Status = CampaignMetrics.CalculateStatus(j.Campaign),
+                    DonorCount = CampaignMetrics.CalculateDonorCount(j.Campaign),
+                    CreateAt = j.Campaign.CreatedAt,
+
+                    // 👈 الحالة فعليًا من الجدول
+                    campaignRequestStatus = j.campaignRequestStatus
+                }).ToList();
+
             return campaignDtos;
         }
 
-      
-        public async Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
+        //------------------------------------------------------------------
+
+        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
         {
+            // 1) هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            if (beneficiary is null)
+            if (beneficiary == null)
                 throw new Exception("Beneficiary not found");
 
-            var skip = (Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1);
-            var take = Math.Max(pageSize, 1);
+            // 2) هات الطلبات مع Items و Supply
+            var requests = await _unitOfWork.Repository<HelpOrder, int>()
+                .FindAllAsync(
+                    h => h.BeneficiaryId == beneficiary.Id,
+                    include: q => q
+                        .Include(h => h.HelpOrderItems)
+                            .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
+                );
 
-            var query = _unitOfWork
-       .Repository<HelpOrder, int>()
-       .GetQueryable()
-       .AsNoTracking()
-       .Where(h => h.BeneficiaryId == beneficiary.Id);
+            // 3) Map إلى DTO
+            var helpOrderDtos = requests.Select(h => new HelpOrderDto
+            {
+                Id = h.Id,
+              
+                Title = h.Title,
+                Description = h.Description ?? string.Empty,
+               Reason = h.HelpOrderItems.FirstOrDefault()?.reason ?? string.Empty,
+                BeneficiaryId = h.BeneficiaryId,
+                PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
+                Status = "قيد الانتظار",
+                CreatedAt = h.CreatedAt,
+                
+            }).ToList();
 
-            var result = await query
-                .OrderByDescending(h => h.CreatedAt)
-                .Skip(skip)
-                .Take(take)
-                .Select(h => new
-                {
-                    HelpOrderId = h.Id,
-                    CreatedAt = h.CreatedAt,
-                    Items = h.HelpOrderItems.Select(i => new HelpOrderItemDto
-                    {
-                        Id = i.Id,
-                        HelpOrderId = i.HelpOrderId,
-                        SupplyId = i.SupplyId,
-                        Quantity = i.QuantityRequested,
-                        ImageUrl = i.ImageUrl,
-                        Status = i.HelpOrderStatus,
-                        Title = i.Title,
-                        Reason = i.reason
-                        
-                    }).ToList()
-                })
-                .ToListAsync();
-
-
-            return result;
+            return helpOrderDtos;
         }
 
 

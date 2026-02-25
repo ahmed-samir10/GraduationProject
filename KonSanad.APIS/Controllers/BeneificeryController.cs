@@ -135,7 +135,7 @@ namespace KonSanad.APIS.Controllers
                 return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
 
-            var result = await _helpRequestService.GetJoinedCampaignsAsync(userId);
+            var result = await _helpRequestService.GetJoinedCampaignsWithStatusAsync(userId);
 
             return Ok(new { success = true, data = result });
         }
@@ -158,8 +158,41 @@ namespace KonSanad.APIS.Controllers
             // Return paginated shape similar to GetAllCampaign
             return Ok(new { success = true, data = result, pageNumber, pageSize });
         }
-       
 
+
+        #region Update & Delete item
+
+        [Authorize]
+        [HttpDelete("delete-my-request/{orderItemId}")]
+        public async Task<IActionResult> DeleteMyRequest(int orderItemId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Ok(new { success = false, message = "لا يوجد مستفيد" });
+
+            var result = await _helpRequestService.DeleteMyRequestAsync(userId, orderItemId);
+
+            if (!result.Success)
+                return Ok(new { success = false, message = result.Message });
+
+            return Ok(new { success = true, message = "تم حذف الطلب بنجاح" });
+        }
+
+        [Authorize]
+        [HttpPut("update-quantity")]
+        public async Task<IActionResult> UpdateQuantity(int helpOrderId, int newQuantity)
+        {
+            var result = await _helpRequestService.UpdateHelpOrderQuantityAsync(helpOrderId, newQuantity);
+
+            if (!result.Success)
+                return Ok(new { success = false, message = result.Message });
+
+            // لو مش محتاج ترجّع الـ UpdatedItem
+            return Ok(new { success = true, message = result.Message });
+        }
+
+        #endregion
 
 
         [Authorize]
@@ -233,6 +266,7 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
 
+<<<<<<< HEAD
 
 
 
@@ -249,5 +283,8 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success, message = "Profile updated successfully" });
         }
+=======
+       
+>>>>>>> solybranch
     }
 }

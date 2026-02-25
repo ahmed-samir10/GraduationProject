@@ -115,8 +115,8 @@ namespace KonSanad.APIS.Controllers
                 return Ok(new { success = false, data = " لا يوجد مستفيد" });
 
             int beneficiaryId = beneficiary.Id;
-            var res= await _cartService.RemoveItemAsync(beneficiaryId, productId);
-            return Ok(new { success = true, data = res });
+            var res = await _cartService.RemoveItemAsync(beneficiaryId, productId);
+            return Ok(new { success = true, message = res });
         }
 
 
@@ -180,7 +180,7 @@ namespace KonSanad.APIS.Controllers
 
             int beneficiaryId = beneficiary.Id;
             var res = await _cartService.ClearCartAsync(beneficiaryId);
-            return Ok(new { success = true, data = res });
+            return Ok(new { success = true, message = res });
         }
 
 
@@ -207,7 +207,7 @@ namespace KonSanad.APIS.Controllers
             if (!submitResult.Success)
                 return BadRequest(new { success = false, errors = submitResult.Errors });
 
-            return Ok(new { success = true, message = "تم إرسال الطلب بنجاح" });
+            return Ok(new { success = true, message = "تم إرسال الطلب بنجاح بانتظار موافقة المدير" });
         }
     }
 }

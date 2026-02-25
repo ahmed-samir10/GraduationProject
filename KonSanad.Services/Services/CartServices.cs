@@ -182,7 +182,7 @@ namespace KonSanad.Services.Services
         public async Task<string> ClearCartAsync(int userId)
         {
             await _database.KeyDeleteAsync(GetCartKey(userId));
-            return "تم الحذف";
+            return "تم حذف جميع الطلبات";
         }
 
 
