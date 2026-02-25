@@ -1,9 +1,7 @@
-﻿using KonSanad.Core.Dtos;
+﻿using System.Threading.Tasks;
+using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
-
-
-
-using System.Threading.Tasks;
+using KonSanad.Repository.Entities;
 
 namespace KonSanad.Core.IRepositery
 {
@@ -11,8 +9,21 @@ namespace KonSanad.Core.IRepositery
     {
         Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request);
         Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request);
+
+        //new delete 
+        Task<(bool Success, string Message)> DeleteMyRequestAsync(string userId, int orderItemId);
+        //new update
+        Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(
+       int helpOrderId,
+       int newQuantity);
+
+
+
+
         Task<string> JoinCampaignAsync(int id, JoinCampaignRequestDto request);
         Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId);
+        Task<IEnumerable<BeneficiaryJoinedCampaignDto>> GetJoinedCampaignsWithStatusAsync(string userId);
+
         Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId);
 
         Task<GetProfileDto> GetProfileAsync(string userId);

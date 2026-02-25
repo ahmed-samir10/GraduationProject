@@ -16,8 +16,8 @@ namespace KonSanad.Core.Entity
         public int CampaignId { get; set; }
         public Campaign Campaign { get; set; }
 
-    
-        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+        public CampaignRequestStatus campaignRequestStatus { get; set; }  = CampaignRequestStatus.Pending; // 👈 قيمة افتراضية
+        public DateTime RequestedAt { get; set; } = DateTime.Now;
     }
 
 }
