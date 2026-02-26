@@ -11,7 +11,7 @@ namespace KonSanad.Core.IRepositery
         Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request);
 */
         //new delete 
-        Task<(bool Success, string Message)> DeleteMyRequestAsync(string userId, int orderItemId);
+        Task<(bool Success, string Message)> DeleteItemAsync(string userId, int orderItemId);
         //new update
         Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(
        int helpOrderId,

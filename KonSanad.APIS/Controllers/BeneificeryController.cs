@@ -171,19 +171,19 @@ namespace KonSanad.APIS.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Ok(new { success = false, message = "لا يوجد مستفيد" });
 
-            var result = await _helpRequestService.DeleteMyRequestAsync(userId, orderItemId);
+            var result = await _helpRequestService.DeleteItemAsync(userId, orderItemId);
 
             if (!result.Success)
                 return Ok(new { success = false, message = result.Message });
 
-            return Ok(new { success = true, message = "تم حذف الطلب بنجاح" });
+            return Ok(new { success = true, message = result.Message});
         }
 
         [Authorize]
         [HttpPut("update-MyRequst")]
-        public async Task<IActionResult> UpdateQuantity(int helpOrderId, int newQuantity)
+        public async Task<IActionResult> UpdateQuantity(int helpOrderItemId, int newQuantity)
         {
-            var result = await _helpRequestService.UpdateHelpOrderQuantityAsync(helpOrderId, newQuantity);
+            var result = await _helpRequestService.UpdateHelpOrderQuantityAsync(helpOrderItemId, newQuantity);
 
             if (!result.Success)
                 return Ok(new { success = false, message = result.Message });
