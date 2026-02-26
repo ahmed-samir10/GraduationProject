@@ -9,6 +9,7 @@ namespace KonSanad.Services.Services
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
 
+
         public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
@@ -261,8 +262,10 @@ namespace KonSanad.Services.Services
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
                 RequestedAt = DateTime.UtcNow,
-                    Status = " قيد الانتظار",
-              //  Reason = request.Reason
+                CreatedAt = DateTime.UtcNow,
+                Status = " قيد الانتظار",
+               Reason = request.Reason,
+               campaignRequestStatus = CampaignRequestStatus.Pending,
             };
 
             // joinRequest.Status = "Pending";
@@ -336,44 +339,51 @@ namespace KonSanad.Services.Services
         }
 
         //------------------------------------------------------------------
-/*
-        public async Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId)
+
+        public async Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize)
         {
-            // 1) هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            if (beneficiary == null)
+            if (beneficiary is null)
                 throw new Exception("Beneficiary not found");
 
-            // 2) هات الطلبات مع Items و Supply
-            var requests = await _unitOfWork.Repository<HelpOrder, int>()
-                .FindAllAsync(
-                    h => h.BeneficiaryId == beneficiary.Id,
-                    include: q => q
-                        .Include(h => h.HelpOrderItems)
-                            .ThenInclude(item => item.Supply) // 👈 مهم لجلب اسم الـ Supply
-                );
+            var skip = (Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1);
+            var take = Math.Max(pageSize, 1);
 
-            // 3) Map إلى DTO
-            var helpOrderDtos = requests.Select(h => new HelpOrderDto
-            {
-                Id = h.Id,
-              
-                Title = h.Title,
-                Description = h.Description ?? string.Empty,
-               Reason = h.HelpOrderItems.FirstOrDefault()?.reason ?? string.Empty,
-                BeneficiaryId = h.BeneficiaryId,
-                PictureUrl = h.HelpOrderItems.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                Status = "قيد الانتظار",
-                CreatedAt = h.CreatedAt,
-                
-            }).ToList();
+            var query = _unitOfWork
+       .Repository<HelpOrder, int>()
+       .GetQueryable()
+       .AsNoTracking()
+       .Where(h => h.BeneficiaryId == beneficiary.Id);
 
-            return helpOrderDtos;
+            var result = await query
+                .OrderByDescending(h => h.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Select(h => new
+                {
+                    HelpOrderId = h.Id,
+                    CreatedAt = h.CreatedAt,
+                    Items = h.HelpOrderItems.Select(i => new HelpOrderItemDto
+                    {
+                        Id = i.Id,
+                        HelpOrderId = i.HelpOrderId,
+                        SupplyId = i.SupplyId,
+                        Quantity = i.QuantityRequested,
+                        ImageUrl = i.ImageUrl,
+                        Status = i.HelpOrderStatus,
+                        Title = i.Title,
+                        Reason = i.reason
+
+                    }).ToList()
+                })
+                .ToListAsync();
+
+
+            return result;
         }
 
-*/
 
 
         public async Task<GetProfileDto> GetProfileAsync(string userId)

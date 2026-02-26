@@ -17,8 +17,10 @@ namespace KonSanad.Core.Entity
         public Campaign Campaign { get; set; }
         public string Reason { get; set; }
 
-    
-        public DateTime RequestedAt { get; set; } = DateTime.Now;
+        public CampaignRequestStatus campaignRequestStatus { get; set; }
+
+
+        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     }
 
 }

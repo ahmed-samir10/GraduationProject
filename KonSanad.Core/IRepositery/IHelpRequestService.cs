@@ -24,7 +24,7 @@ namespace KonSanad.Core.IRepositery
         Task<IEnumerable<CampaignDto>> GetJoinedCampaignsAsync(string userId);
         Task<IEnumerable<BeneficiaryJoinedCampaignDto>> GetJoinedCampaignsWithStatusAsync(string userId);
 
-        Task<IEnumerable<HelpOrderDto>> GetMyHelpRequestsAsync(string userId);
+        Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize);
 
         Task<GetProfileDto> GetProfileAsync(string userId);
         Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
