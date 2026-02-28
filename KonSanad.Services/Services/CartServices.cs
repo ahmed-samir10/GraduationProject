@@ -342,7 +342,7 @@ namespace KonSanad.Services.Services
                 {
                     QuantityRequested = cartItem.Quantity,
                     // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
-                    SupplyId = orderItem?.Supply?.Id ?? orderItem?.SupplyId ?? 0,
+                    SupplyId = cartItem.ProductId,
                     ImageUrl = cartItem.ImagUrl,
                     reason = finalReason,
                     Title=cartItem.ProductName,

@@ -8,9 +8,9 @@ namespace KonSanad.Core.Entity
 {
     public enum CampaignRequestStatus
     {
-        Rejected = 1,   // مرفوض
-        Pending = 2,  // قيد الانتظار
-        Approved = 3   // موافق عليه
+        Rejected = 0,   // مرفوض
+        Pending = 1,  // قيد الانتظار
+        Approved = 2   // موافق عليه
     }
 
 }
