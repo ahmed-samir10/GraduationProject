@@ -149,14 +149,14 @@ namespace KonSanad.Services.Services
             if (helpOrderItem == null)
                 return (false, "HelpOrderItem مش موجود", null);
 
-            var supply = await _unitOfWork.Repository<Supply, int>()
+            var supply = await _unitOfWork.Repository<OrderItem, int>()
                 .FirstOrDefaultAsync(s => s.Id == helpOrderItem.SupplyId);
 
             if (supply == null)
                 return (false, "Supply مش موجود", null);
 
-            if (newQuantity > supply.StockQuantity)
-                return (false, $"الكمية المطلوبة ({newQuantity}) أكبر من المتاح ({supply.StockQuantity})", null);
+            if (newQuantity > supply.Quantity)
+                return (false, $"الكمية المطلوبة ({newQuantity}) أكبر من المتاح ({supply.Quantity})", null);
 
             helpOrderItem.QuantityRequested = newQuantity;
             _unitOfWork.Repository<HelpOrderItem, int>().Update(helpOrderItem);
