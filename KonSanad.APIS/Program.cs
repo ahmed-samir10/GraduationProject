@@ -21,6 +21,9 @@ using System;
 using System.Security.Principal;
 using System.Text;
 
+
+var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+AppContext.SetData("DOTNET_DEFAULT_TIMEZONE", "Egypt Standard Time");
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -89,6 +92,9 @@ Console.WriteLine("========================================");
 Console.WriteLine($"🔗 Identity Connection String: {testConn}");
 Console.WriteLine("========================================");
 
+Console.WriteLine("Machine: " + Environment.MachineName);
+Console.WriteLine("Now: " + DateTime.Now);
+Console.WriteLine("TimeZone: " + TimeZoneInfo.Local.DisplayName);
 if (string.IsNullOrEmpty(testConn) || testConn.Contains("IdentityDb"))
 {
     throw new Exception("❌ ERROR: Still using old connection string!");

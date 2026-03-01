@@ -255,13 +255,15 @@ namespace KonSanad.Services.Services
 
             if (existingRequest != null)
                 return "تم تقديم طلب لهذه الحملة بالفعل";
+            var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+            var cairoNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cairoZone);
 
             var joinRequest = new BeneficiaryCampaign
             {
                 BeneficiaryId = userid,
                 CampaignId = request.CampaignId,
-                RequestedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
+                RequestedAt = cairoNow,
+                CreatedAt = cairoNow,
                 Status = " قيد الانتظار",
                Reason = request.Reason,
                campaignRequestStatus = CampaignRequestStatus.Pending,
