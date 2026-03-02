@@ -1,4 +1,4 @@
-
+﻿
 namespace KonSanad.Services.Services
 {
     public class FileService : IFileService
@@ -26,7 +26,7 @@ namespace KonSanad.Services.Services
             await using var fs = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(fs);
 
-            return $"/{folder}/{fileName}";
+            return "تم رفع الملف بنجاح";
         }
         public async Task DeleteFileAsync(string relativePath)
         {

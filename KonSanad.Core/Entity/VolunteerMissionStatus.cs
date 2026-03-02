@@ -12,5 +12,6 @@ namespace KonSanad.Core.Entity
         InReview = 1,
         WaitingForReport = 2,
         Completed = 3,
+
     }
 }
