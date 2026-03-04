@@ -74,9 +74,9 @@ public class CartController : ControllerBase
     // =========================
     // Add Beneficiary Item
     // =========================
-    [HttpPost("add-beneficiary")]
+    [HttpPost("Additems")]
     [Authorize(Roles = "Beneficiary")]
-    public async Task<IActionResult> AddBeneficiaryItem([FromBody] AddToCartDto dto)
+    public async Task<IActionResult> AddItemToCart([FromBody] AddToCartDto dto)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -134,8 +134,8 @@ public class CartController : ControllerBase
     // =========================
     // Update Quantity
     // =========================
-    [HttpPut("update/{productId}")]
-    public async Task<IActionResult> Update(int productId, [FromQuery] int quantity)
+    [HttpPut("UpdateItems")]
+    public async Task<IActionResult> UpdateItems(int productId, [FromQuery] int quantity)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -148,8 +148,8 @@ public class CartController : ControllerBase
     // =========================
     // Remove Item
     // =========================
-    [HttpDelete("remove/{productId}")]
-    public async Task<IActionResult> Remove(int productId)
+    [HttpDelete("Delitems/{productId}")]
+    public async Task<IActionResult> RemoRemoveItem(int productId)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -162,8 +162,8 @@ public class CartController : ControllerBase
     // =========================
     // Clear Cart
     // =========================
-    [HttpDelete("clear")]
-    public async Task<IActionResult> Clear()
+    [HttpDelete("ClearCart")]
+    public async Task<IActionResult> ClearCart()
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -176,8 +176,8 @@ public class CartController : ControllerBase
     // =========================
     // Submit Cart
     // =========================
-    [HttpPost("submit")]
-    public async Task<IActionResult> Submit()
+    [HttpPost("SubmitCart")]
+    public async Task<IActionResult> SubmitCart()
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
