@@ -1041,7 +1041,6 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1086,6 +1085,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("orderItemStatus")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

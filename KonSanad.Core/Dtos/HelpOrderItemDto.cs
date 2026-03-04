@@ -10,7 +10,7 @@ namespace KonSanad.Core.Dtos
         public int? SupplyId { get; set; }
         public string Title { get; set; }
         public int? Quantity { get; set; }
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
         public string? ImageUrl { get; set; } // optional image url for this help-order item
     }
 }

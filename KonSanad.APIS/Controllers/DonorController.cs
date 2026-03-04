@@ -110,7 +110,7 @@ public class DonorController : ControllerBase
             });
         }
     }
-
+    //------------------------------------------------------------------
     [Authorize]
     [HttpGet("my-requestsItem")]
     public async Task<IActionResult> GetMyItemRequests()
@@ -120,10 +120,11 @@ public class DonorController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return BadRequest(new { error = "User id not found in token" });
 
-        var result = await donorServices.GetMyItemDonationsAsync(userId);
+        var result = await donorServices.GetMyDonatedOrderItemsAsync(userId);
 
         return Ok(new { success = true, data = result });
     }
+    //-------------------------------------------------------------------
     [Authorize]
     [HttpGet("my-requestsCash")]
     public async Task<IActionResult> GetMyCashRequests()
