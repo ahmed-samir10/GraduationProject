@@ -11,6 +11,6 @@ namespace KonSanad.Core.IRepositery
     public interface ITokenService
     {
         //   Task<string> CreateToken(AppUser user, UserManager<AppUser> userManager);
-        string GenerateJwtToken(AppUser user, IList<string> roles);
+        Task<string> GenerateJwtToken(AppUser user, IList<string> roles, UserManager<AppUser> userManager);
     }
 }

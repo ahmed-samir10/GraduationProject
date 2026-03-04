@@ -9,19 +9,17 @@ namespace KonSanad.Services.Services
     public class DonorSubmitStrategy : ICartSubmitStrategy
     {
         private readonly KonSanadDbContext _context;
+       
 
-        public DonorSubmitStrategy(KonSanadDbContext context)
+        public DonorSubmitStrategy(KonSanadDbContext context )
         {
             _context = context;
+          
         }
 
-        public async Task<SubmitResultDto> SubmitAsync(string userId, CartResponseDto cart)
+        public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
         {
-            var donor = await _context.Donors
-    .FirstOrDefaultAsync(x => x.AppUserId == userId);
-
-            if (donor == null)
-                throw new Exception("Donor not found");
+            
             var donation = new DonationOrder
             {
                 DonorId = userId,

@@ -10,57 +10,61 @@ public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
     private readonly KonSanadDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CartController(ICartService cartService , KonSanadDbContext context)
+    public CartController(ICartService cartService , KonSanadDbContext context , IUnitOfWork unitOfWork)
     {
         _cartService = cartService;
         _context = context;
+        _unitOfWork = unitOfWork;
     }
-    private async Task<(int userId, string role)?> GetCurrentUserAsync()
+    private async Task<(int userId, string role)?> GetCurrentUser()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
+       // var role = User.FindFirst("Role")?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || string.IsNullOrEmpty(role))
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
             return null;
 
-        // parse userId to int
-        if (!int.TryParse(userIdClaim, out int userId))
-            return null;
+        int id;
 
         if (role.Equals("Beneficiary", StringComparison.OrdinalIgnoreCase))
         {
-            var beneficiary = await _context.Beneficiaries
-                .FirstOrDefaultAsync(b => b.AppUser == userId);
+            var beneficiary = await _unitOfWork
+                .Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-            if (beneficiary == null) return null;
+            if (beneficiary == null)
+                return null;
 
-            userId = beneficiary.Id; // هنا نرجع الـ BeneficiaryId
+            id = beneficiary.Id;
         }
         else if (role.Equals("Donor", StringComparison.OrdinalIgnoreCase))
         {
-            var donor = await _context.Donors
+            var donor = await _unitOfWork
+                .Repository<Donor, int>()
                 .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
-            if (donor == null) return null;
+            if (donor == null)
+                return null;
 
-            userId = donor.Id; // هنا نرجع الـ DonorId
+            id = donor.Id;
         }
         else
         {
-            return null; // لو رول غير معروف
+            return null;
         }
 
-        return (userId, role.ToLower());
+        return (id, role.ToLower());
     }
-
     // =========================
     // Get Cart
     // =========================
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var cart = await _cartService.GetCartAsync(user.Value.userId, user.Value.role);
@@ -74,7 +78,7 @@ public class CartController : ControllerBase
     [Authorize(Roles = "Beneficiary")]
     public async Task<IActionResult> AddBeneficiaryItem([FromBody] AddToCartDto dto)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
@@ -89,7 +93,7 @@ public class CartController : ControllerBase
     [Authorize(Roles = "Donor")]
     public async Task<IActionResult> AddDonationItem([FromForm] CreateDonationItemRequestDto dto)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
@@ -104,7 +108,7 @@ public class CartController : ControllerBase
     [Authorize(Roles = "Donor")]
     public async Task<IActionResult> AddDonationCash([FromBody] CreateDonationCashRequestDto dto)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
@@ -119,7 +123,7 @@ public class CartController : ControllerBase
     [Authorize(Roles = "Donor")]
     public async Task<IActionResult> AddCustomItem([FromForm] CreateCustomDonationItemRequestDto dto)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
@@ -133,7 +137,7 @@ public class CartController : ControllerBase
     [HttpPut("update/{productId}")]
     public async Task<IActionResult> Update(int productId, [FromQuery] int quantity)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.UpdateItemAsync(user.Value.userId, user.Value.role, productId, quantity);
@@ -147,7 +151,7 @@ public class CartController : ControllerBase
     [HttpDelete("remove/{productId}")]
     public async Task<IActionResult> Remove(int productId)
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.RemoveItemAsync(user.Value.userId, user.Value.role, productId);
@@ -161,7 +165,7 @@ public class CartController : ControllerBase
     [HttpDelete("clear")]
     public async Task<IActionResult> Clear()
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         await _cartService.ClearCartAsync(user.Value.userId, user.Value.role);
@@ -175,7 +179,7 @@ public class CartController : ControllerBase
     [HttpPost("submit")]
     public async Task<IActionResult> Submit()
     {
-        var user = GetCurrentUser();
+        var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
         var result = await _cartService.SubmitCartAsync(user.Value.userId, user.Value.role);

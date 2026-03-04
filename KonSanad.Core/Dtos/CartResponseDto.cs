@@ -16,7 +16,7 @@ namespace KonSanad.Core.Dtos
 
     public class CartResponseDto
     {
-        public string CartId { get; set; } = string.Empty;
+        public int CartId { get; set; }
         public List<CartItemDto> Items { get; set; } = new();
     }
 }

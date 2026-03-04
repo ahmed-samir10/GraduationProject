@@ -9,6 +9,6 @@ namespace KonSanad.Core.IRepositery
 {
     public interface ICartSubmitStrategy
     {
-        Task<SubmitResultDto> SubmitAsync(string userId, CartResponseDto cart);
+        Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart);
     }
 }

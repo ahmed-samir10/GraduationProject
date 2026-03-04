@@ -25,16 +25,16 @@ namespace KonSanad.Services.Services
             _context = context;
         }
 
-        private string GetCartKey(string userId, string role)
+        private string GetCartKey(int userId, string role)
             => $"cart:{role}:{userId}";
 
-        private async Task SaveCart(string userId, string role, CartResponseDto cart)
+        private async Task SaveCart(int userId, string role, CartResponseDto cart)
         {
             var json = JsonSerializer.Serialize(cart);
             await _redis.StringSetAsync(GetCartKey(userId, role), json);
         }
 
-        public async Task<CartResponseDto> GetCartAsync(string userId, string role)
+        public async Task<CartResponseDto> GetCartAsync(int userId, string role)
         {
             var data = await _redis.StringGetAsync(GetCartKey(userId, role));
 
@@ -44,7 +44,7 @@ namespace KonSanad.Services.Services
             return JsonSerializer.Deserialize<CartResponseDto>(data);
         }
 
-        public async Task<string> AddToCartAsync(string userId, string role, object dto)
+        public async Task<string> AddToCartAsync(int userId, string role, object dto)
         {
             var cart = await GetCartAsync(userId, role);
 
@@ -113,7 +113,7 @@ namespace KonSanad.Services.Services
             return "تمت الإضافة";
         }
 
-        public async Task<string> UpdateItemAsync(string userId, string role, int productId, int quantity)
+        public async Task<string> UpdateItemAsync(int userId, string role, int productId, int quantity)
         {
             var cart = await GetCartAsync(userId, role);
 
@@ -126,7 +126,7 @@ namespace KonSanad.Services.Services
             return "تم التحديث";
         }
 
-        public async Task<string> RemoveItemAsync(string userId, string role, int productId)
+        public async Task<string> RemoveItemAsync(int userId, string role, int productId)
         {
             var cart = await GetCartAsync(userId, role);
 
@@ -139,12 +139,12 @@ namespace KonSanad.Services.Services
             return "تم الحذف";
         }
 
-        public async Task ClearCartAsync(string userId, string role)
+        public async Task ClearCartAsync(int userId, string role)
         {
             await _redis.KeyDeleteAsync(GetCartKey(userId, role));
         }
 
-        public async Task<SubmitResultDto> SubmitCartAsync(string userId, string role)
+        public async Task<SubmitResultDto> SubmitCartAsync(int userId, string role)
         {
             var cart = await GetCartAsync(userId, role);
 

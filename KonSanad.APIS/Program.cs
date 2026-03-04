@@ -59,7 +59,7 @@ builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService,VolunteerService>();
-builder.Services.AddScoped<ICartService, CartServices>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
@@ -125,8 +125,6 @@ builder.Services.AddSwaggerGen(c =>
     });
    // c.OperationFilter<SwaggerJsonBodyOperationFilter>();
 });
-
-
 
 
 

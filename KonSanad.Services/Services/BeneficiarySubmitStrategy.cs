@@ -15,11 +15,11 @@ namespace KonSanad.Services.Services
             _context = context;
         }
 
-        public async Task<SubmitResultDto> SubmitAsync(string userId, CartResponseDto cart)
+        public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
         {
             var helpOrder = new HelpOrder
             {
-                AppUserId = userId,
+                BeneficiaryId = userId,
                 CreatedAt = DateTime.Now,
                 HelpOrderStatus = HelpOrderStatus.Pending
             };
