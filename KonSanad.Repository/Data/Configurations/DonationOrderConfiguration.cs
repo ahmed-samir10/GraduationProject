@@ -8,7 +8,7 @@
             builder.HasKey(d => d.Id);
 
             builder.Property(d => d.DonationCategoryStatus).IsRequired().HasMaxLength(50);
-            builder.Property(d => d.CashAmount).HasColumnType("decimal(18,2)");
+          /*  builder.Property(d => d.CashAmount).HasColumnType("decimal(18,2)");*/
             builder.Property(d => d.OrderDate).IsRequired(false);
 
             // Relationship with Donor
@@ -18,10 +18,10 @@
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Relationship with Campaign
-            builder.HasOne(d => d.Campaign)
+        /*    builder.HasOne(d => d.Campaign)
                 .WithMany(c => c.DonationOrders)
                 .HasForeignKey(d => d.CampaignId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);*/
 
             // Relationship with Manager
             builder.HasOne(d => d.Manager)

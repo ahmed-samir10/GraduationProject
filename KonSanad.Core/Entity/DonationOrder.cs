@@ -17,11 +17,11 @@ namespace KonSanad.Repository.Entities
         public int? DonorId { get; set; }
         [ForeignKey(nameof(DonorId))]
         public Donor? Donor { get; set; }
-        public int? HelpOrderid { get; set; }
+       /* public int? HelpOrderid { get; set; }
         [ForeignKey(nameof(HelpOrderid))]
         public int? CampaignId { get; set; }
         [ForeignKey(nameof(CampaignId))]
-        public Campaign? Campaign { get; set; }
+        public Campaign? Campaign { get; set; }*/
 
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]

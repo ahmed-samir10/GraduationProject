@@ -46,7 +46,7 @@ namespace KonSanad.Services.Services
         // ---------------------------------------------------------------------------
         // 3) Create Donation (Cash + Items)
         // ---------------------------------------------------------------------------
-        public async Task<DonationResponseItemDto> CreateDonationItemAsync(
+    /*    public async Task<DonationResponseItemDto> CreateDonationItemAsync(
               CreateDonationItemRequestDto request, int donorId)
         {
             if (request == null)
@@ -139,7 +139,7 @@ namespace KonSanad.Services.Services
             };
         }
 
-        
+        */
         public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
             CreateCustomDonationItemRequestDto request, int donorId)
         {
@@ -154,7 +154,7 @@ namespace KonSanad.Services.Services
             var donationOrder = new DonationOrder
             {
                 DonorId = donorId,
-                CampaignId = null,
+                //CampaignId = null,
                 ManagerId = 1,
                 CreatedAt = DateTime.Now,
                 OrderDate = DateTime.Now,
@@ -220,7 +220,7 @@ namespace KonSanad.Services.Services
                 Message = "تم تسجيل التبرع بعنصر مخصص ✔"
             };
         }
-
+/*
         public async Task<DonationResponseCashDto> CreateDonationCashAsync(
            CreateDonationCashRequestDto request, int donorId)
         {
@@ -301,7 +301,7 @@ namespace KonSanad.Services.Services
 
 
         }
-        // get myrequst 
+        // get myrequst */
 
         // ---------------------------------------------------------------------------
         // New: Get all DonationOrders made by the donor (cash and/or items)

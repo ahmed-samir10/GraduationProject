@@ -26,7 +26,7 @@ namespace KonSanad.Services.Services
             await using var fs = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(fs);
 
-            return "تم رفع الملف بنجاح";
+            return $"{folder}/{fileName}";
         }
         public async Task DeleteFileAsync(string relativePath)
         {

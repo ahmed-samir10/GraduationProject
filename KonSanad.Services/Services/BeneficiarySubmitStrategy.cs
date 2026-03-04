@@ -29,7 +29,7 @@ namespace KonSanad.Services.Services
                 helpOrder.HelpOrderItems.Add(new HelpOrderItem
                 {
                     SupplyId = item.ProductId.Value,
-                    QuantityRequested = item.Quantity,
+                    QuantityRequested = (int) item.Quantity,
                     reason = item.ExtraData?["Reason"]
                 });
             }

@@ -141,6 +141,12 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault;
+    });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {

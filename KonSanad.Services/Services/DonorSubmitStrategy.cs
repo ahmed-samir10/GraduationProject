@@ -1,61 +1,101 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Repository.Entities;
 
 namespace KonSanad.Services.Services
 {
     public class DonorSubmitStrategy : ICartSubmitStrategy
     {
         private readonly KonSanadDbContext _context;
-       
 
-        public DonorSubmitStrategy(KonSanadDbContext context )
+        public DonorSubmitStrategy(KonSanadDbContext context)
         {
             _context = context;
-          
         }
 
         public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
         {
-            
+            // نوع أول عنصر في الكارت
+            var type = cart.Items.FirstOrDefault()?.Type;
+
+            // إنشاء الـ DonationOrder
             var donation = new DonationOrder
             {
                 DonorId = userId,
-                CreatedAt = DateTime.Now
+                DonationCategoryStatus = type,
+                CreatedAt = DateTime.Now,
+                ManagerId = 1,
+                OrderDate = DateTime.Now,
+                OrderItems = new List<OrderItem>()
             };
+            _context.DonationOrders.Add(donation);
+            await _context.SaveChangesAsync();
 
+            // معالجة كل العناصر
             foreach (var item in cart.Items)
             {
                 switch (item.Type)
                 {
                     case "donationItem":
-                        donation.OrderItems.Add(new OrderItem
+                       
+                        var orderItem = new OrderItem
                         {
-                            SupplyId = item.ProductId.Value,
-                            Quantity = item.Quantity,
+                            DonationOrderId = donation.Id,
+                            SupplyId = item.ProductId ?? 0,
+                            Quantity = (int)item.Quantity,
+                            ImageUrl = item.ImageUrl,
+                            CustomSupplyName = item.ProductName,
+                            Category = item.Category,
+                            Unit = "pce",
+                            Status = item.ExtraData?["Status"],
                             Description = item.ExtraData?["Description"]
-                        });
+                        };
+                        _context.OrderItems.Add(orderItem);
+                        await _context.SaveChangesAsync();
                         break;
 
                     case "donationCash":
-                        donation.CashAmount += decimal.Parse(item.ExtraData["CashAmount"]);
+                        donation.CashDonation = new CashDonation
+                        {
+                            Amount = decimal.Parse(item.ExtraData["CashAmount"]),
+                            Status = "pending",
+                            CreatedAt = DateTime.Now
+                        };
+                        var CashDonation = new CashDonation
+                        {
+                            DonationOrderId = donation.Id,
+                            Amount = decimal.Parse(item.ExtraData["CashAmount"]),
+                            Status = "pending",
+                            CampaignId = item.ExtraData.ContainsKey("CampaignId") ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
+                            HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId") ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
+                            CreatedAt = DateTime.Now
+                        };
+                        _context.CashDonations.Add(CashDonation);
+                        await _context.SaveChangesAsync();
                         break;
 
                     case "custom":
-                        donation.OrderItems.Add(new OrderItem
+                      
+                        var customOrderItem = new OrderItem
                         {
-                            CustomSupplyName = item.ExtraData["CustomItemName"],
-                            Quantity = item.Quantity,
-                            Description = item.ExtraData["Description"]
-                        });
+                            DonationOrderId = donation.Id,
+                            CustomSupplyName = item.ProductName,
+                            Quantity = (int)item.Quantity,
+                            Description = item.ExtraData["Description"],
+                            Category = item.Category,
+                            Unit = item.ExtraData["Unit"],
+                            ImageUrl = item.ImageUrl,
+                           // Status = item.ExtraData?["Status"]
+                        };
+                        _context.OrderItems.Add(customOrderItem);
+                        await _context.SaveChangesAsync();
                         break;
                 }
             }
 
-            _context.DonationOrders.Add(donation);
-            await _context.SaveChangesAsync();
+          
 
             return new SubmitResultDto { Success = true };
         }

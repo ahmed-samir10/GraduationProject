@@ -27,10 +27,10 @@
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Navigation properties
-            builder.HasMany(c => c.DonationOrders)
+        /*    builder.HasMany(c => c.DonationOrders)
                 .WithOne(d => d.Campaign)
                 .HasForeignKey(d => d.CampaignId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);*/
 
             builder.HasMany(c => c.CampaignResults)
                 .WithOne(cr => cr.Campaign)
