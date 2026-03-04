@@ -1,213 +1,188 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using KonSanad.Core.Dtos;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
-namespace KonSanad.APIS.Controllers
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class CartController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class CartController : ControllerBase
+    private readonly ICartService _cartService;
+    private readonly KonSanadDbContext _context;
+
+    public CartController(ICartService cartService , KonSanadDbContext context)
     {
-        private readonly ICartService _cartService;
-        private readonly IUnitOfWork _unitOfWork;
+        _cartService = cartService;
+        _context = context;
+    }
+    private async Task<(int userId, string role)?> GetCurrentUserAsync()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        public CartController(ICartService cartService , IUnitOfWork unitOfWork)
+        if (string.IsNullOrEmpty(userIdClaim) || string.IsNullOrEmpty(role))
+            return null;
+
+        // parse userId to int
+        if (!int.TryParse(userIdClaim, out int userId))
+            return null;
+
+        if (role.Equals("Beneficiary", StringComparison.OrdinalIgnoreCase))
         {
-            _cartService = cartService;
-            _unitOfWork = unitOfWork;
+            var beneficiary = await _context.Beneficiaries
+                .FirstOrDefaultAsync(b => b.AppUser == userId);
+
+            if (beneficiary == null) return null;
+
+            userId = beneficiary.Id; // هنا نرجع الـ BeneficiaryId
+        }
+        else if (role.Equals("Donor", StringComparison.OrdinalIgnoreCase))
+        {
+            var donor = await _context.Donors
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+            if (donor == null) return null;
+
+            userId = donor.Id; // هنا نرجع الـ DonorId
+        }
+        else
+        {
+            return null; // لو رول غير معروف
         }
 
-        private async Task<int?> GetBeneficiaryIdAsync()
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-            if (string.IsNullOrEmpty(userId)) return null;
+        return (userId, role.ToLower());
+    }
 
-            var ben = await _unitOfWork
-                .Repository<Beneficiary, int>()
-                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+    // =========================
+    // Get Cart
+    // =========================
+    [HttpGet]
+    public async Task<IActionResult> GetCart()
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-            return ben?.Id;
-        }
+        var cart = await _cartService.GetCartAsync(user.Value.userId, user.Value.role);
+        return Ok(new { success = true, data = cart });
+    }
 
-      
+    // =========================
+    // Add Beneficiary Item
+    // =========================
+    [HttpPost("add-beneficiary")]
+    [Authorize(Roles = "Beneficiary")]
+    public async Task<IActionResult> AddBeneficiaryItem([FromBody] AddToCartDto dto)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-        // =========================
-        // Get Cart By UserId
-        // =========================
-        [HttpGet]
-        public async Task<ActionResult<CartResponseDto>> GetCart()
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+        var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
 
+        return Ok(new { success = true, message = result });
+    }
 
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+    // =========================
+    // Add Donation Item
+    // =========================
+    [HttpPost("add-donation-item")]
+    [Authorize(Roles = "Donor")]
+    public async Task<IActionResult> AddDonationItem([FromForm] CreateDonationItemRequestDto dto)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
+        var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
 
-            int beneficiaryId = beneficiary.Id;
-            var cart = await _cartService.GetCartAsync(beneficiaryId);
-            return Ok(new { success = true, data = cart });
-        }
+        return Ok(new { success = true, message = result });
+    }
 
+    // =========================
+    // Add Donation Cash
+    // =========================
+    [HttpPost("add-donation-cash")]
+    [Authorize(Roles = "Donor")]
+    public async Task<IActionResult> AddDonationCash([FromBody] CreateDonationCashRequestDto dto)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
+        var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
 
+        return Ok(new { success = true, message = result });
+    }
 
-        // =========================
-        // Add Item To Cart
-        // =========================
-        [HttpPost("Additems")]
-        public async Task<IActionResult> AddItemToCart([FromBody] AddToCartDto dto)
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+    // =========================
+    // Add Custom Donation Item
+    // =========================
+    [HttpPost("add-custom-item")]
+    [Authorize(Roles = "Donor")]
+    public async Task<IActionResult> AddCustomItem([FromForm] CreateCustomDonationItemRequestDto dto)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
+        var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
 
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
+        return Ok(new { success = true, message = result });
+    }
 
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
+    // =========================
+    // Update Quantity
+    // =========================
+    [HttpPut("update/{productId}")]
+    public async Task<IActionResult> Update(int productId, [FromQuery] int quantity)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-            int beneficiaryId = beneficiary.Id;
+        var result = await _cartService.UpdateItemAsync(user.Value.userId, user.Value.role, productId, quantity);
 
-           var res= await _cartService.AddItemAsync(beneficiaryId, dto);
-            return Ok(new { success = true, data = res });
-        }
+        return Ok(new { success = true, message = result });
+    }
 
+    // =========================
+    // Remove Item
+    // =========================
+    [HttpDelete("remove/{productId}")]
+    public async Task<IActionResult> Remove(int productId)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
+        var result = await _cartService.RemoveItemAsync(user.Value.userId, user.Value.role, productId);
 
+        return Ok(new { success = true, message = result });
+    }
 
-   /*     // =========================
-        // Add multiple items in one request
-        // =========================
-        [HttpPost("AddItemsBulk")]
-        public async Task<IActionResult> AddItemsBulk([FromBody] IEnumerable<AddToCartDto> dtos)
-        {
-            var benId = await GetBeneficiaryIdAsync();
-            if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
+    // =========================
+    // Clear Cart
+    // =========================
+    [HttpDelete("clear")]
+    public async Task<IActionResult> Clear()
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-            await _cartService.AddItemsAsync(benId.Value, dtos);
-            return Ok(new { success = true, data = "تم الاضافه" });
-        }
-*/
+        await _cartService.ClearCartAsync(user.Value.userId, user.Value.role);
 
+        return Ok(new { success = true, message = "تم مسح الكارت" });
+    }
 
+    // =========================
+    // Submit Cart
+    // =========================
+    [HttpPost("submit")]
+    public async Task<IActionResult> Submit()
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
 
-        // =========================
-        // Remove Item From Cart
-        // =========================
-        [HttpDelete("Delitems/{productId}")]
-        public async Task<IActionResult> RemoveItem(int productId)
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+        var result = await _cartService.SubmitCartAsync(user.Value.userId, user.Value.role);
 
+        if (!result.Success)
+            return BadRequest(result);
 
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
-
-            int beneficiaryId = beneficiary.Id;
-            var res = await _cartService.RemoveItemAsync(beneficiaryId, productId);
-            return Ok(new { success = true, message = res });
-        }
-
-
-
-        /*
-                // =========================
-                // Remove multiple items
-                // =========================
-                [HttpDelete("Delitems")]
-                public async Task<IActionResult> RemoveItems([FromBody] IEnumerable<int> productIds)
-                {
-                    var benId = await GetBeneficiaryIdAsync();
-                    if (benId == null) return Unauthorized(new { success = false, message = "User not found" });
-
-                    var res = await _cartService.RemoveItemsAsync(benId.Value, productIds);
-                    return Ok(new { success = true, data = res });
-                }
-        */
-
-
-
-        // =========================
-        // Update multiple items quantities
-        // =========================
-        [HttpPut("UpdateItems")]
-        public async Task<IActionResult> UpdateItems([FromBody] UpdateCartItemDto  Updated)
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-
-
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
-
-            int beneficiaryId = beneficiary.Id;
-            var res = await _cartService.UpdateItemQuantityAsync(beneficiaryId, Updated.ProductId , Updated.Quantity);
-            return Ok(new { success = true, data = res });
-        }
-
-
-
-
-        // =========================
-        // Clear Cart
-        // =========================
-        [HttpDelete("ClearCart")]
-        public async Task<IActionResult> ClearCart()
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-
-
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
-
-            int beneficiaryId = beneficiary.Id;
-            var res = await _cartService.ClearCartAsync(beneficiaryId);
-            return Ok(new { success = true, message = res });
-        }
-
-
-        // =========================
-        // Submit Cart (retrieve all cart data in one request)
-        // Front-end should call this when user clicks Submit to get final cart snapshot
-        // and basic validation (missing items or invalid quantities).
-        // =========================
-        [HttpPost("SubmitCart")]
-        public async Task<IActionResult> SubmitCart()
-        {
-            var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-
-
-            var beneficiary = await _unitOfWork
-     .Repository<Beneficiary, int>()
-     .FirstOrDefaultAsync(b => b.AppUserId == userId);
-
-            if (beneficiary == null)
-                return Ok(new { success = false, data = " لا يوجد مستفيد" });
-
-            int beneficiaryId = beneficiary.Id;
-            var submitResult = await _cartService.SubmitCartAsync(beneficiaryId);
-            if (!submitResult.Success)
-                return BadRequest(new { success = false, errors = submitResult.Errors });
-
-            return Ok(new { success = true, message = "تم إرسال الطلب بنجاح بانتظار موافقة المدير" });
-        }
+        return Ok(new { success = true, message = "تم الإرسال بنجاح" });
     }
 }
