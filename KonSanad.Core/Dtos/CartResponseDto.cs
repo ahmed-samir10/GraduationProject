@@ -10,8 +10,12 @@ namespace KonSanad.Core.Dtos
     {
         public int? ProductId { get; set; }
         public int Quantity { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty; // beneficiary | donationItem | donationCash | custom
-        public Dictionary<string, string>? ExtraData { get; set; }
+      public string Reason { get; set; } = string.Empty; // For beneficiary items
+        public Dictionary<string, string> ExtraData { get; set; } = new(); // For donor items
     }
 
     public class CartResponseDto

@@ -51,16 +51,17 @@ namespace KonSanad.Services.Services
             if (role == "beneficiary")
             {
                 var data = dto as AddToCartDto;
-
+                var product = await _context.OrderItems  
+    .FirstOrDefaultAsync(p => p.Id == data.ProductId);
                 cart.Items.Add(new CartItemDto
                 {
                     ProductId = data.ProductId,
                     Quantity = data.QuantityRequested,
+                 ImageUrl = product.ImageUrl,
+                ProductName = product.CustomSupplyName,
+                Category = product.Category,
                     Type = "beneficiary",
-                    ExtraData = new Dictionary<string, string>
-                {
-                    { "Reason", data.Reason }
-                }
+                  Reason = data.Reason
                 });
             }
             else if (role == "donor")
