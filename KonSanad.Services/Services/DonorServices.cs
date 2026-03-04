@@ -1,4 +1,7 @@
 ﻿
+using KonSanad.Repository.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace KonSanad.Services.Services
 {
     public class DonorServices : IDonorServices
@@ -338,47 +341,58 @@ namespace KonSanad.Services.Services
 
             return result;
         }
-        public async Task<IEnumerable<ItemDonationDto>> GetMyItemDonationsAsync(string userId)
+
+        #region GetMyItemDonationsAsync
+        //-----------------------------------------------------------------------------------
+
+        public async Task<IEnumerable<MyOrderItemDto>> GetMyDonatedOrderItemsAsync(string userId)
         {
-            // 1) Get donor by AppUserId
+            // 1️⃣ هات المتبرع
             var donor = await _unitOfWork.Repository<Donor, int>()
                 .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
+            //لو ملقاش المتبرع ال فالتوكين بيساوي ال فجدول ال appUserId
             if (donor == null)
                 throw new Exception("Donor not found");
 
-            // 2) Query DonationOrders that have Items only
-            var itemDonations = await _unitOfWork.Repository<DonationOrder, int>()
+
+            // 2️⃣ هات OrderItems باستخدام Repository
+            // جلب الـ OrderItems الخاصة بالمتبرع
+
+            var orderItems = await _unitOfWork.Repository<OrderItem, int>()
                 .FindAllAsync(
-                    d => d.DonorId == donor.Id && d.OrderItems.Any(),
-                    include: q => q
-                        .Include(d => d.OrderItems)
-                            .ThenInclude(oi => oi.Supply)
-                        .Include(d => d.Receipts)
+                    oi => oi.DonationOrder != null &&
+                          oi.DonationOrder.DonorId == donor.Id,
+                    include: q => q.Include(oi => oi.DonationOrder)
                 );
 
-            // 3) Map to DTO
-            var result = itemDonations.Select(d => new ItemDonationDto
+            // 3️⃣ Mapping آمن يمنع Null crash
+            // ?? string.Empty دي علشان لو القيمه ب null في الداتا بيز الاسواجر بيضرب
+
+            var result = orderItems.Select(oi => new MyOrderItemDto
             {
-                Id = d.Id,
-                OrderDate = d.OrderDate,
-                CreatedAt = d.CreatedAt,
-                Status = d.Status,
-                Items = d.OrderItems?.Select(oi => new DonationItemDetailDto
-                {
-                    SupplyId = oi.SupplyId ?? 0,
-                    Quantity = oi.Quantity,
-                    CustomName = oi.CustomSupplyName,
-                    ImageFile = oi.ImageUrl,
-                    Unit = oi.Unit
-                }).ToList() ?? new List<DonationItemDetailDto>(),
-                ReceiptIds = d.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
+                Id = oi.Id,
+                DonationOrderId = oi.DonationOrderId,
+                SupplyId = oi.SupplyId,
+                CustomSupplyName = oi.CustomSupplyName ?? string.Empty,
+                Quantity = oi.Quantity,
+                Category = oi.Category ?? string.Empty,
+                Unit = oi.Unit ?? string.Empty,
+                CreatedAt = oi.CreatedAt,
+                Status = oi.Status ?? string.Empty,
+                ImageUrl = oi.ImageUrl ?? string.Empty,
+                Description = oi.Description ?? string.Empty,
+
+                orderItemStatus = oi.orderItemStatus
+
             }).ToList();
 
             return result;
         }
+        //-------------------------------------------------------------------------------
+        #endregion
 
-       
+
         public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
         {
             // 1) Get donor by AppUserId

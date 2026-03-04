@@ -134,6 +134,10 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("datetime2");
 
@@ -802,9 +806,10 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                    b.Property<int>("HelpOrderStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -820,9 +825,6 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -851,6 +853,9 @@ namespace KonSanad.Repository.Data.migration
                     b.Property<int>("HelpOrderId")
                         .HasColumnType("int");
 
+                    b.Property<int>("HelpOrderStatus")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -872,6 +877,9 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<int>("SupplyId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1027,7 +1035,6 @@ namespace KonSanad.Repository.Data.migration
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1072,6 +1079,9 @@ namespace KonSanad.Repository.Data.migration
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("orderItemStatus")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

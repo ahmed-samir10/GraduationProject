@@ -1,6 +1,7 @@
 ﻿// KonSanad.Repository\Entities\OrderItem.cs
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using KonSanad.Core.Entity;
 using Microsoft.AspNetCore.Http;
 
 namespace KonSanad.Repository.Entities
@@ -18,13 +19,17 @@ namespace KonSanad.Repository.Entities
 
         public string? CustomSupplyName { get; set; }
         public int Quantity { get; set; }
-        public string Category { get; set; } = null!;
-        public string Unit { get; set; } = null!;
+        public string? Category { get; set; } = null!;
+        public string? Unit { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public string? Status { get; set; }
         public string? ImageUrl { get; set; } = null!;
 
         // new column for description
         public string? Description { get; set; }
+
+       
+        //OrderItemStatus
+        public OrderItemStatus orderItemStatus { get; set; }
     }
 }
