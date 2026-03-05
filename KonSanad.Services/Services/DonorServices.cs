@@ -37,22 +37,25 @@ namespace KonSanad.Services.Services
         // ---------------------------------------------------------------------------
         // 2) Get All Low-Stock Supplies
         // ---------------------------------------------------------------------------
-        public async Task<List<SupplyDto>> GetLowStockSuppliesAsync()
-        {
 
-            
+        //  new : pagenation
+        public async Task<List<SupplyDto>> GetLowStockSuppliesAsync(int pageNumber, int pageSize)
+        {
             var supplies = await _unitOfWork.Repository<Supply, int>()
-                .FindAllAsync(s => s.StockQuantity <= s.MinimumLevel);
+                .GetQueryable()
+                .Where(s => s.StockQuantity <= s.MinimumLevel)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return supplies.Select(s => new SupplyDto
             {
                 Id = s.Id,
                 Name = s.Name,
-               Quantity = s.StockQuantity ?? 0,
-               imageurl = s.ImageUrl,
+                Quantity = s.StockQuantity ?? 0,
+                imageurl = s.ImageUrl,
                 Unit = s.Unit,
                 title = s.Title
-
             }).ToList();
         }
 
@@ -342,6 +345,9 @@ namespace KonSanad.Services.Services
                     CreatedAt = d.CreatedAt,
                     Status = d.Status,
                     CashAmount = d.Amount,
+                    //new status
+                    cashDonationStatus = d.cashDonationStatus,
+                    
                     ReceiptIds = d.Receipt != null
                         ? new List<int> { d.Receipt.Id }
                         : new List<int>()
@@ -349,6 +355,7 @@ namespace KonSanad.Services.Services
 
             return result;
         }
+        //-----------------------------------------------------------------------------------
         public async Task<IEnumerable<ItemDonationDto>> GetMyItemDonationsAsync(string userId)
         {
             // 1) Get donor by AppUserId
