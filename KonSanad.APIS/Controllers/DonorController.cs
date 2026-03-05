@@ -143,7 +143,7 @@ public class DonorController : ControllerBase
             return BadRequest(new { error = "User id not found in token" });
 
         // 3. Get cash donations for the user
-        var result = await donorServices.GetMyCashDonationsAsync(userId);
+        var result = await donorServices.GetMyCashDonationsAsyncc(userId);
 
         // 4. Return the result
         return Ok(new { success = true, data = result });
