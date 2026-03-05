@@ -49,6 +49,7 @@ namespace KonSanad.Services.Services
                             CustomSupplyName = item.ProductName,
                             Category = item.Category,
                             Unit = "pce",
+                            orderItemStatus = OrderItemStatus.Pending,
                             Status = item.ExtraData?["Status"],
                             Description = item.ExtraData?["Description"]
                         };
@@ -74,7 +75,19 @@ namespace KonSanad.Services.Services
                         };
                         _context.CashDonations.Add(CashDonation);
                         await _context.SaveChangesAsync();
+                        var Receipt = new Receipt
+                        {
+                            DonationOrderId = donation.Id,
+                            CashDonationId = CashDonation.Id,
+                            DonorId = userId,
+                             ManagerId = 1,
+                            CreatedAt = DateTime.Now,
+                           
+                        };
+                        _context.Receipts.Add(Receipt);
+                        await _context.SaveChangesAsync();
                         break;
+
 
                     case "custom":
                       
@@ -87,7 +100,8 @@ namespace KonSanad.Services.Services
                             Category = item.Category,
                             Unit = item.ExtraData["Unit"],
                             ImageUrl = item.ImageUrl,
-                           // Status = item.ExtraData?["Status"]
+                            orderItemStatus = OrderItemStatus.Pending,
+                            // Status = item.ExtraData?["Status"]
                         };
                         _context.OrderItems.Add(customOrderItem);
                         await _context.SaveChangesAsync();

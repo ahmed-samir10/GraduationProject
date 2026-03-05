@@ -16,7 +16,7 @@ namespace KonSanad.Repository.Entities
         public decimal Amount { get; set; }
         public int? CampaignId { get; set; }
          public int? HelpOrderId { get; set; }
-
+     
 
     }
 }

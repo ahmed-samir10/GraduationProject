@@ -223,88 +223,88 @@ namespace KonSanad.Services.Services
                 Message = "تم تسجيل التبرع بعنصر مخصص ✔"
             };
         }
-/*
-        public async Task<DonationResponseCashDto> CreateDonationCashAsync(
-           CreateDonationCashRequestDto request, int donorId)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            var donationOrder = new DonationOrder
-            {
-                DonorId = donorId,
-                HelpOrderid = request.HelpOrderId,
-                CampaignId = request.CampaignId,
-                ManagerId = 1, // Default manager assignment
-                OrderDate = DateTime.Now,
-                CreatedAt = DateTime.Now,
-                DonationCategoryStatus = "معلقه",
-                Status = "قيد المراجعة",
-
-
-            };
-
-            await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
-            await _unitOfWork.Complete();
-
-
-            int? cashReceiptId = null;
-           
-
-            // Step 2: Cash donation
-            if (request.CashAmount.HasValue && request.CashAmount > 0)
-            {
-                donationOrder.CashAmount = request.CashAmount.Value;
-                _unitOfWork.Repository<DonationOrder, int>().Update(donationOrder);
-                await _unitOfWork.Complete();
-
-                var cash = new CashDonation
+        /*
+                public async Task<DonationResponseCashDto> CreateDonationCashAsync(
+                   CreateDonationCashRequestDto request, int donorId)
                 {
+                    if (request == null)
+                        throw new ArgumentNullException(nameof(request));
 
-                    DonationOrderId = donationOrder.Id,
-                    Amount = request.CashAmount.Value
-                };
-
-                await _unitOfWork.Repository<CashDonation, int>().AddAsync(cash);
-                await _unitOfWork.Complete();
-                var receipt = new Receipt
-                {
-                    DonationOrderId = donationOrder.Id,
-                    CashDonationId = cash.Id,
-
-                    DonorId = donorId,
-                    ManagerId = 1
-                };
-
-                // Save
-                await _unitOfWork.Repository<Receipt, int>().AddAsync(receipt);
-
-                await _unitOfWork.Complete();
-
-                cashReceiptId = receipt.Id;
-            }
-
-            
-            await _unitOfWork.Complete();
-
-            // Step 4: Response
-
-            
-                return new DonationResponseCashDto
-                {
-
-                    CashAmount = request.CashAmount,
-
-                    CashReceiptId = cashReceiptId,
-                    Message = "تم تسجيل التبرع بنجاح ✔"
-                };
-
-           
+                    var donationOrder = new DonationOrder
+                    {
+                        DonorId = donorId,
+                        HelpOrderid = request.HelpOrderId,
+                        CampaignId = request.CampaignId,
+                        ManagerId = 1, // Default manager assignment
+                        OrderDate = DateTime.Now,
+                        CreatedAt = DateTime.Now,
+                        DonationCategoryStatus = "معلقه",
+                        Status = "قيد المراجعة",
 
 
+                    };
 
-        }
-        // get myrequst */
+                    await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+                    await _unitOfWork.Complete();
+
+
+                    int? cashReceiptId = null;
+
+
+                    // Step 2: Cash donation
+                    if (request.CashAmount.HasValue && request.CashAmount > 0)
+                    {
+                        donationOrder.CashAmount = request.CashAmount.Value;
+                        _unitOfWork.Repository<DonationOrder, int>().Update(donationOrder);
+                        await _unitOfWork.Complete();
+
+                        var cash = new CashDonation
+                        {
+
+                            DonationOrderId = donationOrder.Id,
+                            Amount = request.CashAmount.Value
+                        };
+
+                        await _unitOfWork.Repository<CashDonation, int>().AddAsync(cash);
+                        await _unitOfWork.Complete();
+                        var receipt = new Receipt
+                        {
+                            DonationOrderId = donationOrder.Id,
+                            CashDonationId = cash.Id,
+
+                            DonorId = donorId,
+                            ManagerId = 1
+                        };
+
+                        // Save
+                        await _unitOfWork.Repository<Receipt, int>().AddAsync(receipt);
+
+                        await _unitOfWork.Complete();
+
+                        cashReceiptId = receipt.Id;
+                    }
+
+
+                    await _unitOfWork.Complete();
+
+                    // Step 4: Response
+
+
+                        return new DonationResponseCashDto
+                        {
+
+                            CashAmount = request.CashAmount,
+
+                            CashReceiptId = cashReceiptId,
+                            Message = "تم تسجيل التبرع بنجاح ✔"
+                        };
+
+
+
+
+
+                }
+                // get myrequst */
 
         // ---------------------------------------------------------------------------
         // New: Get all DonationOrders made by the donor (cash and/or items)
@@ -319,24 +319,22 @@ namespace KonSanad.Services.Services
             if (donor == null)
                 throw new Exception("Donor not found");
 
-            // 2) Query DonationOrders that have CashDonation only
-            var cashDonations = await _unitOfWork.Repository<DonationOrder, int>()
-                .FindAllAsync(
-                    d => d.DonorId == donor.Id && d.CashDonation != null,
-                    include: q => q
-                        .Include(d => d.CashDonation)
-                        .Include(d => d.Receipts)
-                );
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+     .FindAllAsync(
+         cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id,
+         include: q => q.Include(cd => cd.DonationOrder) // جوا DonationOrder فيه Receipts
+     );
 
-            // 3) Map to DTO
-            var result = cashDonations.Select(d => new CashDonationDto
+            var result = cashDonations.Select(cd => new CashDonationDto
             {
-                Id = d.Id,
-                OrderDate = d.OrderDate,
-                CreatedAt = d.CreatedAt,
-                Status = d.Status,
-                CashAmount = d.CashAmount ?? 0,
-                ReceiptIds = d.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
+                Id = cd.Id,
+                OrderDate = cd.DonationOrder?.OrderDate,
+                CreatedAt = cd.CreatedAt,
+                Status = cd.Status,
+                CashAmount = cd.Amount,
+                CampaignId = (int)cd.CampaignId,
+                HelpOrderId =(int) cd.HelpOrderId,
+                ReceiptIds = cd.DonationOrder?.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
             }).ToList();
 
             return result;
