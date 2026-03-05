@@ -1,6 +1,7 @@
 ﻿// KonSanad.Repository\Entities\CashDonation.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Repository.Entities
 {
@@ -20,6 +21,13 @@ namespace KonSanad.Repository.Entities
         public int receiptId { get; set; }
         [ForeignKey(nameof(receiptId))]
         public Receipt Receipt { get; set; } = null!; // Navigation Property
+
+
+        //CashDonationStatus 
+        public CashDonationStatus cashDonationStatus {  get; set; }
+        
+
+        
 
 
     }

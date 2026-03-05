@@ -153,36 +153,45 @@ public class DonorController : ControllerBase
 
     [Authorize]
     [HttpPost("donateItem")]
-   /* public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
+    /* public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
 
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+     {
+         if (!ModelState.IsValid)
+             return BadRequest(ModelState);
+         var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
 
-        var Donor = await _unitOfWork
-    .Repository<Donor, int>()
-    .FirstOrDefaultAsync(b => b.AppUserId == userId);
+         var Donor = await _unitOfWork
+     .Repository<Donor, int>()
+     .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
-        if (Donor == null)
-            return BadRequest(new { Error = "No Donor found for this user" });
+         if (Donor == null)
+             return BadRequest(new { Error = "No Donor found for this user" });
 
-        int DonorID = Donor.Id;
+         int DonorID = Donor.Id;
 
-        var result = await donorServices.CreateDonationItemAsync(request, DonorID);
+         var result = await donorServices.CreateDonationItemAsync(request, DonorID);
 
-        return Ok(new { success = true, data = result });
-    }
-*/
+         return Ok(new { success = true, data = result });
+     }
+ */
+
+    //   new: Pagenation
+
     [HttpGet("low-stock-supplies")]
-    public async Task<IActionResult> GetLowStockSupplies()
+    public async Task<IActionResult> GetLowStockSupplies(
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 8)
     {
-        var result = await donorServices.GetLowStockSuppliesAsync();
-        return Ok(new { success = true, data = result });
+        var result = await donorServices.GetLowStockSuppliesAsync(pageNumber, pageSize);
 
+        return Ok(new
+        {
+            success = true,
+            data = result
+        });
     }
-
+    //--------------------------------------------------------------------------------
     [Authorize]
     [HttpGet("MyDonationsInCampaign-requests")]
     public async Task<IActionResult> GetMyDonationsInCampaignRequests()

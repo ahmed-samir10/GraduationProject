@@ -664,10 +664,20 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("cashDonationStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("receiptId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
 
                     b.HasIndex("DonationOrderId")
                         .IsUnique();
+
+                    b.HasIndex("receiptId");
 
                     b.ToTable("CashDonation", (string)null);
                 });
@@ -697,7 +707,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int?>("DonorId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("HelpOrderid")
+                    b.Property<int?>("HelpOrderId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
@@ -1502,21 +1512,34 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
             modelBuilder.Entity("KonSanad.Repository.Entities.CashDonation", b =>
                 {
+                    b.HasOne("KonSanad.Repository.Entities.Campaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId");
+
                     b.HasOne("KonSanad.Repository.Entities.DonationOrder", "DonationOrder")
                         .WithOne("CashDonation")
                         .HasForeignKey("KonSanad.Repository.Entities.CashDonation", "DonationOrderId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("KonSanad.Repository.Entities.Receipt", "Receipt")
+                        .WithMany()
+                        .HasForeignKey("receiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
                     b.Navigation("DonationOrder");
+
+                    b.Navigation("Receipt");
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.DonationOrder", b =>
                 {
                     b.HasOne("KonSanad.Repository.Entities.Campaign", "Campaign")
                         .WithMany("DonationOrders")
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("CampaignId");
 
                     b.HasOne("KonSanad.Repository.Entities.Donor", "Donor")
                         .WithMany("DonationOrders")
