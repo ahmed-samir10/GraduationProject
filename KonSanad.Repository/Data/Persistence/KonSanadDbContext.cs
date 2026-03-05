@@ -82,23 +82,17 @@ namespace KonSanad.Repository.Data.Persistence
         #region Automatic Apply Audit Columns
         private void ApplyAuditColumns()
         {
-            var now = DateTime.UtcNow;
+            var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cairoZone); // ✅ Cairo Time
 
-            // Catch The All Entity And Make Filteration From State Action "Added"
-            // And Make Set Value For CreatedAt Column Automatically
             foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
             {
                 if (entry.Properties.FirstOrDefault(p => p.Metadata.Name == "CreatedAt") is { } created)
                 {
                     created.CurrentValue = now;
                 }
-
-                //var entity = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "CreatedAt");
-                //entity.CurrentValue = now;
             }
 
-            // Catch The All Entity And Make Filteration From State Action "Modified" => Updated
-            // And Make Set Value For UpdatedAt Column Automatically
             foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Modified))
             {
                 if (entry.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt") is { } updated)
@@ -110,5 +104,6 @@ namespace KonSanad.Repository.Data.Persistence
         #endregion
 
         // Yousseif
+
     }
 }

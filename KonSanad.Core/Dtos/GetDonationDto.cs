@@ -14,6 +14,8 @@ namespace KonSanad.Core.Dtos
         public DateTime? CreatedAt { get; set; }
         public string? Status { get; set; }
         public decimal CashAmount { get; set; }
+        public int CampaignId { get; set; }
+        public int HelpOrderId { get; set; }
         public List<int> ReceiptIds { get; set; } = new List<int>();
     }
 

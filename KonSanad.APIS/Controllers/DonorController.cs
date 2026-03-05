@@ -24,7 +24,7 @@ public class DonorController : ControllerBase
         return Ok(new { success = true, data = list });
     }
 
-    [Authorize]
+    /*[Authorize]
     [HttpPost("donateCash")]
     public async Task<IActionResult> Donate([FromForm] CreateDonationCashRequestDto request)
     {
@@ -46,7 +46,7 @@ public class DonorController : ControllerBase
 
         return Ok(new { success = true, data = result });
     }
-
+*/
 
     [HttpPost("donate-custom-item")]
     [Authorize]
@@ -143,7 +143,7 @@ public class DonorController : ControllerBase
 
     [Authorize]
     [HttpPost("donateItem")]
-    public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
+   /* public async Task<IActionResult> Donate([FromForm] CreateDonationItemRequestDto request)
 
     {
         if (!ModelState.IsValid)
@@ -164,7 +164,7 @@ public class DonorController : ControllerBase
 
         return Ok(new { success = true, data = result });
     }
-
+*/
     [HttpGet("low-stock-supplies")]
     public async Task<IActionResult> GetLowStockSupplies()
     {
