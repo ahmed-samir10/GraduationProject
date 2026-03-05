@@ -1,5 +1,4 @@
 ﻿
-using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
@@ -23,294 +22,341 @@ namespace KonSanad.Services.Services
 
         }
 
+        // Helper to map DonationOrder.Status string to DonationRequestStatus enum
+        private Core.Entity.DonationRequestStatus MapDonationOrderStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status)) return Core.Entity.DonationRequestStatus.Pending;
+            var s = status.Trim().ToLower();
+            if (s.Contains("قيد") || s.Contains("مراجعة") || s.Contains("pending")) return Core.Entity.DonationRequestStatus.Pending;
+            if (s.Contains("مكتمل") || s.Contains("completed") || s.Contains("complete")) return Core.Entity.DonationRequestStatus.Completed;
+            if (s.Contains("مرفوض") || s.Contains("rejected")) return Core.Entity.DonationRequestStatus.Rejected;
+            return Core.Entity.DonationRequestStatus.Pending;
+        }
+
 
         // ---------------------------------------------------------------------------
         // 2) Get All Low-Stock Supplies
         // ---------------------------------------------------------------------------
-        public async Task<List<SupplyDto>> GetLowStockSuppliesAsync()
-        {
 
-            
+        //  new : pagenation
+        public async Task<List<SupplyDto>> GetLowStockSuppliesAsync(int pageNumber, int pageSize)
+        {
             var supplies = await _unitOfWork.Repository<Supply, int>()
-                .FindAllAsync(s => s.StockQuantity <= s.MinimumLevel);
+                .GetQueryable()
+                .Where(s => s.StockQuantity <= s.MinimumLevel)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return supplies.Select(s => new SupplyDto
             {
                 Id = s.Id,
                 Name = s.Name,
-               Quantity = s.StockQuantity ?? 0,
-               imageurl = s.ImageUrl,
+                Quantity = s.StockQuantity ?? 0,
+                imageurl = s.ImageUrl,
                 Unit = s.Unit,
                 title = s.Title
-
             }).ToList();
         }
 
         // ---------------------------------------------------------------------------
         // 3) Create Donation (Cash + Items)
         // ---------------------------------------------------------------------------
-    /*    public async Task<DonationResponseItemDto> CreateDonationItemAsync(
-              CreateDonationItemRequestDto request, int donorId)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+        /*   public async Task<DonationResponseItemDto> CreateDonationItemAsync(
+                 CreateDonationItemRequestDto request, int donorId)
+           {
+               if (request == null)
+                   throw new ArgumentNullException(nameof(request));
 
-            // Create donation order
-            var donationOrder = new DonationOrder
+               // Create donation order
+               var donationOrder = new DonationOrder
+               {
+                   DonorId = donorId,
+                   CampaignId = null,
+                   ManagerId = 1,
+                   CreatedAt = DateTime.Now,
+                   OrderDate = DateTime.Now,
+                   DonationCategoryStatus = "معلقة",
+                   Status = "قيد المراجعة",
+               };
+
+               await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+               await _unitOfWork.Complete();
+
+               // ensure upload folder exists
+               var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+               if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+
+
+
+               // Load supply to copy its Name and Unit into OrderItem
+               var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
+
+
+
+               // Handle single donated object (CreateDonationItemRequestDto represents one item)
+               string? imageUrl = null;
+               if (request.ImageFile != null && request.ImageFile.Length > 0)
+               {
+                   var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+                   var filePath = Path.Combine(uploadsFolder, fileName);
+
+                   using (var stream = new FileStream(filePath, FileMode.Create))
+                   {
+                       await request.ImageFile.CopyToAsync(stream);
+                   }
+
+                   imageUrl = "/uploads/" + fileName;
+               }
+
+               var donationItem = new OrderItem
+               {
+                   DonationOrderId = donationOrder.Id,
+                   SupplyId = request.SupplyId,
+                   Quantity = request.Quantity,
+                   ImageUrl = imageUrl,
+
+                   // copy supply values into order item
+                   CustomSupplyName = supply?.Name,
+                   Unit = supply?.Unit ?? string.Empty,
+
+                   Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
+                   Description = request.Description
+               };
+
+               await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
+
+               // Update stock
+               supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
+               if (supply != null)
+               {
+                   supply.StockQuantity = supply.StockQuantity + request.Quantity;
+                   _unitOfWork.Repository<Supply, int>().Update(supply);
+               }
+
+               await _unitOfWork.Complete();
+
+               return new DonationResponseItemDto
+               {
+                   //QuantityItems = request.Quantity,
+                   Items = new List<object>
+           {
+               new DonationItemDto
+               {
+                   SupplyId = request.SupplyId,
+                   //ImageFile = imageUrl,
+                   Quantity = request.Quantity,
+                   Status = donationItem.Status,
+                   Description = donationItem.Description
+               }
+           },
+                   Message = "تم تسجيل التبرع بالمنتج ✔"
+               };
+           }
+   */
+
+        /*    public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
+                CreateCustomDonationItemRequestDto request, int donorId)
             {
-                DonorId = donorId,
-                CampaignId = null,
-                ManagerId = 1,
-                CreatedAt = DateTime.Now,
-                OrderDate = DateTime.Now,
-                DonationCategoryStatus = "معلقة",
-                Status = "قيد المراجعة",
-            };
+                if (request == null)
+                    throw new ArgumentNullException(nameof(request));
 
-            await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
-            await _unitOfWork.Complete();
+                // Validate custom item name
+                if (string.IsNullOrWhiteSpace(request.CustomItemName))
+                    throw new ArgumentException("اسم العنصر المخصص مطلوب", nameof(request.CustomItemName));
 
-            // ensure upload folder exists
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-
-
-
-            // Load supply to copy its Name and Unit into OrderItem
-            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
-
-
-
-            // Handle single donated object (CreateDonationItemRequestDto represents one item)
-            string? imageUrl = null;
-            if (request.ImageFile != null && request.ImageFile.Length > 0)
-            {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Create donation order
+                var donationOrder = new DonationOrder
                 {
-                    await request.ImageFile.CopyToAsync(stream);
-                }
+                    DonorId = donorId,
+                    CampaignId = null,
+                    ManagerId = 1,
+                    CreatedAt = DateTime.Now,
+                    OrderDate = DateTime.Now,
+                    DonationCategoryStatus = "معلقة",
+                    Status = "قيد المراجعة",
+                };
 
-                imageUrl = "/uploads/" + fileName;
-            }
+                await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+                await _unitOfWork.Complete();
 
-            var donationItem = new OrderItem
-            {
-                DonationOrderId = donationOrder.Id,
-                SupplyId = request.SupplyId,
-                Quantity = request.Quantity,
-                ImageUrl = imageUrl,
+                // Ensure upload folder exists
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
 
-                // copy supply values into order item
-                CustomSupplyName = supply?.Name,
-                Unit = supply?.Unit ?? string.Empty,
-
-                Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
-                Description = request.Description
-            };
-
-            await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
-
-            // Update stock
-            supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(request.SupplyId);
-            if (supply != null)
-            {
-                supply.StockQuantity = supply.StockQuantity + request.Quantity;
-                _unitOfWork.Repository<Supply, int>().Update(supply);
-            }
-
-            await _unitOfWork.Complete();
-
-            return new DonationResponseItemDto
-            {
-                //QuantityItems = request.Quantity,
-                Items = new List<object>
-        {
-            new DonationItemDto
-            {
-                SupplyId = request.SupplyId,
-                //ImageFile = imageUrl,
-                Quantity = request.Quantity,
-                Status = donationItem.Status,
-                Description = donationItem.Description
-            }
-        },
-                Message = "تم تسجيل التبرع بالمنتج ✔"
-            };
-        }
-
-        */
-        public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
-            CreateCustomDonationItemRequestDto request, int donorId)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            // Validate custom item name
-            if (string.IsNullOrWhiteSpace(request.CustomItemName))
-                throw new ArgumentException("اسم العنصر المخصص مطلوب", nameof(request.CustomItemName));
-
-            // Create donation order
-            var donationOrder = new DonationOrder
-            {
-                DonorId = donorId,
-                //CampaignId = null,
-                ManagerId = 1,
-                CreatedAt = DateTime.Now,
-                OrderDate = DateTime.Now,
-                DonationCategoryStatus = "معلقة",
-                Status = "قيد المراجعة",
-            };
-
-            await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
-            await _unitOfWork.Complete();
-
-            // Ensure upload folder exists
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            // Handle image upload
-            string? imageUrl = null;
-            if (request.ImageFile != null && request.ImageFile.Length > 0)
-            {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Handle image upload
+                string? imageUrl = null;
+                if (request.ImageFile != null && request.ImageFile.Length > 0)
                 {
-                    await request.ImageFile.CopyToAsync(stream);
-                }
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
 
-                imageUrl = "/uploads/" + fileName;
-            }
-
-            // Create donation item for CUSTOM item (SupplyId = null)
-            var donationItem = new OrderItem
-            {
-                DonationOrderId = donationOrder.Id,
-                SupplyId = null, 
-                Quantity = request.Quantity,
-                ImageUrl = imageUrl,
-                CustomSupplyName = request.CustomItemName, 
-                Unit = request.Unit ?? "قطعة", //
-                Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
-                Description = request.Description
-            };
-
-            await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
-            await _unitOfWork.Complete();
-
-            return new DonationResponseItemDto
-            {
-                QuantityItems = request.Quantity,
-                Items = new List<object>
-        {
-            new DonationNewItemDto
-            {
-                //SupplyId = 0, // No supply ID for custom items
-                CustomName = request.CustomItemName,
-                Unit = donationItem.Unit,
-                Quantity = request.Quantity,
-                Status = donationItem.Status,
-                Description = donationItem.Description,
-                ImageFile = imageUrl
-            }
-        },
-                Message = "تم تسجيل التبرع بعنصر مخصص ✔"
-            };
-        }
-        /*
-                public async Task<DonationResponseCashDto> CreateDonationCashAsync(
-                   CreateDonationCashRequestDto request, int donorId)
-                {
-                    if (request == null)
-                        throw new ArgumentNullException(nameof(request));
-
-                    var donationOrder = new DonationOrder
+                    using (var stream = new FileStream(filePath, FileMode.Create))
                     {
-                        DonorId = donorId,
-                        HelpOrderid = request.HelpOrderId,
-                        CampaignId = request.CampaignId,
-                        ManagerId = 1, // Default manager assignment
-                        OrderDate = DateTime.Now,
-                        CreatedAt = DateTime.Now,
-                        DonationCategoryStatus = "معلقه",
-                        Status = "قيد المراجعة",
-
-
-                    };
-
-                    await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
-                    await _unitOfWork.Complete();
-
-
-                    int? cashReceiptId = null;
-
-
-                    // Step 2: Cash donation
-                    if (request.CashAmount.HasValue && request.CashAmount > 0)
-                    {
-                        donationOrder.CashAmount = request.CashAmount.Value;
-                        _unitOfWork.Repository<DonationOrder, int>().Update(donationOrder);
-                        await _unitOfWork.Complete();
-
-                        var cash = new CashDonation
-                        {
-
-                            DonationOrderId = donationOrder.Id,
-                            Amount = request.CashAmount.Value
-                        };
-
-                        await _unitOfWork.Repository<CashDonation, int>().AddAsync(cash);
-                        await _unitOfWork.Complete();
-                        var receipt = new Receipt
-                        {
-                            DonationOrderId = donationOrder.Id,
-                            CashDonationId = cash.Id,
-
-                            DonorId = donorId,
-                            ManagerId = 1
-                        };
-
-                        // Save
-                        await _unitOfWork.Repository<Receipt, int>().AddAsync(receipt);
-
-                        await _unitOfWork.Complete();
-
-                        cashReceiptId = receipt.Id;
+                        await request.ImageFile.CopyToAsync(stream);
                     }
 
-
-                    await _unitOfWork.Complete();
-
-                    // Step 4: Response
-
-
-                        return new DonationResponseCashDto
-                        {
-
-                            CashAmount = request.CashAmount,
-
-                            CashReceiptId = cashReceiptId,
-                            Message = "تم تسجيل التبرع بنجاح ✔"
-                        };
-
-
-
-
-
+                    imageUrl = "/uploads/" + fileName;
                 }
-                // get myrequst */
+
+                // Create donation item for CUSTOM item (SupplyId = null)
+                var donationItem = new OrderItem
+                {
+                    DonationOrderId = donationOrder.Id,
+                    SupplyId = null, 
+                    Quantity = request.Quantity,
+                    ImageUrl = imageUrl,
+                    CustomSupplyName = request.CustomItemName, 
+                    Unit = request.Unit ?? "قطعة", //
+                    Status = string.IsNullOrWhiteSpace(request.Status) ? "قيد المراجعة" : request.Status,
+                    Description = request.Description
+                };
+
+                await _unitOfWork.Repository<OrderItem, int>().AddAsync(donationItem);
+                await _unitOfWork.Complete();
+
+                return new DonationResponseItemDto
+                {
+                    QuantityItems = request.Quantity,
+                    Items = new List<object>
+            {
+                new DonationNewItemDto
+                {
+                    //SupplyId = 0, // No supply ID for custom items
+                    CustomName = request.CustomItemName,
+                    Unit = donationItem.Unit,
+                    Quantity = request.Quantity,
+                    Status = donationItem.Status,
+                    Description = donationItem.Description,
+                    ImageFile = imageUrl
+                }
+            },
+                    Message = "تم تسجيل التبرع بعنصر مخصص ✔"
+                };
+            }
+    */
+        /*      public async Task<DonationResponseCashDto> CreateDonationCashAsync(CreateDonationCashRequestDto request, int donorId)
+              {
+                  // 1. Validate request
+                  if (request is null)
+                      throw new ArgumentNullException(nameof(request));
+
+
+                  // 2. Create donation order with cash amount
+                  var donationOrder = new DonationOrder
+                  {
+                      DonorId = donorId,
+                      HelpOrderid = request.HelpOrderId,
+                      CampaignId = request.CampaignId,
+                      ManagerId = 1, // Default manager assignment
+                      OrderDate = DateTime.Now,
+                      CreatedAt = DateTime.Now,
+                      DonationCategoryStatus = "معلقه",
+                      Status = "قيد المراجعة",
+                      CashAmount = request.CashAmount
+                  };
+
+
+                  // 3. Save donation order (cash donation)
+                  await _unitOfWork.Repository<DonationOrder, int>().AddAsync(donationOrder);
+                  await _unitOfWork.Complete();
+
+
+                  // 4. Initialize cashReceiptId to null; it will be set if a cash donation record is created
+                  int? cashReceiptId = null;
+
+
+                  // 5. Create cash donation record if cash amount is provided
+                  if (request.CashAmount.HasValue && request.CashAmount > 0)
+                  {
+                      // 5.1 Update the DonationOrder with the cash amount (if not already set)
+                      donationOrder.CashAmount = request.CashAmount.Value;
+                      _unitOfWork.Repository<DonationOrder, int>().Update(donationOrder);
+                      await _unitOfWork.Complete();
+
+                      // 5.2 Create CashDonation record linked to the DonationOrder
+                      var cash = new CashDonation
+                      {
+                          DonationOrderId = donationOrder.Id,
+                          Amount = request.CashAmount.Value
+                      };
+
+                      // 5.3 Save CashDonation record
+                      await _unitOfWork.Repository<CashDonation, int>().AddAsync(cash);
+                      await _unitOfWork.Complete();
+
+                      // 5.4 Create Receipt record linked to the DonationOrder and CashDonation
+                      var receipt = new Receipt
+                      {
+                          DonationOrderId = donationOrder.Id,
+                          CashDonationId = cash.Id,
+                          DonorId = donorId,
+                          ManagerId = 1
+                      };
+
+                      // 5.5 Save Receipt record
+                      await _unitOfWork.Repository<Receipt, int>().AddAsync(receipt);
+                      await _unitOfWork.Complete();
+
+                      // 5.6 Set cashReceiptId to the ID of the created receipt
+                      cashReceiptId = receipt.Id;
+                  }
+
+
+                  // 6. return response with cash amount and receipt ID (if created)
+                  return new DonationResponseCashDto
+                  {
+                      CashAmount = request.CashAmount,
+                      CashReceiptId = cashReceiptId,
+                      Message = "تم تسجيل التبرع بنجاح ✔"
+                  };
+              }
+      */
 
         // ---------------------------------------------------------------------------
         // New: Get all DonationOrders made by the donor (cash and/or items)
         // ---------------------------------------------------------------------------
 
-        public async Task<IEnumerable<CashDonationDto>> GetMyCashDonationsAsync(string userId)
+
+        // Get all cash donations made by the donor, including related receipts
+        public async Task<IReadOnlyList<CashDonationDto>> GetMyCashDonationsAsyncc(string userId)
+        {
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+            if (donor is null)
+                throw new Exception($"Donor not found for userId: {userId}");
+
+            // جيب كل الـ CashDonations
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+       .FindAllAsync(
+           cd => cd.DonationOrderId > 0,  // بدل true
+           include: q => q
+               .Include(cd => cd.DonationOrder)
+               .Include(cd => cd.Receipt)
+       );
+            // فلتر في الميموري زي الـ SQL
+            var result = cashDonations
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Select(d => new CashDonationDto
+                {
+                    Id = d.Id,
+                    CreatedAt = d.CreatedAt,
+                    Status = d.Status,
+                    CashAmount = d.Amount,
+                    //new status
+                    cashDonationStatus = d.cashDonationStatus,
+                    
+                    ReceiptIds = d.Receipt != null
+                        ? new List<int> { d.Receipt.Id }
+                        : new List<int>()
+                }).ToList();
+
+            return result;
+        }
+        //-----------------------------------------------------------------------------------
+        public async Task<IEnumerable<ItemDonationDto>> GetMyItemDonationsAsync(string userId)
         {
             // 1) Get donor by AppUserId
             var donor = await _unitOfWork.Repository<Donor, int>()
@@ -319,26 +365,39 @@ namespace KonSanad.Services.Services
             if (donor == null)
                 throw new Exception("Donor not found");
 
-            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
-     .FindAllAsync(
-         cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id,
-         include: q => q.Include(cd => cd.DonationOrder) // جوا DonationOrder فيه Receipts
-     );
+            // 2) Query DonationOrders that have Items only
+            var itemDonations = await _unitOfWork.Repository<DonationOrder, int>()
+                .FindAllAsync(
+                    d => d.DonorId == donor.Id && d.OrderItems.Any(),
+                    include: q => q
+                        .Include(d => d.OrderItems)
+                            .ThenInclude(oi => oi.Supply)
+                        .Include(d => d.Receipts)
+                );
 
-            var result = cashDonations.Select(cd => new CashDonationDto
+            // 3) Map to DTO
+            var result = itemDonations.Select(d => new ItemDonationDto
             {
-                Id = cd.Id,
-                OrderDate = cd.DonationOrder?.OrderDate,
-                CreatedAt = cd.CreatedAt,
-                Status = cd.Status,
-                CashAmount = cd.Amount,
-                CampaignId = (int)cd.CampaignId,
-                HelpOrderId =(int) cd.HelpOrderId,
-                ReceiptIds = cd.DonationOrder?.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
+                Id = d.Id,
+                OrderDate = d.OrderDate,
+                CreatedAt = d.CreatedAt,
+                Status = d.Status,
+                Items = d.OrderItems?.Select(oi => new DonationItemDetailDto
+                {
+                    SupplyId = oi.SupplyId ?? 0,
+                    Quantity = oi.Quantity,
+                    CustomName = oi.CustomSupplyName,
+                    ImageFile = oi.ImageUrl,
+                    Unit = oi.Unit
+                }).ToList() ?? new List<DonationItemDetailDto>(),
+                ReceiptIds = d.Receipts?.Select(r => r.Id).ToList() ?? new List<int>()
             }).ToList();
 
             return result;
         }
+
+        // Get all cash donations made by the donor, including related receipts
+       
 
         #region GetMyItemDonationsAsync
         //-----------------------------------------------------------------------------------
@@ -389,35 +448,46 @@ namespace KonSanad.Services.Services
         }
         //-------------------------------------------------------------------------------
         #endregion
-
-
-        public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
+        // Get all campaigns that the donor has donated From it .
+        // -----------------------------------------------------------
+        public async Task<IEnumerable<CampaignDto>> GetMyDonationsInCampaignRequestsAsync(string userId)
         {
-            // 1) Get donor by AppUserId
+            // 1. Get donor by AppUserId
             var donor = await _unitOfWork.Repository<Donor, int>()
                 .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
-            if (donor == null)
-                throw new Exception("Donor not found");
+            // 2. check if donor exists
+            if (donor is null)
+                throw new Exception($"Donor not found for userId: {userId}");
 
-            // 2) Query campaigns that have at least one DonationOrder from this donor
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
-                .FindAllAsync(
-                    c => c.DonationOrders.Any(d => d.DonorId == donor.Id),
-             include: q => q
-                 .Include(c => c.Category)
-                 .Include(c => c.DonationOrders)
-         );
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+     .FindAllAsync(
+         cd => cd.CampaignId != null && cd.CampaignId != 0,  // ✅ أضف != 0
+         include: q => q
+             .Include(cd => cd.DonationOrder)
+             .Include(cd => cd.Campaign)
+                 .ThenInclude(c => c.Category)
+     );
 
-            // 3) Map to CampaignDto and compute a few helpful aggregates
+            var campaigns = cashDonations
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Select(cd => cd.Campaign)
+                .Where(c => c != null)
+                .GroupBy(c => c.Id)
+                .Select(g => g.First())
+                .ToList();
+
+            // 4. Map to CampaignDto and compute a few helpful aggregates
             var result = campaigns.Select(c =>
             {
-                var totalCash = c.DonationOrders.Sum(d => d.CashAmount ?? 0m);
-                var donorCount = c.DonationOrders
-                    .Where(d => d.DonorId.HasValue)
-                    .Select(d => d.DonorId)
-                    .Distinct()
-                    .Count();
+                var totalCash = cashDonations
+       .Where(cd => cd.CampaignId == c.Id)
+       .Sum(cd => cd.Amount);
+                var donorCount = cashDonations
+         .Where(cd => cd.CampaignId == c.Id && cd.DonationOrder?.DonorId != null)
+         .Select(cd => cd.DonationOrder.DonorId)
+         .Distinct()
+         .Count();
 
                 int progressPercentage = 0;
                 if (c.GoalCash.HasValue && c.GoalCash > 0)
@@ -429,22 +499,104 @@ namespace KonSanad.Services.Services
                 return new CampaignDto
                 {
                     Id = c.Id,
-                    Title = c.Title,
+
+                    Title = c.Title ?? string.Empty,
+
                     ShortDescription = string.IsNullOrEmpty(c.Description)
                         ? string.Empty
                         : (c.Description.Length > 150 ? c.Description.Substring(0, 150) : c.Description),
-                    PictureUrl = c.PictureUrl,
+
+                    PictureUrl = c.PictureUrl ?? string.Empty,
+
                     CategoryName = c.Category?.Name ?? string.Empty,
-                    Status = (c.EndDate.HasValue && c.EndDate.Value < DateTime.UtcNow) ? "Completed" : "Active",
+
+                    Status = DonationRequestStatus.Pending.ToString(), 
+
                     ProgressPercentage = progressPercentage,
+
                     DonorCount = donorCount,
-                  //  CreateAt = c.CreatedAt ?? DateTime.UtcNow
                 };
+            }).ToList();
+
+            // 5. Return result
+            return result;
+
+        }
+        // -------------------------------------------------------------------
+        
+
+
+        //del
+        public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
+        {
+            // 1) Get donor
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+            if (donor == null)
+                throw new Exception("Donor not found");
+            var allOrders = await _unitOfWork.Repository<DonationOrder, int>()
+    .FindAllAsync(d => d.DonorId == donor.Id);
+            Console.WriteLine($"Total orders for donor {donor.Id}: {allOrders.Count()}");
+            // جيب الـ CashDonations مع include للـ DonationOrder
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+                .FindAllAsync(
+                    cd => cd.CampaignId != null,
+                    include: q => q
+                        .Include(cd => cd.DonationOrder)
+                        .Include(cd => cd.Campaign)
+                            .ThenInclude(c => c.Category)
+                );
+
+            // فلتر بعد ما اتجبت البيانات
+            var campaigns = cashDonations
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Select(cd => cd.Campaign)
+                .Where(c => c != null)
+                .GroupBy(c => c.Id)
+                .Select(g => g.First())
+                .ToList();
+            // 4) Map to DTO
+            var result = campaigns.Select(c =>
+            {
+                var totalCash = c.DonationOrders.Sum(d => d.CashAmount ?? 0m);
+
+                var donorCount = c.DonationOrders
+                    .Where(d => d.DonorId.HasValue)
+                    .Select(d => d.DonorId)
+                    .Distinct()
+                    .Count();
+
+                int progressPercentage = 0;
+
+                if (c.GoalCash.HasValue && c.GoalCash > 0)
+                {
+                    progressPercentage = (int)Math.Min(100,
+                        Math.Round((double)(totalCash / c.GoalCash.Value) * 100));
+                }
+
+                return new CampaignDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    ShortDescription = string.IsNullOrEmpty(c.Description)
+                        ? ""
+                        : (c.Description.Length > 150 ? c.Description.Substring(0, 150) : c.Description),
+
+                    PictureUrl = c.PictureUrl,
+                    CategoryName = c.Category?.Name ?? "",
+                    Status = (c.EndDate.HasValue && c.EndDate.Value < DateTime.UtcNow)
+                        ? "Completed"
+                        : "Active",
+
+                    ProgressPercentage = progressPercentage,
+                    DonorCount = donorCount
+                };
+
             }).ToList();
 
             return result;
         }
-
         // ---------------------------------------------------------------------------
         // 4) Get Profile To Donor 
         // ---------------------------------------------------------------------------
@@ -565,6 +717,8 @@ namespace KonSanad.Services.Services
 
             return true;
         }
+
+      
     }
 }
 

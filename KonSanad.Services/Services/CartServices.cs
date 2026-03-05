@@ -135,9 +135,9 @@ namespace KonSanad.Services.Services
                             ExtraData = new Dictionary<string, string>
                     {
 
-        { "CashAmount", cash.CashAmount.ToString() },
-        { "CampaignId", cash.CampaignId.ToString() },
-        { "HelpOrderId", cash.HelpOrderId.ToString() }
+                                    { "CashAmount", cash.CashAmount.ToString() },
+                                    { "CampaignId", cash.CampaignId.ToString() },
+                                     { "HelpOrderId", cash.HelpOrderId.ToString() }
                     }
                         });
                         break;

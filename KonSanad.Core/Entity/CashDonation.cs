@@ -1,6 +1,7 @@
 ﻿// KonSanad.Repository\Entities\CashDonation.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Repository.Entities
 {
@@ -15,8 +16,19 @@ namespace KonSanad.Repository.Entities
         [Required]
         public decimal Amount { get; set; }
         public int? CampaignId { get; set; }
-         public int? HelpOrderId { get; set; }
-     
+        public Campaign? Campaign { get; set; } // Navigation Property
+        public int? HelpOrderId { get; set; }
+        public int receiptId { get; set; }
+        [ForeignKey(nameof(receiptId))]
+        public Receipt Receipt { get; set; } = null!; // Navigation Property
+
+
+        //CashDonationStatus 
+        public CashDonationStatus cashDonationStatus {  get; set; }
+        
+
+        
+
 
     }
 }

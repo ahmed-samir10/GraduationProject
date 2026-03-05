@@ -64,6 +64,7 @@ namespace KonSanad.Services.Services
                             Status = "pending",
                             CreatedAt = DateTime.Now
                         };
+                        
                         var CashDonation = new CashDonation
                         {
                             DonationOrderId = donation.Id,
@@ -85,6 +86,9 @@ namespace KonSanad.Services.Services
                            
                         };
                         _context.Receipts.Add(Receipt);
+                        await _context.SaveChangesAsync();
+                        CashDonation.receiptId = Receipt.Id;
+                         _context.CashDonations.Update(CashDonation);
                         await _context.SaveChangesAsync();
                         break;
 
