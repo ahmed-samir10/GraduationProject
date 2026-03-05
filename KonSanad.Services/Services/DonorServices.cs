@@ -516,8 +516,52 @@ namespace KonSanad.Services.Services
 
         }
         // -------------------------------------------------------------------
-        
 
+        public async Task<bool> DeleteCashDonationAsync(int cashDonationId)
+        {
+            var repo = _unitOfWork.Repository<CashDonation, int>();
+
+            var cashDonation = await repo.FirstOrDefaultAsync(
+                cd => cd.Id == cashDonationId,
+                include: q => q
+                    .Include(cd => cd.DonationOrder)
+                    .Include(cd => cd.Receipt)
+            );
+
+            if (cashDonation == null)
+                return false;
+
+            // حذف الكاش
+            repo.Delete(cashDonation);
+
+            // حذف الاوردر
+            if (cashDonation.DonationOrder != null)
+            {
+                _unitOfWork.Repository<DonationOrder, int>()
+                    .Delete(cashDonation.DonationOrder);
+            }
+
+            await _unitOfWork.Complete();
+
+            return true;
+        }
+        public async Task<bool> UpdateCashDonationAmountAsync(int cashDonationId, decimal amount)
+        {
+            var repo = _unitOfWork.Repository<CashDonation, int>();
+
+            var cashDonation = await repo.GetByIdAsync(cashDonationId);
+
+            if (cashDonation == null)
+                throw new Exception("CashDonation not found");
+
+            cashDonation.Amount = amount;
+
+            repo.Update(cashDonation);
+
+            await _unitOfWork.Complete();
+
+            return true;
+        }
 
         //del
         public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)

@@ -201,6 +201,28 @@ public class DonorController : ControllerBase
         return Ok(new { success = true, data = result });
     }
 
+    [HttpPut("UpdateAmount")]
+    public async Task<IActionResult> UpdateAmount(int id, decimal amount)
+    {
+        await donorServices.UpdateCashDonationAmountAsync(id, amount);
+
+        return Ok(new
+        {
+            success = true,
+            message = "تم التحديث بنجاح"
+        });
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCashDonation(int id)
+    {
+        await donorServices.DeleteCashDonationAsync(id);
+
+        return Ok(new
+        {
+            success = true,
+            message = "Donation deleted successfully"
+        });
+    }
 
     // ====================== Get Profile EndPoint ==========================
     [Authorize]
