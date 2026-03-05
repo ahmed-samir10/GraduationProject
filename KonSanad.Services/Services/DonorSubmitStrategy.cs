@@ -72,7 +72,8 @@ namespace KonSanad.Services.Services
                             Status = "pending",
                             CampaignId = item.ExtraData.ContainsKey("CampaignId") ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
                             HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId") ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
-                            CreatedAt = DateTime.Now
+                            CreatedAt = DateTime.Now,
+                            cashDonationStatus = CashDonationStatus.Pending
                         };
                         _context.CashDonations.Add(CashDonation);
                         await _context.SaveChangesAsync();
