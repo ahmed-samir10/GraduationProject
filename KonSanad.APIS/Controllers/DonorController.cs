@@ -54,7 +54,7 @@ public class DonorController : ControllerBase
     }
 */
 
-    [HttpPost("donate-custom-item")]
+/*    [HttpPost("donate-custom-item")]
     [Authorize]
     public async Task<IActionResult> DonateCustomItem([FromForm] CreateCustomDonationItemRequestDto request)
     {
@@ -116,7 +116,7 @@ public class DonorController : ControllerBase
             });
         }
     }
-    //------------------------------------------------------------------
+    //------------------------------------------------------------------*/
     [Authorize]
     [HttpGet("my-requestsItem")]
     public async Task<IActionResult> GetMyItemRequests()

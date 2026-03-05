@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+
 namespace KonSanad.Services.Services
 {
     public class DonorServices : IDonorServices
@@ -57,7 +59,7 @@ namespace KonSanad.Services.Services
         // ---------------------------------------------------------------------------
         // 3) Create Donation (Cash + Items)
         // ---------------------------------------------------------------------------
-        public async Task<DonationResponseItemDto> CreateDonationItemAsync(
+     /*   public async Task<DonationResponseItemDto> CreateDonationItemAsync(
               CreateDonationItemRequestDto request, int donorId)
         {
             if (request == null)
@@ -149,9 +151,9 @@ namespace KonSanad.Services.Services
                 Message = "تم تسجيل التبرع بالمنتج ✔"
             };
         }
-
+*/
         
-        public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
+    /*    public async Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
             CreateCustomDonationItemRequestDto request, int donorId)
         {
             if (request == null)
@@ -231,8 +233,8 @@ namespace KonSanad.Services.Services
                 Message = "تم تسجيل التبرع بعنصر مخصص ✔"
             };
         }
-
-        public async Task<DonationResponseCashDto> CreateDonationCashAsync(CreateDonationCashRequestDto request, int donorId)
+*/
+  /*      public async Task<DonationResponseCashDto> CreateDonationCashAsync(CreateDonationCashRequestDto request, int donorId)
         {
             // 1. Validate request
             if (request is null)
@@ -308,7 +310,7 @@ namespace KonSanad.Services.Services
                 Message = "تم تسجيل التبرع بنجاح ✔"
             };
         }
-
+*/
 
         // ---------------------------------------------------------------------------
         // New: Get all DonationOrders made by the donor (cash and/or items)
@@ -403,24 +405,34 @@ namespace KonSanad.Services.Services
             if (donor is null)
                 throw new Exception($"Donor not found for userId: {userId}");
 
-            // 3. Query campaigns that have at least one DonationOrder from this donor
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
-                .FindAllAsync(
-                    c => c.DonationOrders.Any(d => d.DonorId == donor.Id),
-             include: q => q
-                 .Include(c => c.Category)
-                 .Include(c => c.DonationOrders));
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+     .FindAllAsync(
+         cd => cd.CampaignId != null && cd.CampaignId != 0,  // ✅ أضف != 0
+         include: q => q
+             .Include(cd => cd.DonationOrder)
+             .Include(cd => cd.Campaign)
+                 .ThenInclude(c => c.Category)
+     );
+
+            var campaigns = cashDonations
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Select(cd => cd.Campaign)
+                .Where(c => c != null)
+                .GroupBy(c => c.Id)
+                .Select(g => g.First())
+                .ToList();
 
             // 4. Map to CampaignDto and compute a few helpful aggregates
             var result = campaigns.Select(c =>
             {
-                var totalCash = c.DonationOrders.Sum(d => d.CashAmount ?? 0m);
-
-                var donorCount = c.DonationOrders
-                    .Where(d => d.DonorId.HasValue)
-                    .Select(d => d.DonorId)
-                    .Distinct()
-                    .Count();
+                var totalCash = cashDonations
+       .Where(cd => cd.CampaignId == c.Id)
+       .Sum(cd => cd.Amount);
+                var donorCount = cashDonations
+         .Where(cd => cd.CampaignId == c.Id && cd.DonationOrder?.DonorId != null)
+         .Select(cd => cd.DonationOrder.DonorId)
+         .Distinct()
+         .Count();
 
                 int progressPercentage = 0;
                 if (c.GoalCash.HasValue && c.GoalCash > 0)
@@ -456,29 +468,44 @@ namespace KonSanad.Services.Services
 
         }
         // -------------------------------------------------------------------
+        
 
+
+        //del
         public async Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId)
         {
-            // 1) Get donor by AppUserId
+            // 1) Get donor
             var donor = await _unitOfWork.Repository<Donor, int>()
                 .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
             if (donor == null)
                 throw new Exception("Donor not found");
-
-            // 2) Query campaigns that have at least one DonationOrder from this donor
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
+            var allOrders = await _unitOfWork.Repository<DonationOrder, int>()
+    .FindAllAsync(d => d.DonorId == donor.Id);
+            Console.WriteLine($"Total orders for donor {donor.Id}: {allOrders.Count()}");
+            // جيب الـ CashDonations مع include للـ DonationOrder
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
                 .FindAllAsync(
-                    c => c.DonationOrders.Any(d => d.DonorId == donor.Id),
-             include: q => q
-                 .Include(c => c.Category)
-                 .Include(c => c.DonationOrders)
-         );
+                    cd => cd.CampaignId != null,
+                    include: q => q
+                        .Include(cd => cd.DonationOrder)
+                        .Include(cd => cd.Campaign)
+                            .ThenInclude(c => c.Category)
+                );
 
-            // 3) Map to CampaignDto and compute a few helpful aggregates
+            // فلتر بعد ما اتجبت البيانات
+            var campaigns = cashDonations
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Select(cd => cd.Campaign)
+                .Where(c => c != null)
+                .GroupBy(c => c.Id)
+                .Select(g => g.First())
+                .ToList();
+            // 4) Map to DTO
             var result = campaigns.Select(c =>
             {
                 var totalCash = c.DonationOrders.Sum(d => d.CashAmount ?? 0m);
+
                 var donorCount = c.DonationOrders
                     .Where(d => d.DonorId.HasValue)
                     .Select(d => d.DonorId)
@@ -486,6 +513,7 @@ namespace KonSanad.Services.Services
                     .Count();
 
                 int progressPercentage = 0;
+
                 if (c.GoalCash.HasValue && c.GoalCash > 0)
                 {
                     progressPercentage = (int)Math.Min(100,
@@ -497,20 +525,23 @@ namespace KonSanad.Services.Services
                     Id = c.Id,
                     Title = c.Title,
                     ShortDescription = string.IsNullOrEmpty(c.Description)
-                        ? string.Empty
+                        ? ""
                         : (c.Description.Length > 150 ? c.Description.Substring(0, 150) : c.Description),
+
                     PictureUrl = c.PictureUrl,
-                    CategoryName = c.Category?.Name ?? string.Empty,
-                    Status = (c.EndDate.HasValue && c.EndDate.Value < DateTime.UtcNow) ? "Completed" : "Active",
+                    CategoryName = c.Category?.Name ?? "",
+                    Status = (c.EndDate.HasValue && c.EndDate.Value < DateTime.UtcNow)
+                        ? "Completed"
+                        : "Active",
+
                     ProgressPercentage = progressPercentage,
-                    DonorCount = donorCount,
-                  //  CreateAt = c.CreatedAt ?? DateTime.UtcNow
+                    DonorCount = donorCount
                 };
+
             }).ToList();
 
             return result;
         }
-
         // ---------------------------------------------------------------------------
         // 4) Get Profile To Donor 
         // ---------------------------------------------------------------------------
@@ -630,6 +661,16 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Complete();
 
             return true;
+        }
+
+        public Task<IEnumerable<MyOrderItemDto>> GetMyDonatedOrderItemsAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<IEnumerable<CashDonationDto>> IDonorServices.GetMyCashDonationsAsync(string userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

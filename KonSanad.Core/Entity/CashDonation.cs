@@ -15,7 +15,8 @@ namespace KonSanad.Repository.Entities
         [Required]
         public decimal Amount { get; set; }
         public int? CampaignId { get; set; }
-         public int? HelpOrderId { get; set; }
+        public Campaign? Campaign { get; set; } // Navigation Property
+        public int? HelpOrderId { get; set; }
      
 
     }
