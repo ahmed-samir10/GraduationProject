@@ -663,15 +663,7 @@ namespace KonSanad.Services.Services
             return true;
         }
 
-        public Task<IEnumerable<MyOrderItemDto>> GetMyDonatedOrderItemsAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<IEnumerable<CashDonationDto>> IDonorServices.GetMyCashDonationsAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
+     
     }
 }
 
