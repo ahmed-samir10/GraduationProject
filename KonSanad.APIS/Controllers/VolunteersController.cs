@@ -43,7 +43,7 @@ namespace KonSanad.APIS.Controllers
 
             int VolID = Vol.Id;
 
-            var missions = await _volunteerService.GetAllMissionsAsync();
+            var missions = await _volunteerService.GetAllMissionsAsync(VolID);
             return Ok(new { success = true, data = missions });
         }
 
@@ -133,7 +133,7 @@ namespace KonSanad.APIS.Controllers
             var fileUrl = await _volunteerService.SubmitMissionReportAsync(volunteer.Id, dto.MissionId, dto.File, dto.Notes);
 
 
-                return Ok(new { success = true, data = "تم رفع الملف" });
+                return Ok(new { success = true, data = fileUrl });
             
 
           

@@ -119,7 +119,7 @@ namespace KonSanad.APIS.Controllers
                 FullName = user.FullName ?? "User",
                 Role = roles.FirstOrDefault() ?? "User",
 
-                Token =  _tokenService.GenerateJwtToken(user, roles)
+                Token = await _tokenService.GenerateJwtToken(user, roles ,_userManager)
             };
         }
 

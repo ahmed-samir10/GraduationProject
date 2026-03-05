@@ -21,6 +21,9 @@ using System;
 using System.Security.Principal;
 using System.Text;
 
+
+var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+AppContext.SetData("DOTNET_DEFAULT_TIMEZONE", "Egypt Standard Time");
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -56,7 +59,7 @@ builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService,VolunteerService>();
-builder.Services.AddScoped<ICartService, CartServices>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
@@ -89,6 +92,9 @@ Console.WriteLine("========================================");
 Console.WriteLine($"🔗 Identity Connection String: {testConn}");
 Console.WriteLine("========================================");
 
+Console.WriteLine("Machine: " + Environment.MachineName);
+Console.WriteLine("Now: " + DateTime.Now);
+Console.WriteLine("TimeZone: " + TimeZoneInfo.Local.DisplayName);
 if (string.IsNullOrEmpty(testConn) || testConn.Contains("IdentityDb"))
 {
     throw new Exception("❌ ERROR: Still using old connection string!");
@@ -125,8 +131,6 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -137,6 +141,12 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault;
+    });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {

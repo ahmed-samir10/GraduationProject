@@ -10,12 +10,12 @@ namespace KonSanad.Core.IRepositery
    public interface IDonorServices
     {
         Task<List<SupplyDto>> GetLowStockSuppliesAsync();
-        Task<DonationResponseCashDto> CreateDonationCashAsync(
-           CreateDonationCashRequestDto request, int donorId);
-        Task<DonationResponseItemDto> CreateDonationItemAsync(
-                   CreateDonationItemRequestDto request, int donorId);
-        Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
-            CreateCustomDonationItemRequestDto request, int donorId);
+/*        Task<DonationResponseCashDto> CreateDonationCashAsync(
+           CreateDonationCashRequestDto request, int donorId);*/
+      /*  Task<DonationResponseItemDto> CreateDonationItemAsync(
+                   CreateDonationItemRequestDto request, int donorId);*/
+   /*     Task<DonationResponseItemDto> CreateCustomItemDonationAsync(
+            CreateCustomDonationItemRequestDto request, int donorId);*/
         Task<GetProfileDto> GetProfileAsync(string userId);
 
 
@@ -24,11 +24,13 @@ namespace KonSanad.Core.IRepositery
 
         //new
         Task<IEnumerable<MyOrderItemDto>> GetMyDonatedOrderItemsAsync(string userId);
-
+       Task<IReadOnlyList<CashDonationDto>> GetMyCashDonationsAsyncc(string userId);
         //-----------------------------------------------------------------------------
-        Task<IEnumerable<CashDonationDto>> GetMyCashDonationsAsync(string userId);
+       // Task<IEnumerable<CashDonationDto>> GetMyCashDonationsAsyncc(string userId);
        // Task<object> GetMyDonationsAsync(string userId);
         Task<IEnumerable<CampaignDto>> GetCampaignsDonatedByAsync(string userId);
+        Task<IEnumerable<CampaignDto>> GetMyDonationsInCampaignRequestsAsync(string userId);
+
 
         Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
 

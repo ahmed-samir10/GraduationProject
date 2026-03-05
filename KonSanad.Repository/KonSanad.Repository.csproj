@@ -33,6 +33,7 @@
 
 	<ItemGroup>
 		<Folder Include="Data\Identity\migration\" />
+		<Folder Include="Data\migration\" />
 		<Folder Include="Identity\" />
 	</ItemGroup>
 

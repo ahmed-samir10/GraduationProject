@@ -9,7 +9,7 @@ namespace KonSanad.Core.Dtos
    public class CreateDonationItemRequestDto
     {
        // public int? CampaignId { get; set; }
-        public int? HelpOrderId { get; set; }
+       // public int? HelpOrderId { get; set; }
 
         public int SupplyId { get; set; }
         public IFormFile? ImageFile { get; set; }

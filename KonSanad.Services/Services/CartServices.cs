@@ -1,391 +1,231 @@
 ﻿
+using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity;
+using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
+using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using KonSanad.Core.Dtos;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
-using KonSanad.Repository.Entities;
-using KonSanad.Core.Entity;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace KonSanad.Services.Services
 {
-    public class CartServices : ICartService
+    public class CartService : ICartService
     {
-        private readonly IDatabase _database;
-        private readonly IMapper _mapper;
-        private readonly KonSanadDbContext _dbContext;
+        private readonly IDatabase _redis;
+        private readonly KonSanadDbContext _context;
+        private readonly IFileService _fileService;
 
-        public CartServices(IConnectionMultiplexer redis, IMapper mapper , KonSanadDbContext dbContext)
+        public CartService(IConnectionMultiplexer redis, KonSanadDbContext context , IFileService fileService)
         {
-            _database = redis.GetDatabase();
-            _mapper = mapper;
-            _dbContext = dbContext;
+            _redis = redis.GetDatabase();
+            _context = context;
+            _fileService = fileService;
         }
 
-        private string GetCartKey(int userId)
-            => $"cart:{userId}";
+        private string GetCartKey(int userId, string role)
+            => $"cart:{role}:{userId}";
 
-
-
-        // =========================
-        // Get Cart
-        // =========================
-        public async Task<CartResponseDto> GetCartAsync(int userId)
+        private async Task SaveCart(int userId, string role, CartResponseDto cart)
         {
-            var data = await _database.StringGetAsync(GetCartKey(userId));
+            var json = JsonSerializer.Serialize(cart);
+            await _redis.StringSetAsync(GetCartKey(userId, role), json);
+        }
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            CartResponseDto cart;
+        public async Task<CartResponseDto> GetCartAsync(int userId, string role)
+        {
+            var data = await _redis.StringGetAsync(GetCartKey(userId, role));
 
             if (data.IsNullOrEmpty)
+                return new CartResponseDto { CartId = userId };
+
+
+            return JsonSerializer.Deserialize<CartResponseDto>(data);
+        }
+
+        public async Task<string> AddToCartAsync(int userId, string role, object dto)
+        {
+            // جلب الكارت أو إنشاء جديد لو مش موجود
+            var cart = await GetCartAsync(userId, role) ?? new CartResponseDto
             {
-                cart = new CartResponseDto
+                CartId = userId,
+                Items = new List<CartItemDto>()
+            };
+
+            if (role == "beneficiary")
+            {
+                var data = dto as AddToCartDto;
+                if (data == null)
+                    throw new ArgumentException("dto must be AddToCartDto for beneficiary");
+
+                // جلب المنتج من الداتا بيز
+                var product = await _context.OrderItems
+                    .FirstOrDefaultAsync(p => p.Id == data.ProductId);
+
+                if (product == null)
+                    throw new Exception("Product not found");
+
+                cart.Items = cart.Items ?? new List<CartItemDto>();
+
+                cart.Items.Add(new CartItemDto
                 {
-                    CartId = userId,
-                    Items = new List<CartItemResponseDto>()
-                };
+                    ProductId = product.Id,
+                    Quantity = data.QuantityRequested,
+                    ImageUrl = product.ImageUrl,
+                    ProductName = product.CustomSupplyName,
+                    Category = product.Category,
+                    Type = "beneficiary",
+                    Reason = data.Reason
+                });
             }
-            else
+            else if (role == "donor")
             {
-                cart = JsonSerializer.Deserialize<CartResponseDto>(data, options);
-
-                if (cart?.Items == null)
-                    cart.Items = new List<CartItemResponseDto>();
-            }
-
-            // تحقق من أي item ناقص تفاصيل وملأها من قاعدة البيانات
-            foreach (var item in cart.Items)
-            {
-                if (string.IsNullOrEmpty(item.ProductName) || string.IsNullOrEmpty(item.ImagUrl))
+               
+                switch (dto)
                 {
-                    var orderItem = await _dbContext.OrderItems
-                        .Include(o => o.Supply)
-                        .FirstOrDefaultAsync(o => o.Id == item.ProductId);
+                    case CreateDonationItemRequestDto item:
+                        var data = dto as CreateDonationItemRequestDto;
+                        var relativeUrl = await _fileService.SaveFileAsync(data.ImageFile, "uploads");
+                        var product = await _context.Supplies
+                            .FirstOrDefaultAsync(p => p.Id == item.SupplyId);
+                        if (product == null)
+                            throw new Exception("Product not found");
 
-                    if (orderItem != null)
+                        cart.Items = cart.Items ?? new List<CartItemDto>();
+
+                        var existingItem = cart.Items
+                            .FirstOrDefault(i => i.ProductId == item.SupplyId && i.Type == "donationItem");
+
+                        if (existingItem != null)
+                        {
+                            existingItem.Quantity += item.Quantity;
+                        }
+                        else
+                        {
+                            cart.Items.Add(new CartItemDto
+                            {
+                                ProductId = item.SupplyId,
+                                Quantity = item.Quantity,
+                                ImageUrl =relativeUrl, // لو فيه صورة من المستخدم استخدمها، لو لا استخدم صورة المنتج
+                                ProductName = product.Name,
+                                Category = product.Title,
+                                Type = "donationItem",
+                                ExtraData = new Dictionary<string, string>
+        {
+            { "Description", item.Description ?? "" },
+            { "Status", item.Status ?? "" }
+        }
+                            });
+                        }
+                        break;
+
+                    case CreateDonationCashRequestDto cash:
+
+                        cart.Items = cart.Items ?? new List<CartItemDto>();
+                        cart.Items.Add(new CartItemDto
+                        {
+                           
+                            Type = "donationCash",
+                            ExtraData = new Dictionary<string, string>
                     {
-                        item.ProductName = orderItem.Supply?.Name ?? orderItem.CustomSupplyName ?? "Unknown";
-                        item.ImagUrl = orderItem.ImageUrl ?? orderItem.Supply?.ImageUrl;
-                        item.Catgorey = orderItem.Category;
+
+                                    { "CashAmount", cash.CashAmount.ToString() },
+                                    { "CampaignId", cash.CampaignId.ToString() },
+                                     { "HelpOrderId", cash.HelpOrderId.ToString() }
                     }
+                        });
+                        break;
+
+                    case CreateCustomDonationItemRequestDto custom:
+
+                        var data2 = dto as CreateCustomDonationItemRequestDto;
+                        var relativeUrl2 = await _fileService.SaveFileAsync(data2.ImageFile, "uploads");
+                        cart.Items = cart.Items ?? new List<CartItemDto>();
+                        cart.Items.Add(new CartItemDto
+                        {
+                            ProductId =0, // لأن المنتج مخصص مش موجود في الداتا بيز
+
+                            ProductName = custom.CustomItemName,
+                            ImageUrl=relativeUrl2,
+                            Quantity = custom.Quantity,
+                            Category = "Custom",
+                            Type = "custom",
+                            ExtraData = new Dictionary<string, string>
+                    {
+                        
+                        { "Unit", custom.Unit ?? "" },
+                        { "Description", custom.Description ?? "" },
+                                  { "Status", custom.Status ?? "" }
+                    }
+                        });
+                        break;
+
+                    default:
+                        throw new ArgumentException("Invalid DTO type for donor");
                 }
             }
 
-            return cart;
+            // حفظ الكارت
+            await SaveCart(userId, role, cart);
+
+            return "تمت الإضافة";
         }
-
-
-
-
-        // =========================
-        // Add Item
-        // =========================
-        public async Task<string> AddItemAsync(int userId, AddToCartDto dto)
+        public async Task<string> UpdateItemAsync(int userId, string role, int productId, int quantity)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-
-            var cart = await GetCartAsync(userId);
-
-            // نجلب الـ OrderItem من قاعدة البيانات حسب الـ Id اللي جاي من DTO
-            var orderItem = await _dbContext.OrderItems
-                .Include(o => o.Supply)
-                .FirstOrDefaultAsync(o => o.Id == dto.ProductId);
-
-            if (orderItem == null)
-                return " طلب غير موجود";
-            if (dto.QuantityRequested > orderItem.Quantity)
-                return "  كميه غير صحيحه";
-
-
-            var item = cart.Items.FirstOrDefault(x => x.ProductId == orderItem.Id);
-             
-            if (item == null)
-            {
-                cart.Items.Add(new CartItemResponseDto
-                {
-                    ProductId = orderItem.Id,
-                    Reason = dto.Reason,
-                    ProductName = orderItem.Supply?.Name ?? orderItem.CustomSupplyName ?? "Unknown",
-                    ImagUrl = orderItem.ImageUrl ?? orderItem.Supply?.ImageUrl,
-                    Quantity = dto.QuantityRequested,
-                    Catgorey =orderItem.Category
-                    
-                });
-                
-            }
-            else if (dto.QuantityRequested + item.Quantity <= orderItem.Quantity)
-            {
-                item.Quantity += dto.QuantityRequested;
-            }
-            else
-            {
-                return "كميه غير صحيحه";
-            }
-
-                // Serialize بطريقة مرتبة
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = true
-                };
-
-            var json = JsonSerializer.Serialize(cart, options);
-            await _database.StringSetAsync(GetCartKey(userId), json);
-            return " تم الاضافه";
-        }
-
-
-
-
-
-
-        // =========================
-        // Remove Item
-        // =========================
-        public async Task<string> RemoveItemAsync(int userId, int productId)
-        {
-            var cart = await GetCartAsync(userId);
-
-            if (cart == null || cart.Items == null || !cart.Items.Any())
-                return "الكارت فاضي";
+            var cart = await GetCartAsync(userId, role);
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+            if (item == null) return "غير موجود";
 
-            if (item == null)
-                return "المنتج مش موجود في الكارت";
+            item.Quantity = quantity;
+
+            await SaveCart(userId, role, cart);
+            return "تم التحديث";
+        }
+
+        public async Task<string> RemoveItemAsync(int userId, string role, int productId)
+        {
+            var cart = await GetCartAsync(userId, role);
+
+            var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+            if (item == null) return "غير موجود";
 
             cart.Items.Remove(item);
 
-            var json = JsonSerializer.Serialize(cart);
-            await _database.StringSetAsync(GetCartKey(userId), json);
-
-            return "تم الحذف بنجاح";
+            await SaveCart(userId, role, cart);
+            return "تم الحذف";
         }
 
-
-
-
-
-
-        // =========================
-        // Clear Cart
-        // =========================
-        public async Task<string> ClearCartAsync(int userId)
+        public async Task ClearCartAsync(int userId, string role)
         {
-            await _database.KeyDeleteAsync(GetCartKey(userId));
-            return "تم حذف جميع الطلبات";
+            await _redis.KeyDeleteAsync(GetCartKey(userId, role));
         }
 
-
-
-
-        // =========================
-        // Optional: Update Item Quantity
-        // =========================
-        public async Task<string> UpdateItemQuantityAsync(int userId, int productId, int quantity)
+        public async Task<SubmitResultDto> SubmitCartAsync(int userId, string role)
         {
-            if (quantity <= 0)
-            {
-                await RemoveItemAsync(userId, productId);
-                return "تم التعديل";
-            }
+            var cart = await GetCartAsync(userId, role);
 
-            var cart = await GetCartAsync(userId);
-            var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+            if (!cart.Items.Any())
+                return new SubmitResultDto { Success = false };
 
-            var orderItem = await _dbContext.OrderItems
-                .Include(o => o.Supply)
-                .FirstOrDefaultAsync(o => o.Id == productId);
-            if (quantity > orderItem.Quantity)
-            {
-                return  "خطا في الكميه";
-            }
-            if (item != null)
-            {
-                item.Quantity = quantity;
+            ICartSubmitStrategy strategy =
+                role == "beneficiary"
+                ? new BeneficiarySubmitStrategy(_context)
+                : new DonorSubmitStrategy(_context);
 
-                var json = JsonSerializer.Serialize(cart);
-                await _database.StringSetAsync(GetCartKey(userId), json);
-            }
-            return "تم التعديل";
-        }
+            var result = await strategy.SubmitAsync(userId, cart);
 
+            if (result.Success)
+                await ClearCartAsync(userId, role);
 
-        // =========================
-        // Submit Cart: create a HelpOrder from current cart, save to DB and clear cart
-        // Returns the created HelpOrderDto
-        // =========================
-        public async Task<SubmitResultDto> SubmitCartAsync(int userId, IEnumerable<AddToCartDto>? items = null)
-        {
-            var result = new SubmitResultDto();
-
-            // Validate provided final items before merging
-            if (items != null && items.Any())
-            {
-                var invalidProvided = new List<string>();
-
-                var providedIds = items.Select(i => i.ProductId).ToList();
-                var providedOrderItems = await _dbContext.OrderItems
-                    .Where(o => providedIds.Contains(o.Id))
-                    .ToListAsync();
-
-                foreach (var dto in items)
-                {
-                    if (dto.QuantityRequested <= 0)
-                        invalidProvided.Add($"Product {dto.ProductId} has invalid quantity {dto.QuantityRequested}.");
-
-                    var found = providedOrderItems.Any(o => o.Id == dto.ProductId);
-                    if (!found)
-                        invalidProvided.Add($"Product {dto.ProductId} not found.");
-                }
-
-                if (invalidProvided.Any())
-                {
-                    result.Success = false;
-                    result.Errors.AddRange(invalidProvided);
-                    return result;
-                }
-
-                // merge now that provided items are valid
-               // await AddItemsAsync(userId, items);
-            }
-
-            var cart = await GetCartAsync(userId);
-
-            if (cart.Items == null || !cart.Items.Any())
-            {
-                result.Success = false;
-                result.Errors.Add("Cart is empty.");
-                return result;
-            }
-
-            // Validate cart items
-            var errors = new List<string>();
-            foreach (var cartItem in cart.Items)
-            {
-                if (cartItem.Quantity <= 0)
-                    errors.Add($"Product {cartItem.ProductId} has invalid quantity {cartItem.Quantity}.");
-            }
-
-            var productIds = cart.Items.Select(i => i.ProductId).ToList();
-            var orderItems = await _dbContext.OrderItems
-                .Include(o => o.Supply)
-                .Where(o => productIds.Contains(o.Id))
-                .ToListAsync();
-
-            var missing = productIds.Except(orderItems.Select(o => o.Id)).ToList();
-            foreach (var id in missing)
-                errors.Add($"Product {id} not found.");
-
-            if (errors.Any())
-            {
-                result.Success = false;
-                result.Errors.AddRange(errors);
-                return result;
-            }
-
-            // Retrive Title and Description from supplies 
-            var supplyInfos = orderItems.Select(o => new
-            {
-                OrderItem = o,
-                SupplyId = o.Supply?.Id ?? o.SupplyId,
-                SupplyName = o.Supply?.Name ?? o.CustomSupplyName ?? "Unknown",
-                SupplyDescription = o.Supply?.Description ?? "Unknown",
-            }).ToDictionary(x => x.OrderItem.Id);
-
-            var titleParts = new List<string>();
-            var descParts = new List<string>();
-
-            foreach (var cartItem in cart.Items)
-            {
-                if (!supplyInfos.TryGetValue(cartItem.ProductId, out var info)) continue;
-
-                titleParts.Add(info.SupplyName);
-                var desc = info.SupplyDescription ?? "";
-                descParts.Add($"{info.SupplyName} - {desc} (الكمية: {cartItem.Quantity})");
-            }
-
-
-            // Create HelpOrder
-            var helpOrder = new HelpOrder
-            {
-                BeneficiaryId = userId,
-                CreatedAt = DateTime.Now,
-                HelpOrderStatus = HelpOrderStatus.Pending,
-            };
-
-            foreach (var cartItem in cart.Items)
-            {
-                var orderItem = orderItems.FirstOrDefault(o => o.Id == cartItem.ProductId);
-                if (orderItem == null) continue;
-
-                var rawReason = !string.IsNullOrWhiteSpace(cartItem.Reason)
-                    ? cartItem.Reason
-                    : (!string.IsNullOrWhiteSpace(orderItem?.Description) ? orderItem.Description : null);
-
-                // sanitize accidental literal "string"
-                if (!string.IsNullOrWhiteSpace(rawReason) && rawReason.Trim().ToLower() == "string")
-                    rawReason = null;
-
-                var finalReason = !string.IsNullOrWhiteSpace(rawReason) ? rawReason : "Not specified";
-
-                var helpOrderItem = new HelpOrderItem
-                {
-                    QuantityRequested = cartItem.Quantity,
-                    // Prefer the actual Supply.Id if the Supply navigation is loaded, otherwise fall back to OrderItem.SupplyId
-                    SupplyId = cartItem.ProductId,
-                    ImageUrl = cartItem.ImagUrl,
-                    reason = finalReason,
-                    Title=cartItem.ProductName,
-                    CreatedAt = DateTime.Now,
-
-                };
-
-                helpOrder.HelpOrderItems.Add(helpOrderItem);
-            }
-
-            // Save help order
-            _dbContext.HelpOrders.Add(helpOrder);
-            await _dbContext.SaveChangesAsync();
-
-            // Clear cart
-            await ClearCartAsync(userId);
-
-            // Map to DTO
-            var dtoResult = new HelpOrderDto
-            {
-                Id = helpOrder.Id,
-                BeneficiaryId = helpOrder.BeneficiaryId,
-              
-                CreatedAt = DateTime.UtcNow,
-                Status = helpOrder.HelpOrderStatus,
-                Items = helpOrder.HelpOrderItems.Select(h => new HelpOrderItemDto
-                {
-                    Id = h.Id,
-                    HelpOrderId = h.HelpOrderId,
-                    SupplyId = h.SupplyId,
-                    Quantity = h.QuantityRequested,
-                    ImageUrl = h.ImageUrl
-                }).ToList()
-            };
-
-            result.Success = true;
-            result.HelpOrder = dtoResult;
             return result;
         }
-
-
-
-
     }
 
 }

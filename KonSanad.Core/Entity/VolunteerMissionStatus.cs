@@ -8,9 +8,10 @@ namespace KonSanad.Core.Entity
 {
     public enum VolunteerMissionStatus
     {
-        Applied = 0,     // قدم طلب
-        Approved = 1,    // المانجر وافق
-        Rejected = 2,    // اترفض
-        Submitted = 3    // رفع التقرير
+        New = 0,
+        InReview = 1,
+        WaitingForReport = 2,
+        Completed = 3,
+
     }
 }

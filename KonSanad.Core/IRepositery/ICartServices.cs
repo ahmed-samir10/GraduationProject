@@ -4,22 +4,12 @@ namespace KonSanad.Core.IRepositery
 {
     public interface ICartService
     {
-        Task<CartResponseDto> GetCartAsync(int userId);
-
-        Task<string> AddItemAsync(int userId, AddToCartDto dto);
-
-     
-
-        Task<string> RemoveItemAsync(int userId, int productId);
-
-
-
-        Task<string> UpdateItemQuantityAsync(int userId, int productId, int quantity);
-
-        Task<string> ClearCartAsync(int userId);
-
-        Task<SubmitResultDto> SubmitCartAsync(int userId, IEnumerable<AddToCartDto>? items = null);
+        Task<CartResponseDto> GetCartAsync(int userId, string role);
+        Task<string> AddToCartAsync(int userId, string role, object dto);
+        Task<string> UpdateItemAsync(int userId, string role, int productId, int quantity);
+        Task<string> RemoveItemAsync(int userId, string role, int productId);
+        Task ClearCartAsync(int userId, string role);
+        Task<SubmitResultDto> SubmitCartAsync(int userId, string role);
     }
-
 
 }

@@ -1,9 +1,12 @@
 ﻿
+using Microsoft.AspNetCore.Identity;
+
 namespace KonSanad.Services.Services
 {
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
+        
 
         public TokenService(IConfiguration configuration)
         {
@@ -11,7 +14,7 @@ namespace KonSanad.Services.Services
         }
 
  
-        public string GenerateJwtToken(AppUser user, IList<string> roles)
+        public async Task<string> GenerateJwtToken(AppUser user, IList<string> roles , UserManager<AppUser> userManager)
         {
             var claims = new List<Claim>
         {
@@ -22,9 +25,13 @@ namespace KonSanad.Services.Services
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("Name", user.UserName ?? "")
         };
+            var userRoles = await userManager.GetRolesAsync(user);
 
-            
-               claims.AddRange(roles.Select(role => new Claim("Role", role)));
+            foreach (var role in userRoles)
+                claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+
+
+           // claims.AddRange(roles.Select(role => new Claim("Role", role)));
 
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

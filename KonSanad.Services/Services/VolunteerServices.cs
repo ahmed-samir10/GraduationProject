@@ -18,40 +18,51 @@ namespace KonSanad.Services.Services
             _userManager = userManager;
         }
 
-        
+
         // Method to get all missions with beneficiary details
-        // ----------------------------------------------------------
-        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync()
+        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId)
         {
-            var dtos = await _context.Missions
+            var volunteerMissions = await _context.MissionVolunteers
+                .Where(mv => mv.VolunteerId == volunteerId)
+                .Select(mv => new { mv.MissionId, mv.MissionStatus })
+                .ToListAsync();
+
+            var volunteerMissionDict = volunteerMissions
+                .ToDictionary(mv => mv.MissionId, mv => mv.MissionStatus);
+
+            var missions = await _context.Missions
                 .AsNoTracking()
+                .Where(m => m.MissionStatus == MissionStatus.New
+                         || volunteerMissionDict.Keys.Contains(m.Id))
                 .Select(m => new MissionDto
                 {
                     Id = m.Id,
-
                     Title = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
                         ? m.HelpOrder.Beneficiary.FullName
                         : (m.Title ?? string.Empty),
-
                     PhoneNumber = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
                         ? m.HelpOrder.Beneficiary.Phone
                         : (m.PhoneNumber ?? string.Empty),
-
                     Address = m.HelpOrder != null && m.HelpOrder.Beneficiary != null
                         ? m.HelpOrder.Beneficiary.Address
                         : (m.Address ?? string.Empty),
-
                     Description = "مطلوب زياره ميدانيه",
                     StartDate = m.CreatedAt,
-                    MissionStatus = m.MissionStatus
+                    MissionStatus = m.MissionStatus // هنعدلها بعدين
                 })
                 .ToListAsync();
 
-            return dtos;
-        }
-        // ----------------------------------------------------------
-    
+            // ✅ استبدل الـ Status بتاع المهام المشتركة بالـ Status من MissionVolunteers
+            foreach (var mission in missions)
+            {
+                if (volunteerMissionDict.TryGetValue(mission.Id, out var volunteerStatus))
+                {
+                    mission.MissionStatus = (MissionStatus)(int)volunteerStatus;
+                }
+            }
 
+            return missions;
+        }
 
         // Method to start a mission for a volunteer
         // ----------------------------------------------------------
@@ -59,7 +70,7 @@ namespace KonSanad.Services.Services
         {
             var existing = await _unitOfWork
              .Repository<MissionVolunteers, int>()
-             .FindAllAsync(x => x.MissionId == missionId);
+             .FindAllAsync(x => x.MissionId == missionId&& x.VolunteerId == volunteerId);
 
             if (existing.Any())
                return "تم تقديم طلب لهذه المهمة بالفعل";
@@ -72,14 +83,14 @@ namespace KonSanad.Services.Services
                 return "المهمة غير موجودة";
 
             // 2️⃣ غيّر حالة المهمة
-            mission.MissionStatus = MissionStatus.InReview;
+            mission.MissionStatus = MissionStatus.New;
 
             var MissionVolunteer = new MissionVolunteers
             {
                 VolunteerId = volunteerId,
                 MissionId = missionId,
                 CreatedAt = DateTime.UtcNow,
-                MissionStatus =VolunteerMissionStatus.Applied,
+                MissionStatus =VolunteerMissionStatus.InReview,
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>()
@@ -171,7 +182,7 @@ namespace KonSanad.Services.Services
             }
 
             //vmRepo.Update(volunteerMission);
-            volunteerMission.MissionStatus =VolunteerMissionStatus.Submitted;
+            volunteerMission.MissionStatus =VolunteerMissionStatus.Completed;
             volunteerMission.Status ="Completed";
             vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
