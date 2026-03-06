@@ -23,109 +23,112 @@ public class DonorController : ControllerBase
         return Ok(new { success = true, data = list });
     }
 
-    /*[Authorize]
-    [HttpPost("donateCash")]
-    public async Task<IActionResult> Donate([FromForm] CreateDonationCashRequestDto request)
-    {
-        // 1. Validate the incoming request
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+    //[Authorize]
+    //[HttpPost("donateCash")]
+    //public async Task<IActionResult> Donate([FromForm] CreateDonationCashRequestDto request)
+    //{
+    //    // 1. Validate the incoming request
+    //    if (!ModelState.IsValid)
+    //        return BadRequest(ModelState);
 
 
-        // 2. Get the user ID from the JWT token
-        var userId = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+    //    // 2. Get the user ID from the JWT token
+    //    var userId = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
 
 
-        // 3. Retrieve the donor associated with the user ID
-        var donor = await _unitOfWork.Repository<Donor, int>()
-            .FirstOrDefaultAsync(d => d.AppUserId == userId);
+    //    // 3. Retrieve the donor associated with the user ID
+    //    var donor = await _unitOfWork.Repository<Donor, int>()
+    //        .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
 
-        // 4. If no donor is found, return an error response
-        if (donor is null)
-            return BadRequest(new { Error = "No Donor found for this user" });
+    //    // 4. If no donor is found, return an error response
+    //    if (donor is null)
+    //        return BadRequest(new { Error = "No Donor found for this user" });
 
 
-        // 5. Create the cash donation using the donor's ID
-        var result = await donorServices.CreateDonationCashAsync(request, donor.Id);
+    //    // 5. Create the cash donation using the donor's ID
+    //    var result = await donorServices.CreateDonationCashAsync(request, donor.Id);
 
-        // 6. Return the result of the donation creation
-        return Ok(new { success = true, data = result });
-    }
-*/
+    //    // 6. Return the result of the donation creation
+    //    return Ok(new { success = true, data = result });
+    //}
 
-/*    [HttpPost("donate-custom-item")]
-    [Authorize]
-    public async Task<IActionResult> DonateCustomItem([FromForm] CreateCustomDonationItemRequestDto request)
-    {
-        try
+
+    /*    [HttpPost("donate-custom-item")]
+        [Authorize]
+        public async Task<IActionResult> DonateCustomItem([FromForm] CreateCustomDonationItemRequestDto request)
         {
-            // Get user ID from token
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
+            {
+                // Get user ID from token
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "User not authenticated"
+                    });
+
+                // Get donor by AppUserId
+                var donor = await _unitOfWork.Repository<Donor, int>()
+                    .FirstOrDefaultAsync(d => d.AppUserId == userId);
+
+                if (donor == null)
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Donor not found"
+                    });
+
+                // Create custom item donation
+                var result = await donorServices.CreateCustomItemDonationAsync(request, donor.Id);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = result.Message,
+                    data = result
+                });
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(new
                 {
                     success = false,
-                    message = "User not authenticated"
+                    message = "بيانات غير صحيحة: " + ex.Message
                 });
-
-            // Get donor by AppUserId
-            var donor = await _unitOfWork.Repository<Donor, int>()
-                .FirstOrDefaultAsync(d => d.AppUserId == userId);
-
-            if (donor == null)
-                return NotFound(new
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
                 {
                     success = false,
-                    message = "Donor not found"
+                    message = ex.Message
                 });
-
-            // Create custom item donation
-            var result = await donorServices.CreateCustomItemDonationAsync(request, donor.Id);
-
-            return Ok(new
+            }
+            catch (Exception ex)
             {
-                success = true,
-                message = result.Message,
-                data = result
-            });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "حدث خطأ أثناء معالجة الطلب: " + ex.Message
+                });
+            }
         }
-        catch (ArgumentNullException ex)
-        {
-            return BadRequest(new
-            {
-                success = false,
-                message = "بيانات غير صحيحة: " + ex.Message
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new
-            {
-                success = false,
-                message = ex.Message
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                success = false,
-                message = "حدث خطأ أثناء معالجة الطلب: " + ex.Message
-            });
-        }
-    }
-    //------------------------------------------------------------------*/
+        //------------------------------------------------------------------*/
     [Authorize]
     [HttpGet("my-requestsItem")]
     public async Task<IActionResult> GetMyItemRequests()
     {
+        // 1. Get user ID from token
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        // 2. Validate user ID
         if (string.IsNullOrEmpty(userId))
             return BadRequest(new { error = "User id not found in token" });
 
+        // 3. Get donated items for the user
         var result = await donorServices.GetMyDonatedOrderItemsAsync(userId);
 
         return Ok(new { success = true, data = result });
