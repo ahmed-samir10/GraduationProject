@@ -461,16 +461,18 @@ namespace KonSanad.Services.Services
                 throw new Exception($"Donor not found for userId: {userId}");
 
             var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
-     .FindAllAsync(
-         cd => cd.CampaignId != null && cd.CampaignId != 0,  // ✅ أضف != 0
-         include: q => q
-             .Include(cd => cd.DonationOrder)
-             .Include(cd => cd.Campaign)
-                 .ThenInclude(c => c.Category)
-     );
+      .FindAllAsync(
+          cd => cd.CampaignId != null &&
+                cd.CampaignId != 0 &&
+                cd.DonationOrder.DonorId == donor.Id,
+          include: q => q
+              .Include(cd => cd.DonationOrder)
+              .Include(cd => cd.Campaign)
+                  .ThenInclude(c => c.Category)
+  );
 
             var campaigns = cashDonations
-                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                //.Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
                 .Select(cd => cd.Campaign)
                 .Where(c => c != null)
                 .GroupBy(c => c.Id)
