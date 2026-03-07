@@ -70,12 +70,21 @@ namespace KonSanad.Services.Services
                 if(product == null)
                     return " طلب غير موجود";
                 if (data.QuantityRequested > product.Quantity)
-                    return "ميه غير صحيحه";
+                    return "  كميه غير صحيحه";
+                  cart.Items = cart.Items ?? new List<CartItemDto>();
+                var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == product.Id);
+
+                if (existingItem != null)
+                {
+                    // المنتج موجود → زود الكمية
+                    if (existingItem.Quantity + data.QuantityRequested > product.Quantity)
+                        return "الكمية المطلوبة أكبر من المتاح";
+
+                    existingItem.Quantity += data.QuantityRequested;
+                }
 
 
-                cart.Items = cart.Items ?? new List<CartItemDto>();
-
-                cart.Items.Add(new CartItemDto
+                else {  cart.Items.Add(new CartItemDto
                 {
                     ProductId = product.Id,
                     Quantity = data.QuantityRequested,
@@ -84,7 +93,8 @@ namespace KonSanad.Services.Services
                     Category = product.Category,
                     Type = "beneficiary",
                     Reason = data.Reason
-                });
+                });}
+               
             }
             else if (role == "donor")
             {
@@ -186,13 +196,10 @@ namespace KonSanad.Services.Services
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
          
-
+            if (item == null) return "غير موجود";
             // لو المستخدم متبرع نتحقق من الكمية المتاحة
-            if (role == "Beneificery")
+            if (role == "Beneficiary")
             {
-                var orderItem = await _context.OrderItems
-                    .Include(o => o.Supply)
-                    .FirstOrDefaultAsync(o => o.Id == productId);
                 var product = await _context.OrderItems
                        .FirstOrDefaultAsync(p => p.Id == productId);
                 if (product == null)

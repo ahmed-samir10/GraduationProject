@@ -83,7 +83,7 @@ public class CartController : ControllerBase
 
         var result = await _cartService.AddToCartAsync(user.Value.userId, user.Value.role, dto);
 
-        return Ok(new { success = true, message = result });
+        return Ok(new { success = true, data = result });
     }
 
     // =========================
@@ -131,10 +131,10 @@ public class CartController : ControllerBase
         return Ok(new { success = true, message = result });
     }
 
-    // =========================
-    // Update Quantity
-    // =========================
-    [HttpPut("UpdateItems")]
+// =========================
+// Update Quantity
+// =========================
+[HttpPut("UpdateItems")]
     public async Task<IActionResult> UpdateItems(int productId, [FromQuery] int quantity)
     {
         var user = await GetCurrentUser();
@@ -142,7 +142,7 @@ public class CartController : ControllerBase
 
         var result = await _cartService.UpdateItemAsync(user.Value.userId, user.Value.role, productId, quantity);
 
-        return Ok(new { success = true, message = result });
+        return Ok(new { success = true, data = result });
     }
 
     // =========================
