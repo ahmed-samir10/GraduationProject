@@ -131,18 +131,19 @@ public class CartController : ControllerBase
         return Ok(new { success = true, message = result });
     }
 
-// =========================
-// Update Quantity
-// =========================
-[HttpPut("UpdateItems")]
+    // =========================
+    // Update Quantity
+    // =========================
+    [Authorize]
+    [HttpPut("UpdateItems")]
     public async Task<IActionResult> UpdateItems(int productId, [FromQuery] int quantity)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
-        var result = await _cartService.UpdateItemAsync(user.Value.userId, user.Value.role, productId, quantity);
+        var res = await _cartService.UpdateItemAsync(user.Value.userId, user.Value.role, productId, quantity);
 
-        return Ok(new { success = true, data = result });
+        return Ok(new { success = true, data = res });
     }
 
     // =========================

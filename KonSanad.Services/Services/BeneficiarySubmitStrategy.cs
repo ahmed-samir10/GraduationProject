@@ -30,9 +30,7 @@ namespace KonSanad.Services.Services
                 {
                     SupplyId = item.ProductId.Value,
                     QuantityRequested = (int) item.Quantity,
-                    reason = item.ExtraData != null && item.ExtraData.ContainsKey("Reason")
-            ? item.ExtraData["Reason"]
-            : "testReason",
+                    reason = item.Reason,
                     ImageUrl = item.imagUrl,
                     Title =item.ProductName
                     

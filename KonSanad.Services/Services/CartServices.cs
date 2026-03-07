@@ -198,7 +198,7 @@ namespace KonSanad.Services.Services
          
             if (item == null) return "غير موجود";
             // لو المستخدم متبرع نتحقق من الكمية المتاحة
-            if (role == "Beneficiary")
+            if (role == "beneficiary") 
             {
                 var product = await _context.OrderItems
                        .FirstOrDefaultAsync(p => p.Id == productId);
@@ -206,10 +206,15 @@ namespace KonSanad.Services.Services
                     return "منتج غير موجود";
                 if (quantity > product.Quantity)
                     return "خطا في الكميه";
-                
+                item.Quantity = quantity;
+
+                await SaveCart(userId, role, cart);
+
+                return "تم التعديل";
+
             }
             // لو المستخدم متبرع نتحقق من الكمية المتاحة
-            if (role == "Donor")
+            if (role == "donor")
             {
                 
 
@@ -219,11 +224,7 @@ namespace KonSanad.Services.Services
                 return "تم التحديث";
             }
 
-            item.Quantity = quantity;
-
-            await SaveCart(userId, role, cart);
-
-            return "تم التعديل";
+          return  "خطا في الدور";
         }
 
 
