@@ -9,6 +9,10 @@ namespace KonSanad.Core.IRepositery
 {
    public interface IDonorServices
     {
+
+        Task<(bool Success, string Message)> UpdateItemQuantityAsync(int orderItemId, int newQuantity);
+
+        Task<(bool Success, string Message)> DeleteItemAsync(int orderItemId);
         Task<List<SupplyDto>> GetLowStockSuppliesAsync(int pageNumber, int pageSize);
         /*        Task<DonationResponseCashDto> CreateDonationCashAsync(
                    CreateDonationCashRequestDto request, int donorId);*/

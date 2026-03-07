@@ -236,6 +236,30 @@ public class DonorController : ControllerBase
         });
     }
 
+    [Authorize]
+    [HttpPut("update-item-quantity")]
+    public async Task<IActionResult> UpdateItemQuantity(int orderItemId, int newQuantity)
+    {
+        var result = await donorServices.UpdateItemQuantityAsync(orderItemId, newQuantity);
+
+        if (!result.Success)
+            return BadRequest(new { success = false, message = result.Message });
+
+        return Ok(new { success = true, message = result.Message });
+    }
+
+    [Authorize]
+    [HttpDelete("delete-item")]
+    public async Task<IActionResult> DeleteItem(int orderItemId)
+    {
+        var result = await donorServices.DeleteItemAsync(orderItemId);
+
+        if (!result.Success)
+            return BadRequest(new { success = false, message = result.Message });
+
+        return Ok(new { success = true, message = result.Message });
+    }
+
     // ====================== Get Profile EndPoint ==========================
     [Authorize]
     [HttpGet("GetProfile")]
