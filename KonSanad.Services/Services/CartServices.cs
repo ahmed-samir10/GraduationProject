@@ -62,14 +62,17 @@ namespace KonSanad.Services.Services
             {
                 var data = dto as AddToCartDto;
                 if (data == null)
-                    throw new ArgumentException("dto must be AddToCartDto for beneficiary");
+                    return "dto must be AddToCartDto for beneficiary";
 
                 // جلب المنتج من الداتا بيز
                 var product = await _context.OrderItems
                     .FirstOrDefaultAsync(p => p.Id == data.ProductId);
+                if(product == null)
+                    return "منتج غير موجود";
+                if(data.QuantityRequested > product.Quantity)
+                  return "خطا في الكميه";
 
-                if (product == null)
-                    throw new Exception("Product not found");
+            
 
                 cart.Items = cart.Items ?? new List<CartItemDto>();
 
@@ -178,19 +181,48 @@ namespace KonSanad.Services.Services
         }
         public async Task<string> UpdateItemAsync(int userId, string role, int productId, int quantity)
         {
+            
+
             var cart = await GetCartAsync(userId, role);
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
-            if (item == null) return "غير موجود";
+            if (item == null)
+                return "العنصر غير موجود";
 
+            // لو المستخدم متبرع نتحقق من الكمية المتاحة
+            if (role == "Beneificery")
+            {
+                var orderItem = await _context.OrderItems
+                    .Include(o => o.Supply)
+                    .FirstOrDefaultAsync(o => o.Id == productId);
+                var product = await _context.OrderItems
+                       .FirstOrDefaultAsync(p => p.Id == productId);
+                if (product == null)
+                    return "منتج غير موجود";
+                if (quantity > product.Quantity)
+                    return "خطا في الكميه";
+                
+            }
+            // لو المستخدم متبرع نتحقق من الكمية المتاحة
+            if (role == "Donor")
+            {
+                
+
+                item.Quantity = quantity;
+
+                await SaveCart(userId, role, cart);
+                return "تم التحديث";
+            }
 
             item.Quantity = quantity;
 
             await SaveCart(userId, role, cart);
-            return "تم التحديث";
+
+            return "تم التعديل";
         }
 
-        public async Task<string> RemoveItemAsync(int userId, string role, int productId)
+
+public async Task<string> RemoveItemAsync(int userId, string role, int productId)
         {
             var cart = await GetCartAsync(userId, role);
 
