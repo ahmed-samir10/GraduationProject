@@ -68,11 +68,10 @@ namespace KonSanad.Services.Services
                 var product = await _context.OrderItems
                     .FirstOrDefaultAsync(p => p.Id == data.ProductId);
                 if(product == null)
-                    return "منتج غير موجود";
-                if(data.QuantityRequested > product.Quantity)
-                  return "خطا في الكميه";
+                    return " طلب غير موجود";
+                if (data.QuantityRequested > product.Quantity)
+                    return "ميه غير صحيحه";
 
-            
 
                 cart.Items = cart.Items ?? new List<CartItemDto>();
 
@@ -98,7 +97,7 @@ namespace KonSanad.Services.Services
                         var product = await _context.Supplies
                             .FirstOrDefaultAsync(p => p.Id == item.SupplyId);
                         if (product == null)
-                            throw new Exception("Product not found");
+                            return " طلب غير موجود";
 
                         cart.Items = cart.Items ?? new List<CartItemDto>();
 
@@ -186,8 +185,7 @@ namespace KonSanad.Services.Services
             var cart = await GetCartAsync(userId, role);
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
-            if (item == null)
-                return "العنصر غير موجود";
+         
 
             // لو المستخدم متبرع نتحقق من الكمية المتاحة
             if (role == "Beneificery")

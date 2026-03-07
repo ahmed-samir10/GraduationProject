@@ -176,6 +176,7 @@ public class CartController : ControllerBase
     // =========================
     // Submit Cart
     // =========================
+    [Authorize]
     [HttpPost("SubmitCart")]
     public async Task<IActionResult> SubmitCart()
     {
