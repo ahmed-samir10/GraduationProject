@@ -8,7 +8,7 @@ namespace KonSanad.Core.Entity
 {
     public enum CampaignStatus
     {
-       NotCompleted = 0,
-       Completed = 1,
+       NotCompleted = 1,
+       Completed = 2,
     }
 }
