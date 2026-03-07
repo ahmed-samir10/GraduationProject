@@ -12,7 +12,7 @@ namespace KonSanad.Core.Dtos
         public int? Quantity { get; set; }
 
         public string? ProductName { get; set; }
-        public string? ImageUrl { get; set; }
+        public string? imagUrl { get; set; }
         public string? Category { get; set; }
         public string? Type { get; set; }
         public string? Reason { get; set; }

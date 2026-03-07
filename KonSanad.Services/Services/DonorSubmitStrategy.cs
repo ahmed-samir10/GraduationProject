@@ -45,7 +45,7 @@ namespace KonSanad.Services.Services
                             DonationOrderId = donation.Id,
                             SupplyId = item.ProductId ?? 0,
                             Quantity = (int)item.Quantity,
-                            ImageUrl = item.ImageUrl,
+                            ImageUrl = item.imagUrl,
                             CustomSupplyName = item.ProductName,
                             Category = item.Category,
                             Unit = "pce",
@@ -104,7 +104,7 @@ namespace KonSanad.Services.Services
                             Description = item.ExtraData["Description"],
                             Category = item.Category,
                             Unit = item.ExtraData["Unit"],
-                            ImageUrl = item.ImageUrl,
+                            ImageUrl = item.imagUrl,
                             orderItemStatus = OrderItemStatus.Pending,
                             // Status = item.ExtraData?["Status"]
                         };

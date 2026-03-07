@@ -77,7 +77,7 @@ namespace KonSanad.Services.Services
                 {
                     ProductId = product.Id,
                     Quantity = data.QuantityRequested,
-                    ImageUrl = product.ImageUrl,
+                    imagUrl = product.ImageUrl,
                     ProductName = product.CustomSupplyName,
                     Category = product.Category,
                     Type = "beneficiary",
@@ -112,7 +112,7 @@ namespace KonSanad.Services.Services
                             {
                                 ProductId = item.SupplyId,
                                 Quantity = item.Quantity,
-                                ImageUrl =relativeUrl, // لو فيه صورة من المستخدم استخدمها، لو لا استخدم صورة المنتج
+                                imagUrl =relativeUrl, // لو فيه صورة من المستخدم استخدمها، لو لا استخدم صورة المنتج
                                 ProductName = product.Name,
                                 Category = product.Title,
                                 Type = "donationItem",
@@ -152,7 +152,7 @@ namespace KonSanad.Services.Services
                             ProductId =0, // لأن المنتج مخصص مش موجود في الداتا بيز
 
                             ProductName = custom.CustomItemName,
-                            ImageUrl=relativeUrl2,
+                            imagUrl = relativeUrl2,
                             Quantity = custom.Quantity,
                             Category = "Custom",
                             Type = "custom",
@@ -182,6 +182,7 @@ namespace KonSanad.Services.Services
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
             if (item == null) return "غير موجود";
+
 
             item.Quantity = quantity;
 
