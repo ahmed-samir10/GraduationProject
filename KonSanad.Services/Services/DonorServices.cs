@@ -254,7 +254,8 @@ namespace KonSanad.Services.Services
                       OrderDate = DateTime.Now,
                       CreatedAt = DateTime.Now,
                       DonationCategoryStatus = "معلقه",
-                      Status = "قيد المراجعة",
+                Status = "قيد المراجعة",
+                DonationRequestStatus = Core.Entity.DonationRequestStatus.Pending,
                       CashAmount = request.CashAmount
                   };
 
@@ -439,6 +440,8 @@ namespace KonSanad.Services.Services
                 Status = oi.Status ?? string.Empty,
                 ImageUrl = oi.ImageUrl ?? string.Empty,
                 Description = oi.Description ?? string.Empty,
+                UpdatedAt = oi.UpdatedAt,
+                IsDeleted = oi.IsDeleted,
 
                 orderItemStatus = oi.orderItemStatus
 
@@ -461,35 +464,39 @@ namespace KonSanad.Services.Services
                 throw new Exception($"Donor not found for userId: {userId}");
 
             var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
-      .FindAllAsync(
-          cd => cd.CampaignId != null &&
-                cd.CampaignId != 0 &&
-                cd.DonationOrder.DonorId == donor.Id,
-          include: q => q
-              .Include(cd => cd.DonationOrder)
-              .Include(cd => cd.Campaign)
-                  .ThenInclude(c => c.Category)
-  );
+     .FindAllAsync(
+         cd => cd.CampaignId != null && cd.CampaignId != 0,  // ✅ أضف != 0
+         include: q => q
+             .Include(cd => cd.DonationOrder)
+             .Include(cd => cd.Campaign)
+                 .ThenInclude(c => c.Category)
+     );
 
             var campaigns = cashDonations
-                //.Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
+                .Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
                 .Select(cd => cd.Campaign)
                 .Where(c => c != null)
                 .GroupBy(c => c.Id)
                 .Select(g => g.First())
                 .ToList();
 
-            // 4. Map to CampaignDto and compute a few helpful aggregates
+            var campaignIds = campaigns.Select(c => c.Id).ToList();
+
+            var campaignOrdersAll = await _unitOfWork.Repository<DonationOrder, int>()
+                .FindAllAsync(d => d.CampaignId != null && campaignIds.Contains(d.CampaignId.Value));
+
             var result = campaigns.Select(c =>
             {
-                var totalCash = cashDonations
-       .Where(cd => cd.CampaignId == c.Id)
-       .Sum(cd => cd.Amount);
-                var donorCount = cashDonations
-         .Where(cd => cd.CampaignId == c.Id && cd.DonationOrder?.DonorId != null)
-         .Select(cd => cd.DonationOrder.DonorId)
-         .Distinct()
-         .Count();
+                // All donation orders (any donor) for this campaign to compute aggregates
+                var campaignOrders = campaignOrdersAll.Where(d => d.CampaignId == c.Id).ToList();
+
+                var totalCash = campaignOrders.Sum(d => d.CashAmount ?? 0m);
+
+                var donorCount = campaignOrders
+                    .Where(d => d.DonorId.HasValue)
+                    .Select(d => d.DonorId)
+                    .Distinct()
+                    .Count();
 
                 int progressPercentage = 0;
                 if (c.GoalCash.HasValue && c.GoalCash > 0)
@@ -498,29 +505,41 @@ namespace KonSanad.Services.Services
                         Math.Round((double)(totalCash / c.GoalCash.Value) * 100));
                 }
 
+                // Determine DonationRequestStatus for this donor and campaign.
+                // Priority: if any order for this donor in this campaign is Pending => Pending (0)
+                // else if any is Completed => Completed (1)
+                // else if any is Rejected => Rejected (2)
+                var myOrdersForCampaign = myCampaignOrders.Where(d => d.CampaignId == c.Id).ToList();
+                Core.Entity.DonationRequestStatus donationRequestStatus = Core.Entity.DonationRequestStatus.Pending;
+
+                if (myOrdersForCampaign.Any(o => o.DonationRequestStatus == Core.Entity.DonationRequestStatus.Pending))
+                    donationRequestStatus = Core.Entity.DonationRequestStatus.Pending;
+                
+                else if (myOrdersForCampaign.Any(o => o.DonationRequestStatus == Core.Entity.DonationRequestStatus.Completed))
+                    donationRequestStatus = Core.Entity.DonationRequestStatus.Completed;
+                
+                else if (myOrdersForCampaign.Any(o => o.DonationRequestStatus == Core.Entity.DonationRequestStatus.Rejected))
+                    donationRequestStatus = Core.Entity.DonationRequestStatus.Rejected;
+                
+                else     
+                    donationRequestStatus = Core.Entity.DonationRequestStatus.Pending;
+                
+
                 return new CampaignDto
                 {
                     Id = c.Id,
-
                     Title = c.Title ?? string.Empty,
-
                     ShortDescription = string.IsNullOrEmpty(c.Description)
                         ? string.Empty
                         : (c.Description.Length > 150 ? c.Description.Substring(0, 150) : c.Description),
-
                     PictureUrl = c.PictureUrl ?? string.Empty,
-
                     CategoryName = c.Category?.Name ?? string.Empty,
-
-                    Status = DonationRequestStatus.Pending.ToString(), 
-
+                    DonationRequestStatus = (int)donationRequestStatus,
                     ProgressPercentage = progressPercentage,
-
                     DonorCount = donorCount,
                 };
             }).ToList();
 
-            // 5. Return result
             return result;
 
         }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Drawing;
+using KonSanad.Core.Entity;
 
 namespace KonSanad.Repository.Entities
 {
@@ -12,6 +13,10 @@ namespace KonSanad.Repository.Entities
     {
         public string DonationCategoryStatus { get; set; } = null!;
         public decimal? CashAmount { get; set; }
+
+        // Donation request status stored as enum (0=Pending,1=Completed,2=Rejected)
+        public DonationRequestStatus? DonationRequestStatus { get; set; } = KonSanad.Core.Entity.DonationRequestStatus.Pending;
+
         public DateTime? OrderDate { get; set; }
 
         public int? DonorId { get; set; }
