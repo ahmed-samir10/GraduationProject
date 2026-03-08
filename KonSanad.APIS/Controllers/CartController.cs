@@ -173,7 +173,7 @@ public class CartController : ControllerBase
     }
     // =========================
     [HttpDelete("DeleteCash")]
-    public async Task<IActionResult> RemoveCash(int cashDonationId)
+    public async Task<IActionResult> RemoveCash(string cashDonationId)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();

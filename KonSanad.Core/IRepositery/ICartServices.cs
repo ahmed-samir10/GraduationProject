@@ -9,7 +9,7 @@ namespace KonSanad.Core.IRepositery
         Task<string> UpdateItemAsync(int userId, string role, int productId, int quantity);
         Task<string> UpdateAmountCash(int userId, string role, int cashDonationId, int Amount);
         Task<string> RemoveItemAsync(int userId, string role, int productId);
-        Task<string> RemoveCashAsync(int userId, string role, int cashDonationId);
+        Task<string> RemoveCashAsync(int userId, string role, string cashDonationId);
         Task ClearCartAsync(int userId, string role);
         Task<SubmitResultDto> SubmitCartAsync(int userId, string role);
     }

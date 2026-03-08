@@ -311,7 +311,7 @@ namespace KonSanad.Services.Services
 
             return "تم الحذف";
         }
-        public async Task<string> RemoveCashAsync(int userId, string role,  int cashDonationId)
+        public async Task<string> RemoveCashAsync(int userId, string role,  string cashDonationId)
         {
             var cart = await GetCartAsync(userId, role);
 
