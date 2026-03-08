@@ -139,14 +139,16 @@ namespace KonSanad.Services.Services
 
                     case CreateDonationCashRequestDto cash:
 
+                        var productName = await _context.Supplies
+                           .FirstOrDefaultAsync(p => p.Id == cash.HelpOrderId);
                         cart.Items = cart.Items ?? new List<CartItemDto>();
                         cart.Items.Add(new CartItemDto
                         {
-                           
+                           ProductName = productName.Name,
                             Type = "donationCash",
                             ExtraData = new Dictionary<string, string>
                     {
-
+                                 { "CashDonationId",productName.Id .ToString() },
                                     { "CashAmount", cash.CashAmount.ToString() },
                                     { "CampaignId", cash.CampaignId.ToString() },
                                      { "HelpOrderId", cash.HelpOrderId.ToString() }
@@ -227,20 +229,71 @@ namespace KonSanad.Services.Services
           return  "خطا في الدور";
         }
 
+        public async Task<string> UpdateAmountCash(int userId, string role, int cashDonationId, int Amount)
+        {
 
-public async Task<string> RemoveItemAsync(int userId, string role, int productId)
+
+            var cart = await GetCartAsync(userId, role);
+
+         var   item = cart.Items.FirstOrDefault(x =>
+                      x.ExtraData != null &&
+                      x.ExtraData.ContainsKey("CashDonationId") &&
+                      x.ExtraData["CashDonationId"] == cashDonationId.ToString());
+
+            if (item == null) return "غير موجود";
+           
+               item.ExtraData["CashAmount"] = Amount.ToString();
+
+            await SaveCart(userId, role, cart);
+
+                return "تم التعديل";
+
+            
+            // لو المستخدم متبرع نتحقق من الكمية المتاحة
+           
+        }
+
+        public async Task<string> RemoveItemAsync(int userId, string role, int productId)
         {
             var cart = await GetCartAsync(userId, role);
 
-            var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
-            if (item == null) return "غير موجود";
+            CartItemDto item = null;
+
+                item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
+           
+
+           
+            if (item == null)
+                return "العنصر غير موجود";
 
             cart.Items.Remove(item);
 
             await SaveCart(userId, role, cart);
+
             return "تم الحذف";
         }
+        public async Task<string> RemoveCashAsync(int userId, string role,  int cashDonationId)
+        {
+            var cart = await GetCartAsync(userId, role);
 
+            CartItemDto item = null;
+
+
+                item = cart.Items.FirstOrDefault(x =>
+                    x.ExtraData != null &&
+                    x.ExtraData.ContainsKey("CashDonationId") &&
+                    x.ExtraData["CashDonationId"] == cashDonationId.ToString());
+            
+
+            if (item == null)
+                return "العنصر غير موجود";
+
+            cart.Items.Remove(item);
+
+            await SaveCart(userId, role, cart);
+
+            return "تم الحذف";
+        }
         public async Task ClearCartAsync(int userId, string role)
         {
             await _redis.KeyDeleteAsync(GetCartKey(userId, role));

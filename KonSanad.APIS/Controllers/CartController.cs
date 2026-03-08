@@ -145,12 +145,24 @@ public class CartController : ControllerBase
 
         return Ok(new { success = true, data = res });
     }
+    [Authorize]
+    [HttpPut("UpdateAmountCash")]
+    public async Task<IActionResult> UpdateAmountCash(int cashDonationId, [FromQuery] int Amount)
+    {
+        var user = await GetCurrentUser();
+        if (user == null) return Unauthorized();
+
+        var res = await _cartService.UpdateAmountCash(user.Value.userId, user.Value.role, cashDonationId, Amount);
+
+        return Ok(new { success = true, data = res });
+    }
+
 
     // =========================
     // Remove Item
     // =========================
-    [HttpDelete("Delitems/{productId}")]
-    public async Task<IActionResult> RemoRemoveItem(int productId)
+    [HttpDelete("Delitems")]
+    public async Task<IActionResult> RemoRemoveItem(int productId )
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -159,6 +171,18 @@ public class CartController : ControllerBase
 
         return Ok(new { success = true, message = result });
     }
+    // =========================
+    [HttpDelete("DeleteCash")]
+    public async Task<IActionResult> RemoveCash(int cashDonationId)
+    {
+        var user = await GetCurrentUser();
+        if (user == null) return Unauthorized();
+
+        var result = await _cartService.RemoveItemAsync(user.Value.userId, user.Value.role, cashDonationId);
+
+        return Ok(new { success = true, message = result });
+    }
+
 
     // =========================
     // Clear Cart
