@@ -140,20 +140,41 @@ namespace KonSanad.Services.Services
                     case CreateDonationCashRequestDto cash:
 
                         var productName = await _context.Supplies
-                           .FirstOrDefaultAsync(p => p.Id == cash.HelpOrderId);
+                            .FirstOrDefaultAsync(p => p.Id == cash.HelpOrderId);
+
                         cart.Items = cart.Items ?? new List<CartItemDto>();
-                        cart.Items.Add(new CartItemDto
+
+                        // ندور لو التبرع موجود بالفعل
+                        var existingItem2 = cart.Items.FirstOrDefault(x =>
+                            x.ExtraData != null &&
+                            x.ExtraData.ContainsKey("CashDonationId") &&
+                            x.ExtraData["CashDonationId"] == productName.Id.ToString());
+
+                        if (existingItem2 != null)
                         {
-                           ProductName = productName.Name,
-                            Type = "donationCash",
-                            ExtraData = new Dictionary<string, string>
-                    {
-                                 { "CashDonationId",productName.Id .ToString() },
-                                    { "CashAmount", cash.CashAmount.ToString() },
-                                    { "CampaignId", cash.CampaignId.ToString() },
-                                     { "HelpOrderId", cash.HelpOrderId.ToString() }
-                    }
-                        });
+                            // نزود الفلوس
+                            var currentAmount = decimal.Parse(existingItem2.ExtraData["CashAmount"]);
+                            currentAmount += (decimal)cash.CashAmount;
+
+                            existingItem2.ExtraData["CashAmount"] = currentAmount.ToString();
+                        }
+                        else
+                        {
+                            // نضيف عنصر جديد
+                            cart.Items.Add(new CartItemDto
+                            {
+                                ProductName = productName.Name,
+                                Type = "donationCash",
+                                ExtraData = new Dictionary<string, string>
+            {
+                { "CashDonationId", productName.Id.ToString() },
+                { "CashAmount", cash.CashAmount.ToString() },
+                { "CampaignId", cash.CampaignId.ToString() },
+                { "HelpOrderId", cash.HelpOrderId.ToString() }
+            }
+                            });
+                        }
+
                         break;
 
                     case CreateCustomDonationItemRequestDto custom:
@@ -279,11 +300,12 @@ namespace KonSanad.Services.Services
             CartItemDto item = null;
 
 
-                item = cart.Items.FirstOrDefault(x =>
-                    x.ExtraData != null &&
-                    x.ExtraData.ContainsKey("CashDonationId") &&
-                    x.ExtraData["CashDonationId"] == cashDonationId.ToString());
-            
+             item = cart.Items.FirstOrDefault(x =>
+                x.ExtraData != null &&
+                x.ExtraData.ContainsKey("CashDonationId") &&
+                x.ExtraData["CashDonationId"] == cashDonationId.ToString()
+            );
+
 
             if (item == null)
                 return "العنصر غير موجود";

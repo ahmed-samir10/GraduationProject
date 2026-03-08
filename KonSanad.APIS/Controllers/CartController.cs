@@ -178,7 +178,7 @@ public class CartController : ControllerBase
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
 
-        var result = await _cartService.RemoveItemAsync(user.Value.userId, user.Value.role, cashDonationId);
+        var result = await _cartService.RemoveCashAsync(user.Value.userId, user.Value.role, cashDonationId);
 
         return Ok(new { success = true, message = result });
     }
