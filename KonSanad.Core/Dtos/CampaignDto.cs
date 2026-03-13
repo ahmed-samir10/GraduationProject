@@ -17,7 +17,7 @@ namespace KonSanad.Core.Dtos
             public int ProgressPercentage { get; set; }
         public int DonorCount { get; set; }
         public DateTime  CreateAt{ get; set; }
-        
+        public decimal CashAmount { get; set; }
 
         public int?DonationRequestStatus { get; set; } // 0 or 1 or 2
 

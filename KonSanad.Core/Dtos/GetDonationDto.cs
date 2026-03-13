@@ -11,6 +11,7 @@ namespace KonSanad.Core.Dtos
     public class CashDonationDto
     {
         public int Id { get; set; }
+        public string SupplyName { get; set; }
         public DateTime? OrderDate { get; set; }
         public DateTime? CreatedAt { get; set; }
         public string? Status { get; set; }
