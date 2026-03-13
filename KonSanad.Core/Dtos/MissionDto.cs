@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using KonSanad.Core.Converters;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos
 {

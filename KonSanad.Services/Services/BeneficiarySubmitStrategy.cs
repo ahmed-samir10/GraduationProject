@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Services.Services
 {
@@ -21,7 +22,7 @@ namespace KonSanad.Services.Services
             {
                 BeneficiaryId = userId,
                 CreatedAt = DateTime.Now,
-                HelpOrderStatus = HelpOrderStatus.Pending
+                HelpOrderStatus = RequestedStatus.Pending
             };
 
             foreach (var item in cart.Items.Where(x => x.Type == "beneficiary"))

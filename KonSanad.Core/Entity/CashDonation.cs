@@ -1,7 +1,7 @@
 ﻿// KonSanad.Repository\Entities\CashDonation.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Repository.Entities
 {
@@ -24,10 +24,10 @@ namespace KonSanad.Repository.Entities
 
 
         //CashDonationStatus 
-        public CashDonationStatus cashDonationStatus {  get; set; }
-        
+        public RequestedStatus cashDonationStatus {  get; set; } // = RequestedStatus.Pending; // مؤقتاً نعملها ولا اي؟
 
-        
+
+
 
 
     }

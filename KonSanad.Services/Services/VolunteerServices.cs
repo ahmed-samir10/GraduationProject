@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Entities;
+using KonSanad.Core.Entity.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace KonSanad.Services.Services

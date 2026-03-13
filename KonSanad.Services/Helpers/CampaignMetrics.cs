@@ -116,10 +116,10 @@ namespace KonSanad.Services.Helpers
             int beneficiaryCount = CalculateBeneficiaryCount(c);
 
             if (beneficiaryCount >= c.MaxBeneficiaries)
-                return 1;
+                return 2;
 
             else
-            return 0;
+            return 1;
         }
 
         #endregion

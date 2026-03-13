@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KonSanad.Core.Entity
+namespace KonSanad.Core.Entity.Enums
 {
     public enum CampaignStatus
     {

@@ -1,4 +1,6 @@
-﻿namespace KonSanad.Repository.Data.Configurations;
+﻿using KonSanad.Core.Entity.Enums;
+
+namespace KonSanad.Repository.Data.Configurations;
 
 public class HelpOrderConfiguration : IEntityTypeConfiguration<HelpOrder>
 {
@@ -30,6 +32,6 @@ public class HelpOrderConfiguration : IEntityTypeConfiguration<HelpOrder>
         builder.Property(h => h.HelpOrderStatus)
        .IsRequired()
        .HasConversion<int>()               // Explicit enum -> int mapping
-       .HasDefaultValue(HelpOrderStatus.Pending);
+       .HasDefaultValue(RequestedStatus.Pending);
     }
 }

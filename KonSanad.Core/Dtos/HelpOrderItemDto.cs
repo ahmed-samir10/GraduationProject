@@ -1,4 +1,4 @@
-﻿using KonSanad.Core.Entity;
+﻿using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos
 {
@@ -6,7 +6,7 @@ namespace KonSanad.Core.Dtos
     {
         public int Id { get; set; }
         public int? HelpOrderId { get; set; }
-        public HelpOrderStatus Status { get; set; }
+        public RequestedStatus Status { get; set; }
         public int? SupplyId { get; set; }
         public string Title { get; set; }
         public int? Quantity { get; set; }

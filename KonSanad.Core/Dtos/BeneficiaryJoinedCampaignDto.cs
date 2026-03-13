@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos
 {
     public class BeneficiaryJoinedCampaignDto : CampaignDto
     {
-        public CampaignRequestStatus campaignRequestStatus {  get; set; }
+        public RequestedStatus campaignRequestStatus {  get; set; }
     }
 }

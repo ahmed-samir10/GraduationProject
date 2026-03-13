@@ -1,4 +1,6 @@
 ﻿
+using KonSanad.Core.Entity.Enums;
+
 namespace KonSanad.Services.Services
 {
     public class CampaignService : ICampaignService

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos
 {
@@ -20,7 +20,7 @@ namespace KonSanad.Core.Dtos
         public int HelpOrderId { get; set; }
         public List<int> ReceiptIds { get; set; } = new List<int>();
 
-        public CashDonationStatus cashDonationStatus { get; set; }
+        public RequestedStatus cashDonationStatus { get; set; }
     }
 
     // DTO لعنصر واحد من التبرع العيني

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-
+using KonSanad.Core.Entity.Enums;
 namespace KonSanad.Core.Dtos
 {
     public class CampaignDonationRequestDto

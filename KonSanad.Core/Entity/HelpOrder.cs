@@ -1,5 +1,5 @@
 ﻿// KonSanad.Repository\Entities\HelpOrder.cs
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KonSanad.Repository.Entities
@@ -10,7 +10,7 @@ namespace KonSanad.Repository.Entities
       
 
         // The status of the help order (Pending, Rejected, Approved)
-        public HelpOrderStatus HelpOrderStatus { get; set; } = HelpOrderStatus.Pending;
+        public RequestedStatus HelpOrderStatus { get; set; } = RequestedStatus.Pending;
 
         // This My Relations Between ( Beneficiary And HelpOrder )
         public int BeneficiaryId { get; set; }

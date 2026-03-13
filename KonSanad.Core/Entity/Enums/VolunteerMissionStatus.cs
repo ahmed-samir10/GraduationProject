@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KonSanad.Core.Entity
+namespace KonSanad.Core.Entity.Enums
 {
-    public enum MissionStatus
+    public enum VolunteerMissionStatus
     {
         New = 0,
-        Assigend= 1,
-        Completed = 2,
+        InReview = 1,
+        WaitingForReport = 2,
+        Completed = 3,
 
     }
 }
-

@@ -1,4 +1,5 @@
 ﻿
+using KonSanad.Core.Entity.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
@@ -241,7 +242,7 @@ namespace KonSanad.Services.Services
                 return "الحملة غير موجودة";
 
             /////////////////////////////////////////////////
-            if (CampaignMetrics.DetermineCampaignStatus(campaign) == 1)
+            if (CampaignMetrics.DetermineCampaignStatus(campaign) == 2)
             {
                 return "الحملة غير نشطة حالياً ولا يمكن الانضمام لها";
             }
@@ -266,7 +267,7 @@ namespace KonSanad.Services.Services
                 CreatedAt = cairoNow,
                 Status = " قيد الانتظار",
                Reason = request.Reason,
-               campaignRequestStatus = CampaignRequestStatus.Pending,
+               campaignRequestStatus = RequestedStatus.Pending,
             };
 
             // joinRequest.Status = "Pending";

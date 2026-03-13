@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos;
 
@@ -24,6 +23,6 @@ public class HelpOrderDto
     //  public List<HelpOrderItemDto> Items { get; set; } = new List<HelpOrderItemDto>();
 
     public DateTime? CreatedAt { get; set; }
-    public HelpOrderStatus? Status { get; set; }
+    public RequestedStatus? Status { get; set; }
     //  public int? ManagerId { get; set; }
 }

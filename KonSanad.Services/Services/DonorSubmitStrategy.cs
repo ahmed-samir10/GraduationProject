@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
 
 namespace KonSanad.Services.Services
@@ -49,7 +50,7 @@ namespace KonSanad.Services.Services
                             CustomSupplyName = item.ProductName,
                             Category = item.Category,
                             Unit = "pce",
-                            orderItemStatus = OrderItemStatus.Pending,
+                            orderItemStatus = RequestedStatus.Pending,
                             Status = item.ExtraData?["Status"],
                             Description = item.ExtraData?["Description"]
                         };
@@ -73,7 +74,7 @@ namespace KonSanad.Services.Services
                             CampaignId = item.ExtraData.ContainsKey("CampaignId") ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
                             HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId") ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
                             CreatedAt = DateTime.Now,
-                            cashDonationStatus = CashDonationStatus.Pending
+                            cashDonationStatus = RequestedStatus.Pending
                         };
                         _context.CashDonations.Add(CashDonation);
                         await _context.SaveChangesAsync();
@@ -105,7 +106,7 @@ namespace KonSanad.Services.Services
                             Category = item.Category,
                             Unit = item.ExtraData["Unit"],
                             ImageUrl = item.imagUrl,
-                            orderItemStatus = OrderItemStatus.Pending,
+                            orderItemStatus = RequestedStatus.Pending,
                             // Status = item.ExtraData?["Status"]
                         };
                         _context.OrderItems.Add(customOrderItem);

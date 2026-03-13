@@ -1,4 +1,4 @@
-﻿using KonSanad.Core.Entity;
+﻿using KonSanad.Core.Entity.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,7 +10,7 @@ namespace KonSanad.Repository.Entities
 
         public string? Title { get; set; }
 
-        public HelpOrderStatus HelpOrderStatus { get; set; } = HelpOrderStatus.Pending;
+        public RequestedStatus HelpOrderStatus { get; set; } = RequestedStatus.Pending;
         [Required]
         public int QuantityRequested { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using KonSanad.Repository.Entities;
+﻿using KonSanad.Core.Entity.Enums;
+using KonSanad.Repository.Entities;
 
 using System;
 using System.Collections.Generic;

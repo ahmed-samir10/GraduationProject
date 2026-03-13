@@ -1,4 +1,5 @@
-﻿using KonSanad.Repository.Entities;
+﻿using KonSanad.Core.Entity.Enums;
+using KonSanad.Repository.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace KonSanad.Core.Entity
         public Campaign Campaign { get; set; }
         public string Reason { get; set; }
 
-        public CampaignRequestStatus campaignRequestStatus { get; set; }
+        public RequestedStatus campaignRequestStatus { get; set; }
 
 
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;

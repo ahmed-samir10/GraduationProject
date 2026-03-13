@@ -1,7 +1,7 @@
 ﻿// KonSanad.Repository\Entities\OrderItem.cs
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 using Microsoft.AspNetCore.Http;
 
 namespace KonSanad.Repository.Entities
@@ -30,6 +30,6 @@ namespace KonSanad.Repository.Entities
 
        
         //OrderItemStatus
-        public OrderItemStatus orderItemStatus { get; set; }
+        public RequestedStatus orderItemStatus { get; set; }
     }
 }

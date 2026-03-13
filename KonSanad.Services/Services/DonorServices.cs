@@ -1,4 +1,4 @@
-﻿
+﻿using KonSanad.Core.Entity.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
@@ -23,14 +23,14 @@ namespace KonSanad.Services.Services
         }
 
         // Helper to map DonationOrder.Status string to DonationRequestStatus enum
-        private Core.Entity.DonationRequestStatus MapDonationOrderStatus(string status)
+        private DonationRequestStatus MapDonationOrderStatus(string status)
         {
-            if (string.IsNullOrWhiteSpace(status)) return Core.Entity.DonationRequestStatus.Pending;
+            if (string.IsNullOrWhiteSpace(status)) return DonationRequestStatus.Pending;
             var s = status.Trim().ToLower();
-            if (s.Contains("قيد") || s.Contains("مراجعة") || s.Contains("pending")) return Core.Entity.DonationRequestStatus.Pending;
-            if (s.Contains("مكتمل") || s.Contains("completed") || s.Contains("complete")) return Core.Entity.DonationRequestStatus.Completed;
-            if (s.Contains("مرفوض") || s.Contains("rejected")) return Core.Entity.DonationRequestStatus.Rejected;
-            return Core.Entity.DonationRequestStatus.Pending;
+            if (s.Contains("قيد") || s.Contains("مراجعة") || s.Contains("pending")) return DonationRequestStatus.Pending;
+            if (s.Contains("مكتمل") || s.Contains("completed") || s.Contains("complete")) return DonationRequestStatus.Completed;
+            if (s.Contains("مرفوض") || s.Contains("rejected")) return DonationRequestStatus.Rejected;
+            return DonationRequestStatus.Pending;
         }
 
 
@@ -69,7 +69,7 @@ namespace KonSanad.Services.Services
             // جيب كل الـ CashDonations
             var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
        .FindAllAsync(
-           cd => cd.DonationOrderId > 0,  // بدل true
+           cd => cd.HelpOrderId != 0,  // التعديل ال عملته علشان ارجع التبرعات بالكاش لل HelpOrderId بس 
            include: q => q
                .Include(cd => cd.DonationOrder)
                .Include(cd => cd.Receipt)
@@ -259,7 +259,7 @@ namespace KonSanad.Services.Services
 
                     CategoryName = c.Category?.Name ?? string.Empty,
 
-                    DonationRequestStatus =(int) DonationRequestStatus.Pending,
+                    DonationRequestStatus =(int)RequestedStatus.Pending,
 
                     ProgressPercentage = progressPercentage,
                     CreateAt = c.CreatedAt,
@@ -311,9 +311,17 @@ namespace KonSanad.Services.Services
             // 3️⃣ هات عدد الـ OrderItems في الـ DonationOrder ده
             var orderItemsCount = await _unitOfWork.Repository<OrderItem, int>()
                 .FindAllAsync(i => i.DonationOrderId == donationOrder.Id);
+            //
+            var orderItems = await _unitOfWork.Repository<OrderItem, int>()
+    .FindAllAsync(i => i.DonationOrderId == donationOrder.Id);
+
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+                .FindAllAsync(c => c.DonationOrderId == donationOrder.Id);
+
+            var totalCount = orderItems.Count() + cashDonations.Count();
 
             // 4️⃣ لو الـ OrderItem الوحيد في الـ DonationOrder، نمسح الـ DonationOrder كمان
-            if (orderItemsCount.Count() == 1)
+            if (totalCount == 1)
             {
                 _unitOfWork.Repository<OrderItem, int>().Delete(item);
                 _unitOfWork.Repository<DonationOrder, int>().Delete(donationOrder);

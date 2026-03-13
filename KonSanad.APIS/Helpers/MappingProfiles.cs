@@ -75,7 +75,7 @@ namespace KonSanad.APIS.Helpers
                 // resolve PictureUrl via resolver registered in DI (CampaignUrlResolver depends on IConfiguration)
                 .ForMember(d => d.PictureUrl, opt => opt.MapFrom<CampaignUrlResolver>());
 
-            #region newMap
+            #region newMap campaign Beneficiary
             // Campaign -> CampaignDto (presentation)
             CreateMap<Campaign, CampaignBeneficiaryDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))

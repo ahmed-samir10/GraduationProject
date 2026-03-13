@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos
 {
@@ -25,6 +25,6 @@ namespace KonSanad.Core.Dtos
         public string? Description { get; set; }
 
         //OrderItemStatus
-        public OrderItemStatus orderItemStatus { get; set; }  
+        public RequestedStatus orderItemStatus { get; set; }  
     }
 }
