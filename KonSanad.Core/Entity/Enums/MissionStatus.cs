@@ -8,9 +8,9 @@ namespace KonSanad.Core.Entity.Enums
 {
     public enum MissionStatus
     {
-        New = 0,
-        Assigend= 1,
-        Completed = 2,
+        New = 1,
+        Assigend= 2,
+        Completed = 3,
 
     }
 }

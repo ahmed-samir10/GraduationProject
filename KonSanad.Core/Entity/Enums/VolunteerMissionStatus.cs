@@ -8,10 +8,10 @@ namespace KonSanad.Core.Entity.Enums
 {
     public enum VolunteerMissionStatus
     {
-        New = 0,
-        InReview = 1,
-        WaitingForReport = 2,
-        Completed = 3,
+        New = 1,
+        InReview = 4,
+        WaitingForReport = 5,
+        Completed = 6,
 
     }
 }
