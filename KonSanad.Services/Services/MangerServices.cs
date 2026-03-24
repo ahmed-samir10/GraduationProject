@@ -1,9 +1,10 @@
-﻿using KonSanad.Core.Entity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Services.Services
 {
@@ -21,7 +22,7 @@ namespace KonSanad.Services.Services
             // 1️⃣ هات الـ HelpOrder
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
       .GetQueryable()
-      .Include(h => h.Beneficiary)
+      .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
       .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
             if (helpOrder == null)
@@ -37,10 +38,13 @@ namespace KonSanad.Services.Services
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(3), // حسب اللوجيك بتاعك
                 ManagerId = 1,
+
                // CampaignId = helpOrder.CampaignId,
 
                 MissionStatus = Core.Entity.Enums.MissionStatus.Assigend, // Pending مثلا
-              
+
+                // status في الداتا بيز not null لازم يكون ليه قيمة
+                Status = RequestedStatus.Pending,
 
                 CreatedAt = DateTime.UtcNow
             };

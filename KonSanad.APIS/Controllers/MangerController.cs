@@ -27,6 +27,8 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.GetVolunteerAsync();
             return Ok(result);
         }
+
+
         [HttpPost("AssignVolunteer")]
         public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto)
         {
