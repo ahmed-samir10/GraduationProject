@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using KonSanad.Core.Entity.Enums;
+using System.ComponentModel.DataAnnotations;
 
 public abstract class BaseEntity<TKey>
 {
@@ -6,7 +7,7 @@ public abstract class BaseEntity<TKey>
     public TKey Id { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public RequestedStatus? Status { get; set; }
     public bool IsDeleted { get; set; }
 
     [Timestamp]

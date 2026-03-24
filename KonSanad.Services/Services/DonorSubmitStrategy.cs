@@ -62,7 +62,7 @@ namespace KonSanad.Services.Services
                         donation.CashDonation = new CashDonation
                         {
                             Amount = decimal.Parse(item.ExtraData["CashAmount"]),
-                            Status = "pending",
+                            Status = RequestedStatus.Pending,
                             CreatedAt = DateTime.Now
                         };
                         
@@ -70,7 +70,7 @@ namespace KonSanad.Services.Services
                         {
                             DonationOrderId = donation.Id,
                             Amount = decimal.Parse(item.ExtraData["CashAmount"]),
-                            Status = "pending",
+                            //Status = 2,
                             CampaignId = item.ExtraData.ContainsKey("CampaignId") ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
                             HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId") ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
                             CreatedAt = DateTime.Now,

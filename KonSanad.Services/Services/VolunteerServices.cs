@@ -184,7 +184,7 @@ namespace KonSanad.Services.Services
 
             //vmRepo.Update(volunteerMission);
             volunteerMission.MissionStatus =VolunteerMissionStatus.Completed;
-            volunteerMission.Status ="Completed";
+            //volunteerMission.Status ="Completed";
             vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
 

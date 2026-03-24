@@ -85,7 +85,7 @@ namespace KonSanad.Services.Services
                     SupplyName = _unitOfWork.Repository<Supply, int>()
             .FirstOrDefaultAsync(s => s.Id == d.HelpOrderId).Result?.Name,
                     CreatedAt = d.CreatedAt,
-                    Status = d.Status,
+                   // Status = d.Status,
                     CashAmount = d.Amount,
                     
                     //new status
@@ -124,7 +124,7 @@ namespace KonSanad.Services.Services
                 Id = d.Id,
                 OrderDate = d.OrderDate,
                 CreatedAt = d.CreatedAt,
-                Status = d.Status,
+               // Status = d.Status,
                 Items = d.OrderItems?.Select(oi => new DonationItemDetailDto
                 {
                     SupplyId = oi.SupplyId ?? 0,

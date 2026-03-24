@@ -265,7 +265,7 @@ namespace KonSanad.Services.Services
                 CampaignId = request.CampaignId,
                 RequestedAt = cairoNow,
                 CreatedAt = cairoNow,
-                Status = " قيد الانتظار",
+               // Status = " قيد الانتظار",
                Reason = request.Reason,
                campaignRequestStatus = RequestedStatus.Pending,
             };
