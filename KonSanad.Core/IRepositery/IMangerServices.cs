@@ -12,6 +12,9 @@ namespace KonSanad.Core.IRepositery
             Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync();
         Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync();
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId);
+        Task<ViewReportDto> ViewReport(int HelpOrderId);
+        Task <string> AcceptOrder(int orderId);
+         Task<string> RejectOrder(int orderId);
 
 
     }
