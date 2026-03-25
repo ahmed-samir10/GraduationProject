@@ -40,5 +40,11 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(result);
         }
+        [HttpGet("volunteer-requests")]
+        public async Task<IActionResult> GetAllVolunteerRequests()
+        {
+            var result = await _mangerServices.GetAllVolunteerRequestsAsync();
+            return Ok(result);
+        }
     }
 }

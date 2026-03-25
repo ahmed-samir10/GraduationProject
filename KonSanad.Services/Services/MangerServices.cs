@@ -1,4 +1,6 @@
-﻿using KonSanad.Core.Entity;
+﻿using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -125,6 +127,58 @@ namespace KonSanad.Services.Services
                 .ToListAsync();
 
             return result;
+        }
+
+        // Get All Volunteer Requests [ Join a campaigns + Start Mission ]
+        public async Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync()
+        {
+            var result = new List<GetVolunteerRequestsDto>();
+
+            // 1️⃣ Campaign Join Requests
+            var campaignRequests = await _unitOfWork.Repository<CampaignVolunteer, int>()
+                .GetQueryable()
+                .Where(cv => !cv.IsDeleted && cv.Status != RequestedStatus.Rejected)
+                .Include(cv => cv.Volunteer)
+                .Include(cv => cv.Campaign)
+                .Select(cv => new GetVolunteerRequestsDto
+                {
+                    RequestType = "Campaign",
+                    ReferenceId = cv.CampaignId,
+                    VolunteerId = cv.VolunteerId,
+                    VolunteerName = cv.Volunteer.FullName,
+                    Address = cv.Volunteer.Address,
+                    Phone = cv.Volunteer.Phone,
+                    Title = cv.Campaign.Title,
+                    Status = (int)cv.Status,
+                    CreatedAt = cv.CreatedAt
+                })
+                .ToListAsync();
+
+            // 2️⃣ Mission Start Requests
+            var missionRequests = await _unitOfWork.Repository<MissionVolunteers, int>()
+                .GetQueryable()
+                .Where(mv => !mv.IsDeleted && mv.MissionStatus != VolunteerMissionStatus.Completed)
+                .Include(mv => mv.Volunteer)
+                .Include(mv => mv.Mission)
+                .Select(mv => new GetVolunteerRequestsDto
+                {
+                    RequestType = "Mission",
+                    ReferenceId = mv.MissionId,
+                    VolunteerId = mv.VolunteerId,
+                    VolunteerName = mv.Volunteer.FullName,
+                    Address = mv.Volunteer.Address,
+                    Phone = mv.Volunteer.Phone,
+                    Title = mv.Mission.Title,
+                    Status = (int)mv.MissionStatus,
+                    CreatedAt = mv.CreatedAt
+                })
+                .ToListAsync();
+
+            result.AddRange(campaignRequests);
+            result.AddRange(missionRequests);
+
+            // 3️⃣ Sort by newest first
+            return result.OrderByDescending(r => r.CreatedAt);
         }
 
     }

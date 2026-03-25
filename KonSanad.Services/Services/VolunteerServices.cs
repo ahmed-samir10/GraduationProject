@@ -352,7 +352,7 @@ namespace KonSanad.Services.Services
                 JoinedDate = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Status = "Pending"
+                Status = RequestedStatus.Pending
             };
 
             await _unitOfWork
