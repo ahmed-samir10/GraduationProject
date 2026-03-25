@@ -173,6 +173,7 @@ namespace KonSanad.APIS.Controllers
                         FullName = registerDto.FullName ?? user.FullName ?? "volunteer User",
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false,
+                        Status = Core.Entity.Enums.RequestedStatus.Pending, // مهم
                         Address = registerDto.Address ?? "غير محدد",     // مهم
                         Phone = registerDto.Phone ?? "غير محدد",         // مهم
                         NationalId = registerDto.NationalId ?? "غير محدد" // مهم

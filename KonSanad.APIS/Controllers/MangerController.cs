@@ -16,9 +16,9 @@ namespace KonSanad.APIS.Controllers
         }
 
         [HttpGet("help-orders")]
-        public async Task<IActionResult> GetHelpOrders()
+        public async Task<IActionResult> GetHelpOrders(int pageNumber = 1, int pageSize = 8)
         {
-            var result = await _mangerServices.GetHelpOrderAsync();
+            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize);
 
             return Ok(new { success = true, data = result });
         }
@@ -50,7 +50,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.ViewReport(helpOrderId);
 
             if (result == null)
-           return Ok(new { success = false, data = "Report not found" });
+                return Ok(new { success = false, data = "Report not found" });
 
             return Ok(new { success = true, data = result });
         }
@@ -85,6 +85,49 @@ namespace KonSanad.APIS.Controllers
             if (result.Contains("not found"))
                 return NotFound(result);
 
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
+        }
+
+        [HttpGet("join-volunteers")]
+        public async Task<IActionResult> GetJoinVolunteers()
+        {
+            var result = await _mangerServices.GetJoinVolunteer();
+
+            if (result == null || !result.Any())
+                return NotFound("No join volunteers found");
+
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
+        }
+        [HttpPost("accept-volunteer/{volunteerId}")]
+        public async Task<IActionResult> AcceptVolunteer(int volunteerId)
+        {
+            if (volunteerId <= 0)
+               return Ok(new { success = false, data = "Invalid volunteerId" });
+            var result = await _mangerServices.AcceptVolunteer(volunteerId);
+            if (result.Contains("not found"))
+               return Ok(new { success = false, data = "not found" });
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
+        }
+        [HttpPost("reject-volunteer/{volunteerId}")]
+        public async Task<IActionResult> RejectVolunteer(int volunteerId)
+        {
+            if (volunteerId <= 0)
+                return Ok(new { success = false, data = "Invalid volunteerId" });
+            var result = await _mangerServices.RejectVolunteer(volunteerId);
+            if (result.Contains("not found"))
+                return Ok(new { success = false, data = "not found" });
             return Ok(new
             {
                 success = true,

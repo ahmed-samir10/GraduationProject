@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KonSanad.Core.Entity.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,18 @@ namespace KonSanad.Core.Dtos
         public string Location { get; set; } = string.Empty;
         public string Skills { get; set; } = string.Empty;
          public string Availability { get; set; } = string.Empty;
+
+    }
+    public class GetJoinVolunteerDto
+    {
+        public int Id { get; set; }
+        public RequestedStatus Status { get; set; }
+        public string Email { get; set; } = string.Empty;
+       public DateTime JoinDate { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string Skills { get; set; } = string.Empty;
+        public string Availability { get; set; } = string.Empty;
 
     }
 }

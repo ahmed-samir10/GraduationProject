@@ -74,7 +74,7 @@ namespace KonSanad.Services.Services
         }
 
         //Get HelpOrder 
-        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync()
+        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize)
         {
 
             var query = _unitOfWork.Repository<HelpOrder, int>().GetQueryable();
@@ -83,6 +83,8 @@ namespace KonSanad.Services.Services
                 .Include(h => h.Beneficiary)
                 .Include(h => h.HelpOrderItems)
                 .Where(h => !h.IsDeleted)
+                 .Skip((pageNumber - 1) * pageSize)
+                 .Take(pageSize)
                 .Select(h => new GetHelpOrderDto
                 {
                     Id = h.Id,
@@ -243,6 +245,56 @@ namespace KonSanad.Services.Services
                 .FirstOrDefaultAsync();
 
             return report;
+        }
+
+        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer()
+        {
+            var volunteers = await _unitOfWork.Repository<Volunteer, int>()
+                .GetQueryable()
+                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted) // pending + مش محذوف
+                .Select(v => new GetJoinVolunteerDto
+                {
+                    Id = v.Id,
+                    Status = RequestedStatus.Pending,
+                    Email = v.Email,
+                    JoinDate = v.CreatedAt,
+                    Name = v.FullName,
+                    Location = v.Address,
+                    Skills = v.Skills,
+                    Availability = v.Availability
+                })
+                .ToListAsync();
+
+            return volunteers;
+        }
+
+        public async Task<string> AcceptVolunteer(int VolId)
+        {
+           var volunteer =  _unitOfWork.Repository<Volunteer, int>()
+                .GetQueryable()
+                .FirstOrDefault(v => v.Id == VolId);
+            if (volunteer == null)
+                return "Volunteer not found";
+            volunteer.Status = RequestedStatus.Approved;
+            volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
+            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
+          await  _unitOfWork.Complete();
+            return "Volunteer accepted successfully";
+        }
+
+        public async Task<string> RejectVolunteer(int VolId)
+        {
+            var volunteer = _unitOfWork.Repository<Volunteer, int>()
+                 .GetQueryable()
+                 .FirstOrDefault(v => v.Id == VolId);
+            if (volunteer == null)
+                return "Volunteer not found";
+            volunteer.Status = RequestedStatus.Rejected;
+            volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
+            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
+            await _unitOfWork.Complete();
+            return "Volunteer rejected successfully";
+
         }
     }
 }

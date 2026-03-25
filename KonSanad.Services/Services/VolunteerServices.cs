@@ -1,5 +1,6 @@
 ﻿using KonSanad.Core.Entities;
 using KonSanad.Core.Entity.Enums;
+using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace KonSanad.Services.Services
@@ -105,6 +106,10 @@ namespace KonSanad.Services.Services
 
         public async Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId)
         {
+
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
+            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status==RequestedStatus.Pending)
+                throw new Exception("Volunteer request was pending");
             var missions = await _unitOfWork
                 .Repository<MissionVolunteers, int>()
                 .FindAllAsync(
@@ -133,9 +138,13 @@ namespace KonSanad.Services.Services
         // ----------------------------------------------------------
         public async Task<string> SubmitMissionReportAsync(int volunteerId, int missionId, IFormFile file, string? notes = null)
         {
+            
             // Validate volunteer exists
             var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
 
+           
+            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
+                throw new Exception("Volunteer request was pending");
             if (volunteer is null) return "المتطوع غير موجود";
 
 
@@ -218,7 +227,9 @@ namespace KonSanad.Services.Services
                 NationalId = volunteer.NationalId ?? string.Empty,
                 Address = volunteer.Address ?? string.Empty,
                 PhoneNumber = appUser.PhoneNumber ?? string.Empty,
-                Email = appUser.Email ?? string.Empty
+                Email = appUser.Email ?? string.Empty,
+                status =(RequestedStatus) volunteer.Status
+
             };
             return profileDto;
         }
@@ -321,10 +332,15 @@ namespace KonSanad.Services.Services
 
         public async Task<string> JoinCampaignAsync(int volunteerId, int campaignId)
         {
-            // تأكد الـ volunteer موجود
+            // تأك
+            // د الـ volunteer موجود
             var volunteer = await _unitOfWork
                 .Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
+
+            
+            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
+                throw new Exception("Volunteer request was pending");
 
             if (volunteer is null)
                 return "المطتوع غير موجود";
