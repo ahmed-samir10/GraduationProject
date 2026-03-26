@@ -84,6 +84,10 @@ namespace KonSanad.Services.Services
             if (mission == null)
                 return "المهمة غير موجودة";
 
+            // ✅ تحقق من تاريخ الانتهاء
+            if (mission.EndDate.HasValue && mission.EndDate.Value <= DateTime.Now)
+                return "لا يمكن بدء المهمة، انتهى وقتها";
+
             // 2️⃣ غيّر حالة المهمة
             mission.MissionStatus = MissionStatus.New;
 
