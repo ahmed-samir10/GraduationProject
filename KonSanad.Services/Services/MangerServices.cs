@@ -1,6 +1,6 @@
-﻿using KonSanad.Core.Entity;
+﻿using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
-using KonSanad.Repository.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,14 +18,12 @@ namespace KonSanad.Services.Services
 
         }
 
-      
-
         public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId)
         {
             // 1️⃣ هات الـ HelpOrder
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
       .GetQueryable()
-      .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
+      .Include(h => h.Beneficiary)
       .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
             if (helpOrder == null)
@@ -41,14 +39,10 @@ namespace KonSanad.Services.Services
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(3), // حسب اللوجيك بتاعك
                 ManagerId = 1,
-                HelpOrderId = helpOrder.Id,
-
-                // CampaignId = helpOrder.CampaignId,
+               // CampaignId = helpOrder.CampaignId,
 
                 MissionStatus = Core.Entity.Enums.MissionStatus.Assigend, // Pending مثلا
-
-                // status في الداتا بيز not null لازم يكون ليه قيمة
-                Status = RequestedStatus.Pending,
+              
 
                 CreatedAt = DateTime.UtcNow
             };
@@ -74,7 +68,7 @@ namespace KonSanad.Services.Services
         }
 
         //Get HelpOrder 
-        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize)
+        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync()
         {
 
             var query = _unitOfWork.Repository<HelpOrder, int>().GetQueryable();
@@ -83,8 +77,6 @@ namespace KonSanad.Services.Services
                 .Include(h => h.Beneficiary)
                 .Include(h => h.HelpOrderItems)
                 .Where(h => !h.IsDeleted)
-                 .Skip((pageNumber - 1) * pageSize)
-                 .Take(pageSize)
                 .Select(h => new GetHelpOrderDto
                 {
                     Id = h.Id,
@@ -137,164 +129,57 @@ namespace KonSanad.Services.Services
             return result;
         }
 
-        public  async Task<string> RejectOrder(int missionId)
+        // Get All Volunteer Requests [ Join a campaigns + Start Mission ]
+        public async Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync()
         {
-            var mission = await _unitOfWork.Repository<Mission, int>()
-               .GetQueryable()
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.HelpOrderItems)
-               .FirstOrDefaultAsync(m => m.Id == missionId);
+            var result = new List<GetVolunteerRequestsDto>();
 
-            if (mission == null)
-                return "Mission not found";
-
-            var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
+            // 1️⃣ Campaign Join Requests
+            var campaignRequests = await _unitOfWork.Repository<CampaignVolunteer, int>()
                 .GetQueryable()
-                .FirstOrDefaultAsync(mv => mv.MissionId == missionId);
-
-            if (vm == null)
-                return "Volunteer mission not found";
-
-            // ✅ Update mission
-            mission.MissionStatus = MissionStatus.Completed;
-
-            // ✅ Update volunteer mission
-            vm.MissionStatus = VolunteerMissionStatus.Completed;
-
-            // ✅ Update help order
-            mission.HelpOrder.HelpOrderStatus = RequestedStatus.Rejected;
-
-            // ✅ Update first item (لو موجود)
-            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
-            if (item != null)
-                item.Status = RequestedStatus.Rejected;
-
-            // ✅ Save changes
-            await _unitOfWork.Complete();
-
-            return "تم رفض الطلب ";
-
-        }
-        public async Task<string> AcceptOrder(int missionId)
-        {
-            var mission = await _unitOfWork.Repository<Mission, int>()
-                .GetQueryable()
-                .Include(m => m.HelpOrder)
-                    .ThenInclude(h => h.HelpOrderItems)
-                .FirstOrDefaultAsync(m => m.Id == missionId);
-
-            if (mission == null)
-                return "Mission not found";
-
-            var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
-                .GetQueryable()
-                .FirstOrDefaultAsync(mv => mv.MissionId == missionId);
-
-            if (vm == null)
-                return "Volunteer mission not found";
-
-            // ✅ Update mission
-            mission.MissionStatus = MissionStatus.Completed;
-
-            // ✅ Update volunteer mission
-            vm.MissionStatus = VolunteerMissionStatus.Completed;
-
-            // ✅ Update help order
-            mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
-
-            // ✅ Update first item (لو موجود)
-            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
-            if (item != null)
-                item.HelpOrderStatus = RequestedStatus.Approved;
-
-            // ✅ Save changes
-            await _unitOfWork.Complete();
-
-            return "تم قبول الطلب بنجاح";
-        }
-        public async Task<ViewReportDto> ViewReport(int helpOrderId)
-        {
-            var mission = await _unitOfWork.Repository<Mission, int>()
-                .GetQueryable()
-                .Include(m => m.HelpOrder)
-                    .ThenInclude(h => h.Beneficiary)
-                .Include(m => m.HelpOrder)
-                    .ThenInclude(h => h.HelpOrderItems)
-                .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
-
-            if (mission == null)
-                return null;
-
-            var report = await _unitOfWork.Repository<MissionVolunteers, int>()
-                .GetQueryable()
-                .Where(vm => vm.MissionId == mission.Id)
-                .Select(vm => new ViewReportDto
+                .Where(cv => !cv.IsDeleted && cv.Status == RequestedStatus.Pending)
+                .Include(cv => cv.Volunteer)
+                .Include(cv => cv.Campaign)
+                .Select(cv => new GetVolunteerRequestsDto
                 {
-                    BeneficiaryName = mission.HelpOrder.Beneficiary.FullName,
-
-                    // 👇 لو عايز أول Title من الـ items
-                    Title = mission.HelpOrder.HelpOrderItems
-                                .Select(i => i.Title)
-                                .FirstOrDefault(),
-                    missionId = mission.Id,
-
-                    VolunteerName = vm.Volunteer.FullName,
-                    Notes = vm.Notes,
-                    FileUrl = vm.ResultMission
-                })
-                .FirstOrDefaultAsync();
-
-            return report;
-        }
-
-        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer()
-        {
-            var volunteers = await _unitOfWork.Repository<Volunteer, int>()
-                .GetQueryable()
-                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted) // pending + مش محذوف
-                .Select(v => new GetJoinVolunteerDto
-                {
-                    Id = v.Id,
-                    Status = RequestedStatus.Pending,
-                    Email = v.Email,
-                    JoinDate = v.CreatedAt,
-                    Name = v.FullName,
-                    Location = v.Address,
-                    Skills = v.Skills,
-                    Availability = v.Availability
+                    RequestType = "Campaign",
+                    ReferenceId = cv.CampaignId,
+                    VolunteerId = cv.VolunteerId,
+                    VolunteerName = cv.Volunteer.FullName,
+                    Address = cv.Volunteer.Address,
+                    Phone = cv.Volunteer.Phone,
+                    Title = cv.Campaign.Title,
+                    Status = (int)cv.Status,
+                    CreatedAt = cv.CreatedAt
                 })
                 .ToListAsync();
 
-            return volunteers;
-        }
-
-        public async Task<string> AcceptVolunteer(int VolId)
-        {
-           var volunteer =  _unitOfWork.Repository<Volunteer, int>()
+            // 2️⃣ Mission Start Requests
+            var missionRequests = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
-                .FirstOrDefault(v => v.Id == VolId);
-            if (volunteer == null)
-                return "Volunteer not found";
-            volunteer.Status = RequestedStatus.Approved;
-            volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
-            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
-          await  _unitOfWork.Complete();
-            return "Volunteer accepted successfully";
+                .Where(mv => !mv.IsDeleted && mv.MissionStatus == VolunteerMissionStatus.InReview)
+                .Include(mv => mv.Volunteer)
+                .Include(mv => mv.Mission)
+                .Select(mv => new GetVolunteerRequestsDto
+                {
+                    RequestType = "Mission",
+                    ReferenceId = mv.MissionId,
+                    VolunteerId = mv.VolunteerId,
+                    VolunteerName = mv.Volunteer.FullName,
+                    Address = mv.Volunteer.Address,
+                    Phone = mv.Volunteer.Phone,
+                    Title = mv.Mission.Title,
+                    Status = (int)mv.MissionStatus,
+                    CreatedAt = mv.CreatedAt
+                })
+                .ToListAsync();
+
+            result.AddRange(campaignRequests);
+            result.AddRange(missionRequests);
+
+            // 3️⃣ Sort by newest first
+            return result.OrderByDescending(r => r.CreatedAt);
         }
 
-        public async Task<string> RejectVolunteer(int VolId)
-        {
-            var volunteer = _unitOfWork.Repository<Volunteer, int>()
-                 .GetQueryable()
-                 .FirstOrDefault(v => v.Id == VolId);
-            if (volunteer == null)
-                return "Volunteer not found";
-            volunteer.Status = RequestedStatus.Rejected;
-            volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
-            _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
-            await _unitOfWork.Complete();
-            return "Volunteer rejected successfully";
-
-        }
     }
 }

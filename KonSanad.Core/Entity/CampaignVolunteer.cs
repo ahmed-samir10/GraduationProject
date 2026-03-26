@@ -1,4 +1,5 @@
-﻿using KonSanad.Repository.Entities;
+﻿using KonSanad.Core.Entity.Enums;
+using KonSanad.Repository.Entities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -22,7 +23,7 @@ namespace KonSanad.Core.Entities
 
         // Additional Properties (Optional)
         public DateTime? JoinedDate { get; set; }
-        public string? Status { get; set; } // مثال: "Active", "Completed", "Pending"
+        public RequestedStatus Status { get; set; } // مثال: "Active", "Completed", "Pending"
         public string? Notes { get; set; }
     }
 }

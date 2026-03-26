@@ -52,9 +52,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
+                    b.Property<int>("Status")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -102,9 +102,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -147,9 +146,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -186,9 +184,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -236,9 +233,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("SupplyId")
                         .HasColumnType("int");
@@ -421,9 +417,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -494,9 +489,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -559,9 +553,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .HasMaxLength(200)
@@ -605,9 +598,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("TotalCashCollected")
                         .HasColumnType("decimal(18,2)");
@@ -657,9 +649,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -704,6 +695,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("DonationRequestStatus")
+                        .HasColumnType("int");
+
                     b.Property<int?>("DonorId")
                         .HasColumnType("int");
 
@@ -725,9 +719,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -796,9 +789,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -825,7 +817,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("HelpOrderStatus")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasDefaultValue(2);
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -839,9 +831,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -887,9 +878,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("SupplyId")
                         .HasColumnType("int");
@@ -958,9 +948,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1020,9 +1009,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .HasMaxLength(200)
@@ -1143,9 +1131,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1202,9 +1189,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int?>("StockQuantity")
                         .ValueGeneratedOnAdd()
@@ -1268,9 +1254,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int?>("SupplyId")
                         .HasColumnType("int");
@@ -1353,9 +1338,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");

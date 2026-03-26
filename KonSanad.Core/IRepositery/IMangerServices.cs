@@ -20,5 +20,9 @@ namespace KonSanad.Core.IRepositery
         Task<string> RejectVolunteer(int orderId);
       
 
+        // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
+        Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync();
+
+
     }
 }
