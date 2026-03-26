@@ -137,7 +137,7 @@ namespace KonSanad.Services.Services
             // 1️⃣ Campaign Join Requests
             var campaignRequests = await _unitOfWork.Repository<CampaignVolunteer, int>()
                 .GetQueryable()
-                .Where(cv => !cv.IsDeleted && cv.Status != RequestedStatus.Rejected)
+                .Where(cv => !cv.IsDeleted && cv.Status == RequestedStatus.Pending)
                 .Include(cv => cv.Volunteer)
                 .Include(cv => cv.Campaign)
                 .Select(cv => new GetVolunteerRequestsDto
@@ -157,7 +157,7 @@ namespace KonSanad.Services.Services
             // 2️⃣ Mission Start Requests
             var missionRequests = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
-                .Where(mv => !mv.IsDeleted && mv.MissionStatus != VolunteerMissionStatus.Completed)
+                .Where(mv => !mv.IsDeleted && mv.MissionStatus == VolunteerMissionStatus.InReview)
                 .Include(mv => mv.Volunteer)
                 .Include(mv => mv.Mission)
                 .Select(mv => new GetVolunteerRequestsDto
