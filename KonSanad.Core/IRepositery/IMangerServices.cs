@@ -18,7 +18,9 @@ namespace KonSanad.Core.IRepositery
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer();
         Task<string> AcceptVolunteer(int orderId);
         Task<string> RejectVolunteer(int orderId);
-      
+
+        Task<string> AcceptRequst(int Requsttype , int referenceId);
+        Task<string> RejectRequst(int Requsttype, int referenceId);
 
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
         Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync();

@@ -12,6 +12,14 @@ namespace KonSanad.Core.Entity.Enums
         InReview = 4,
         WaitingForReport = 5,
         Completed = 6,
+        Rejected = 7
+
+    }
+    public enum RefType
+    {
+        Campaign = 1,
+        Mission = 2
 
     }
 }
+

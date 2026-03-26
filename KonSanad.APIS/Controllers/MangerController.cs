@@ -34,12 +34,12 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto)
         {
             if (dto == null || dto.HelpOrderId <= 0 || dto.VolunteerId <= 0)
-                return Ok(new { success = false, data = "Invaild Data" });
+                return Ok(new { success = false, massage = "Invaild Data" });
 
             var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId);
 
             if (result.Contains("not found"))
-                return Ok(new { success = false, data = "not found" });
+                return Ok(new { success = false, massage = "not found" });
 
             return Ok(new { success = true, data = result });
         }
@@ -50,7 +50,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.ViewReport(helpOrderId);
 
             if (result == null)
-                return Ok(new { success = false, data = "Report not found" });
+                return Ok(new { success = false, massage = "Report not found" });
 
             return Ok(new { success = true, data = result });
         }
@@ -59,12 +59,13 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AcceptOrder(int missionId)
         {
             if (missionId <= 0)
-                return BadRequest("Invalid missionId");
+               
+            return Ok(new { success = false, massage = "Invalid missionId" });
 
             var result = await _mangerServices.AcceptOrder(missionId);
 
             if (result.Contains("not found"))
-                return NotFound(result);
+               return Ok(new { success = false, massage = "not found" });
 
             return Ok(new
             {
@@ -78,12 +79,12 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> RejectOrder(int missionId)
         {
             if (missionId <= 0)
-                return BadRequest("Invalid missionId");
+               return Ok(new { success = false, massage = "Invalid missionId" });
 
             var result = await _mangerServices.RejectOrder(missionId);
 
             if (result.Contains("not found"))
-                return NotFound(result);
+             return Ok(new { success = false, massage = "not found" });
 
             return Ok(new
             {
@@ -98,7 +99,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.GetJoinVolunteer();
 
             if (result == null || !result.Any())
-                return NotFound("No join volunteers found");
+              return Ok(new { success = false, massage = "No join volunteer requests found" });
 
             return Ok(new
             {
@@ -110,10 +111,10 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AcceptVolunteer(int volunteerId)
         {
             if (volunteerId <= 0)
-               return Ok(new { success = false, data = "Invalid volunteerId" });
+               return Ok(new { success = false, massage = "Invalid volunteerId" });
             var result = await _mangerServices.AcceptVolunteer(volunteerId);
             if (result.Contains("not found"))
-               return Ok(new { success = false, data = "not found" });
+               return Ok(new { success = false, massage = "not found" });
             return Ok(new
             {
                 success = true,
@@ -124,10 +125,10 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> RejectVolunteer(int volunteerId)
         {
             if (volunteerId <= 0)
-                return Ok(new { success = false, data = "Invalid volunteerId" });
+                return Ok(new { success = false, massage = "Invalid volunteerId" });
             var result = await _mangerServices.RejectVolunteer(volunteerId);
             if (result.Contains("not found"))
-                return Ok(new { success = false, data = "not found" });
+                return Ok(new { success = false, massage = "not found" });
             return Ok(new
             {
                 success = true,
@@ -138,7 +139,48 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> GetAllVolunteerRequests()
         {
             var result = await _mangerServices.GetAllVolunteerRequestsAsync();
-            return Ok(result);
+          return Ok(new
+            {
+                success = true,
+                data = result
+            });
+        }
+        // ✅ Accept Request
+        [HttpPost("accept-request")]
+        public async Task<IActionResult> AcceptRequest(int requestType, int referenceId)
+        {
+            if (referenceId <= 0)
+               return Ok (new { success = false, message = "Invalid referenceId" });
+
+            var result = await _mangerServices.AcceptRequst(requestType, referenceId);
+
+            if (result.Contains("not found") || result.Contains("Invalid"))
+                return Ok (new { success = false, message = result });
+
+            return Ok(new
+            {
+                success = true,
+                message = result
+            });
+        }
+
+        // ✅ Reject Request
+        [HttpPost("reject-request")]
+        public async Task<IActionResult> RejectRequest(int requestType, int referenceId)
+        {
+            if (referenceId <= 0)
+               return Ok (new { success = false, message = "Invalid referenceId" });
+
+            var result = await _mangerServices.RejectRequst(requestType, referenceId);
+
+            if (result.Contains("not found") || result.Contains("Invalid"))
+               return Ok (new { success = false, message = result });
+
+            return Ok(new
+            {
+                success = true,
+                message = result
+            });
         }
     }
 }

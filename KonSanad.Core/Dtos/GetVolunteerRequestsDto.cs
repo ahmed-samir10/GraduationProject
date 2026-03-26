@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KonSanad.Core.Entity.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ public class GetVolunteerRequestsDto
     public string Address { get; set; }
 
     // "Campaign" or "Mission"
-    public string RequestType { get; set; }
+    public RefType RequestType { get; set; }
 
     // Campaign name OR Mission title
     public string Title { get; set; }
