@@ -73,7 +73,9 @@ namespace KonSanad.Services.Services
             var existing = await _unitOfWork
              .Repository<MissionVolunteers, int>()
              .FindAllAsync(x => x.MissionId == missionId&& x.VolunteerId == volunteerId);
-
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
+            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
+                return "طلب التطوع الخاص بك قيد المراجعة أو تم رفضه، لا يمكنك بدء المهمة";
             if (existing.Any())
                return "تم تقديم طلب لهذه المهمة بالفعل";
 
