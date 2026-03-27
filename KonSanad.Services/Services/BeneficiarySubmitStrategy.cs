@@ -37,6 +37,8 @@ namespace KonSanad.Services.Services
                     
                 });
             }
+            _context.HelpOrders.Add(helpOrder);
+            await _context.SaveChangesAsync();
             var beneficiary = await _context.Beneficiaries.FindAsync(userId);
             var Mission = new Mission
             {
@@ -55,8 +57,7 @@ namespace KonSanad.Services.Services
 
             _context.Missions.Add(Mission);
             await _context.SaveChangesAsync();
-            _context.HelpOrders.Add(helpOrder);
-            await _context.SaveChangesAsync();
+          
 
             return new SubmitResultDto { Success = true };
         }
