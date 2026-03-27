@@ -22,7 +22,7 @@ namespace KonSanad.Repository.Entities
         public string? Category { get; set; } = null!;
         public string? Unit { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
-        public string? Status { get; set; }
+        public string? StatusPro { get; set; }
         public string? ImageUrl { get; set; } = null!;
 
         // new column for description

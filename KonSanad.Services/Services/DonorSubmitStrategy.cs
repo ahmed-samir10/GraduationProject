@@ -51,7 +51,7 @@ namespace KonSanad.Services.Services
                             Category = item.Category,
                             Unit = "pce",
                             orderItemStatus = RequestedStatus.Pending,
-                            Status = item.ExtraData?["Status"],
+                            StatusPro = item.ExtraData?["Status"],
                             Description = item.ExtraData?["Description"]
                         };
                         _context.OrderItems.Add(orderItem);
@@ -107,7 +107,7 @@ namespace KonSanad.Services.Services
                             Unit = item.ExtraData["Unit"],
                             ImageUrl = item.imagUrl,
                             orderItemStatus = RequestedStatus.Pending,
-                            // Status = item.ExtraData?["Status"]
+                             StatusPro = item.ExtraData?["Status"]
                         };
                         _context.OrderItems.Add(customOrderItem);
                         await _context.SaveChangesAsync();

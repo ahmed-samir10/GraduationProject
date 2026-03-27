@@ -100,9 +100,9 @@ namespace KonSanad.APIS.Controllers
         //---------------------------------------------------------------------------------------
 
         [HttpGet("join-volunteers")]
-        public async Task<IActionResult> GetJoinVolunteers()
+        public async Task<IActionResult> GetJoinVolunteers(int pageNumber = 1, int pageSize = 8)
         {
-            var result = await _mangerServices.GetJoinVolunteer();
+            var result = await _mangerServices.GetJoinVolunteer(pageNumber, pageSize);
 
             if (result == null || !result.Any())
               return Ok(new { success = false, massage = "No join volunteer requests found" });
@@ -145,9 +145,9 @@ namespace KonSanad.APIS.Controllers
         }
 
         [HttpGet("volunteer-requests")]
-        public async Task<IActionResult> GetAllVolunteerRequests()
+        public async Task<IActionResult> GetAllVolunteerRequests(int pageNumber = 1, int pageSize = 8)
         {
-            var result = await _mangerServices.GetAllVolunteerRequestsAsync();
+            var result = await _mangerServices.GetAllVolunteerRequestsAsync(pageNumber, pageSize);
           return Ok(new
             {
                 success = true,
