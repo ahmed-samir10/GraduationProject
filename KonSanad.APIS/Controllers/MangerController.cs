@@ -22,13 +22,15 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = result });
         }
+
+        //---------------------------------------------------------------------------------------
         [HttpGet("AllVolunteer")]
         public async Task<IActionResult> GetVolunteers()
         {
             var result = await _mangerServices.GetVolunteerAsync();
             return Ok(new { success = true, data = result });
         }
-
+        //---------------------------------------------------------------------------------------
 
         [HttpPost("AssignVolunteer")]
         public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto)
@@ -43,6 +45,7 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = result });
         }
+        //---------------------------------------------------------------------------------------
 
         [HttpGet("view-report/{helpOrderId}")]
         public async Task<IActionResult> ViewReport(int helpOrderId)
@@ -54,6 +57,7 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = result });
         }
+        //---------------------------------------------------------------------------------------
 
         [HttpPost("accept/{missionId}")]
         public async Task<IActionResult> AcceptOrder(int missionId)
@@ -73,6 +77,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //---------------------------------------------------------------------------------------
 
         // ✅ Reject Order
         [HttpPost("reject/{missionId}")]
@@ -92,6 +97,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //---------------------------------------------------------------------------------------
 
         [HttpGet("join-volunteers")]
         public async Task<IActionResult> GetJoinVolunteers()
@@ -107,6 +113,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //---------------------------------------------------------------------------------------
         [HttpPost("accept-volunteer/{volunteerId}")]
         public async Task<IActionResult> AcceptVolunteer(int volunteerId)
         {
@@ -121,6 +128,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //---------------------------------------------------------------------------------------
         [HttpPost("reject-volunteer/{volunteerId}")]
         public async Task<IActionResult> RejectVolunteer(int volunteerId)
         {
@@ -135,6 +143,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+
         [HttpGet("volunteer-requests")]
         public async Task<IActionResult> GetAllVolunteerRequests()
         {
@@ -145,6 +154,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //---------------------------------------------------------------------------------------
         // ✅ Accept Request
         [HttpPost("accept-request")]
         public async Task<IActionResult> AcceptRequest(int requestType, int referenceId)
@@ -163,6 +173,7 @@ namespace KonSanad.APIS.Controllers
                 message = result
             });
         }
+        //---------------------------------------------------------------------------------------
 
         // ✅ Reject Request
         [HttpPost("reject-request")]
@@ -182,5 +193,6 @@ namespace KonSanad.APIS.Controllers
                 message = result
             });
         }
+        //---------------------------------------------------------------------------------------
     }
 }
