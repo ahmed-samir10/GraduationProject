@@ -179,7 +179,7 @@ namespace KonSanad.Services.Services
                 Category = oi.Category ?? string.Empty,
                 Unit = oi.Unit ?? string.Empty,
                 CreatedAt = oi.CreatedAt,
-                Status = oi.Status ?? string.Empty,
+                Status = oi.StatusPro ?? string.Empty,
                 ImageUrl = oi.ImageUrl ?? string.Empty,
                 Description = oi.Description ?? string.Empty,
                 UpdatedAt = oi.UpdatedAt,
