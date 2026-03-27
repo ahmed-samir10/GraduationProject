@@ -195,6 +195,7 @@ namespace KonSanad.Services.Services
             if (!string.IsNullOrEmpty(notes))
             {
                 volunteerMission.Notes = notes;
+                volunteerMission.Status = RequestedStatus.Approved;
             }
 
             //vmRepo.Update(volunteerMission);

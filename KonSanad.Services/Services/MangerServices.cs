@@ -155,7 +155,12 @@ namespace KonSanad.Services.Services
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
-
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Rejected; // لو عايز ترفض أول item
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Rejected; // لو عندك حقل Status في HelpOrderItem نفسه
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث
+            mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
+            mission.HelpOrder.Status = RequestedStatus.Rejected; // لو عندك حقل Status في HelpOrder نفسه
+            mission.HelpOrder.UpdatedAt = DateTime.Now;
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
 
@@ -194,11 +199,18 @@ namespace KonSanad.Services.Services
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
 
+
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
 
             // ✅ Update help order
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
+            mission.HelpOrder.HelpOrderItems.FirstOrDefault().UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
+            mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
+            mission.HelpOrder.Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrder نفسه
+            mission.HelpOrder.UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث  
 
             // ✅ Update first item (لو موجود)
             var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
