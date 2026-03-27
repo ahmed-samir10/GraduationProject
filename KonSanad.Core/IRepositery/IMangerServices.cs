@@ -15,7 +15,7 @@ namespace KonSanad.Core.IRepositery
         Task<ViewReportDto> ViewReport(int HelpOrderId);
         Task <string> AcceptOrder(int orderId);
          Task<string> RejectOrder(int orderId);
-        Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer();
+        Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize);
         Task<string> AcceptVolunteer(int orderId);
         Task<string> RejectVolunteer(int orderId);
 
@@ -23,7 +23,7 @@ namespace KonSanad.Core.IRepositery
         Task<string> RejectRequst(int Requsttype, int referenceId);
 
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
-        Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync();
+        Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize);
 
 
     }

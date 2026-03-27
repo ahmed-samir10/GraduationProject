@@ -245,11 +245,13 @@ namespace KonSanad.Services.Services
             return report;
         }
 
-        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer()
+        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize)
         {
             var volunteers = await _unitOfWork.Repository<Volunteer, int>()
                 .GetQueryable()
-                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted) // pending + مش محذوف
+                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted)
+                 .Skip((pageNumber - 1) * pageSize)
+                 .Take(pageSize)// pending + مش محذوف
                 .Select(v => new GetJoinVolunteerDto
                 {
                     Id = v.Id,
@@ -295,7 +297,7 @@ namespace KonSanad.Services.Services
 
         }
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ]
-        public async Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync()
+        public async Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize)
         {
             var result = new List<GetVolunteerRequestsDto>();
 
@@ -305,6 +307,8 @@ namespace KonSanad.Services.Services
                 .Where(cv => !cv.IsDeleted && cv.Status == RequestedStatus.Pending)
                 .Include(cv => cv.Volunteer)
                 .Include(cv => cv.Campaign)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(cv => new GetVolunteerRequestsDto
                 {
                     RequestType = RefType.Campaign,
