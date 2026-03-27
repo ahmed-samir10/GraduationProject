@@ -177,7 +177,7 @@ namespace KonSanad.Services.Services
             // If mission has start/end dates, you can prevent reporting outside mission window
             if (mission.StartDate.HasValue && mission.EndDate.HasValue)
             {
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
                 if (now < mission.StartDate.Value || now > mission.EndDate.Value)
                 {
                    return "لا يمكن تقديم التقرير خارج فترة المهمة المحددة";
@@ -195,6 +195,7 @@ namespace KonSanad.Services.Services
             if (!string.IsNullOrEmpty(notes))
             {
                 volunteerMission.Notes = notes;
+                volunteerMission.Status = RequestedStatus.Approved;
             }
 
             //vmRepo.Update(volunteerMission);
