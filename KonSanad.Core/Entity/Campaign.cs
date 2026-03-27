@@ -20,7 +20,7 @@ namespace KonSanad.Repository.Entities
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
 
-        public CampaignStatus CampaignStatus {  get; set; } = 0;
+        public CampaignStatus CampaignStatus {  get; set; } = CampaignStatus.NotCompleted;
     
 
          public string? PictureUrl { get; set; }
