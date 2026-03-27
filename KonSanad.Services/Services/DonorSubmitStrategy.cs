@@ -82,6 +82,7 @@ namespace KonSanad.Services.Services
                         {
                             DonationOrderId = donation.Id,
                             CashDonationId = CashDonation.Id,
+                            Status = RequestedStatus.Pending,
                             DonorId = userId,
                              ManagerId = 1,
                             CreatedAt = DateTime.Now,

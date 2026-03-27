@@ -37,7 +37,24 @@ namespace KonSanad.Services.Services
                     
                 });
             }
+            var beneficiary = await _context.Beneficiaries.FindAsync(userId);
+            var Mission = new Mission
+            {
+                CreatedAt = DateTime.Now,
+                HelpOrderId = helpOrder.Id,
+                Title = beneficiary.FullName,
+                Description =" زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
+                Address = beneficiary.Address,
+                PhoneNumber = beneficiary.Phone,
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(7),
+                MissionStatus = MissionStatus.New,
+                Status = RequestedStatus.Pending,
+                ManagerId = 1
+            };
 
+            _context.Missions.Add(Mission);
+            await _context.SaveChangesAsync();
             _context.HelpOrders.Add(helpOrder);
             await _context.SaveChangesAsync();
 
