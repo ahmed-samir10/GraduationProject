@@ -57,44 +57,45 @@ namespace KonSanad.Services.Services
                         _context.OrderItems.Add(orderItem);
                         await _context.SaveChangesAsync();
                         break;
-
                     case "donationCash":
-                        donation.CashDonation = new CashDonation
+                        // ← افصل الـ donation من الـ Tracker عشان EF ميحاولش يعمل Navigation Fix
+                        _context.Entry(donation).State = EntityState.Detached;
+
+                        var cashDonation = new CashDonation
                         {
+                            DonationOrderId = donation.Id, // Id بس، مش Object
                             Amount = decimal.Parse(item.ExtraData["CashAmount"]),
-                            Status = RequestedStatus.Pending,
-                            CreatedAt = DateTime.Now
-                        };
-                        
-                        var CashDonation = new CashDonation
-                        {
-                            DonationOrderId = donation.Id,
-                            Amount = decimal.Parse(item.ExtraData["CashAmount"]),
-                            //Status = 2,
-                            CampaignId = item.ExtraData.ContainsKey("CampaignId") ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
-                            HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId") ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
+                            CampaignId = item.ExtraData.ContainsKey("CampaignId")
+                                ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
+                            HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId")
+                                ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
                             CreatedAt = DateTime.Now,
                             cashDonationStatus = RequestedStatus.Pending
                         };
-                        _context.CashDonations.Add(CashDonation);
+
+                        _context.CashDonations.Add(cashDonation);
                         await _context.SaveChangesAsync();
-                        var Receipt = new Receipt
+
+                        var receipt = new Receipt
                         {
                             DonationOrderId = donation.Id,
-                            CashDonationId = CashDonation.Id,
+                            CashDonationId = cashDonation.Id,
                             Status = RequestedStatus.Pending,
                             DonorId = userId,
-                             ManagerId = 1,
+                            ManagerId = 1,
                             CreatedAt = DateTime.Now,
-                           
                         };
-                        _context.Receipts.Add(Receipt);
-                        await _context.SaveChangesAsync();
-                        CashDonation.receiptId = Receipt.Id;
-                         _context.CashDonations.Update(CashDonation);
-                        await _context.SaveChangesAsync();
-                        break;
 
+                        _context.Receipts.Add(receipt);
+                        await _context.SaveChangesAsync();
+
+                        // حدّث receiptId بدون Update كامل
+                        cashDonation.receiptId = receipt.Id;
+                        await _context.SaveChangesAsync();
+
+                        // ← رجّع الـ donation للـ Tracker عشان الـ cases التانية تشتغل
+                        _context.Entry(donation).State = EntityState.Unchanged;
+                        break;
 
                     case "custom":
                       

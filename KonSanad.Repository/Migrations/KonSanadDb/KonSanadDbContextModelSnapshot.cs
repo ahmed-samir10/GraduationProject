@@ -161,7 +161,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("CampaignId");
 
-                    b.ToTable("BeneficiaryCampaign");
+                    b.ToTable("BeneficiaryCampaign", (string)null);
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.Cart", b =>
@@ -200,7 +200,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("UserId1");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.CartItem", b =>
@@ -252,7 +252,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("SupplyId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.Identity.AppUser", b =>
@@ -326,7 +326,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppUser");
+                    b.ToTable("AppUser", (string)null);
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.MissionVolunteers", b =>
@@ -405,6 +405,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("MissionStatus")
                         .HasColumnType("int");
 
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ResultMission")
                         .HasColumnType("nvarchar(max)");
 
@@ -432,7 +435,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("VolunteerId");
 
-                    b.ToTable("VolunteerMissions");
+                    b.ToTable("VolunteerMissions", (string)null);
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
@@ -1070,7 +1073,10 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusPro")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SupplyId")

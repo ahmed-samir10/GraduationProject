@@ -171,11 +171,11 @@ var ILoggerFactory = services.GetRequiredService<ILoggerFactory>();
 try
 {
     await context.Database.MigrateAsync();
-    await KonSanadDbContextSeed.SeedAsync(context);
+    await KonSanadDbContextSeed.SeedAsync(context , userManager);
     await Identitycontext.Database.MigrateAsync();
     await AppIdentityDbContextSeed.SeedUsersAsync(userManager);
 
-    var rolesToEnsure = new[] { "Volunteer", "Beneficiary", "Donor" };
+    var rolesToEnsure = new[] { "Volunteer", "Beneficiary", "Donor" , "Manager" };
     foreach (var r in rolesToEnsure)
     {
         if (!await roleManager.RoleExistsAsync(r))

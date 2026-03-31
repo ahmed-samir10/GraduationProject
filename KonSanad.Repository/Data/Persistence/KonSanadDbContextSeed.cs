@@ -1,10 +1,13 @@
-﻿using System.Text.Json;
+﻿using KonSanad.Core.Entity.Identity;
+using Microsoft.AspNetCore.Identity;
+using System.Text.Json;
 
 namespace KonSanad.Repository.Data.Persistence
 {
     public class KonSanadDbContextSeed : DbContext
     {
-        public static async Task SeedAsync(KonSanadDbContext context)
+        
+        public static async Task SeedAsync(KonSanadDbContext context , UserManager<AppUser> userManager)
         {
            
 
@@ -38,22 +41,45 @@ namespace KonSanad.Repository.Data.Persistence
                 }
             }
 
-            if (!context.Managers.Any())
+            // 🔥 Manager + Identity User
+           /* if (context.Managers.Count() < 2)
             {
-                var filePath = Path.Combine( "Managers.json");
-                if (File.Exists(filePath))
+                var user = new AppUser()
                 {
-                    var brandsData = await File.ReadAllTextAsync(filePath);
-                    var brands = JsonSerializer.Deserialize<List<Manager>>(brandsData);
-                    if (brands != null && brands.Any())
-                    {
-                        await context.Managers.AddRangeAsync(brands);
-                        await context.SaveChangesAsync();
-                    }
-                }
-            }
+                    FirstName = "Ahmed",
+                    LastName = "Samir",
+                    Email = "Manger564@gmail.com",
+                    UserName = "Manger564@gmail.com",
+                    PhoneNumber = "01015317037",
+                    EmailConfirmed = true
+                };
 
-            if (!context.Supplies.Any())
+                var result = await userManager.CreateAsync(user, "Pa$$w0rd");
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Seeding user failed: {errors}");
+                }
+
+                // 👇 ضيف Manager مربوط بالـ User
+                var manager = new Manager
+                {
+                    FullName = user.FirstName + " " + user.LastName,
+                    Email = user.Email,
+                    Phone = user.PhoneNumber,
+                    Address = "Cairo, Egypt",  // ✅ أضف السطر ده
+                    Password = "Pa$$w0rd",     // ✅ أضف ده كمان لو الـ column NOT NULL
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow, // ✅ لو موجودة
+                    Status = Core.Entity.Enums.RequestedStatus.Pending,
+                    IsDeleted = false
+                };
+
+                await context.Managers.AddAsync(manager);
+                await context.SaveChangesAsync();
+            }*/
+                if (!context.Supplies.Any())
             {
                 var filePath = Path.Combine( "Supplies.json");
                 if (File.Exists(filePath))
