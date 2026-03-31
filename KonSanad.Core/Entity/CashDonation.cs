@@ -18,9 +18,9 @@ namespace KonSanad.Repository.Entities
         public int? CampaignId { get; set; }
         public Campaign? Campaign { get; set; } // Navigation Property
         public int? HelpOrderId { get; set; }
-        public int receiptId { get; set; }
+        public int? receiptId { get; set; }
         [ForeignKey(nameof(receiptId))]
-        public Receipt Receipt { get; set; } = null!; // Navigation Property
+        public Receipt? Receipt { get; set; } = null!; // Navigation Property
 
 
         //CashDonationStatus 

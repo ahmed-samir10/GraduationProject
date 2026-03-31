@@ -194,5 +194,30 @@ namespace KonSanad.APIS.Controllers
             });
         }
         //---------------------------------------------------------------------------------------
+
+        // GET: api/Donation
+        [HttpGet("Donations")]
+        public async Task<IActionResult> GetAllDonations(int pageNumber = 1, int pageSize = 10)
+        {
+            var result = await _mangerServices.GetDonationAsync(pageNumber, pageSize);
+
+            return Ok(new
+            {
+                success = true,
+             
+                data = result
+            });
+        }
+
+        [HttpGet("Donation-Details/{id}")]
+        public async Task<IActionResult> DonationDetails(int id)
+        {
+            var result = await _mangerServices.ViewAllDetailsDonation(id);
+
+            if (result == null)
+                return NotFound("Donation not found");
+
+            return Ok(result);
+        }
     }
 }

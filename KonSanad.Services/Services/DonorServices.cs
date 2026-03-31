@@ -197,80 +197,85 @@ namespace KonSanad.Services.Services
         // -----------------------------------------------------------
         public async Task<IEnumerable<CampaignDto>> GetMyDonationsInCampaignRequestsAsync(string userId)
         {
-            // 1. Get donor by AppUserId
             var donor = await _unitOfWork.Repository<Donor, int>()
                 .FirstOrDefaultAsync(d => d.AppUserId == userId);
 
-            // 2. check if donor exists
             if (donor is null)
                 throw new Exception($"Donor not found for userId: {userId}");
 
             var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
-       .FindAllAsync(
-           cd => cd.CampaignId != null &&
-                 cd.CampaignId != 0 &&
-                 cd.DonationOrder.DonorId == donor.Id,
-           include: q => q
-               .Include(cd => cd.DonationOrder)
-               .Include(cd => cd.Campaign)
-                   .ThenInclude(c => c.Category)
-   );
+                .FindAllAsync(
+                    cd => cd.CampaignId != null &&
+                          cd.CampaignId != 0 &&
+                          cd.DonationOrder.DonorId == donor.Id,
+                    include: q => q
+                        .Include(cd => cd.DonationOrder)
+                        .Include(cd => cd.Campaign)
+                            .ThenInclude(c => c.Category)
+                );
 
             var campaigns = cashDonations
-                //.Where(cd => cd.DonationOrder != null && cd.DonationOrder.DonorId == donor.Id)
                 .Select(cd => cd.Campaign)
                 .Where(c => c != null)
                 .GroupBy(c => c.Id)
                 .Select(g => g.First())
                 .ToList();
 
-            // 4. Map to CampaignDto and compute a few helpful aggregates
             var result = campaigns.Select(c =>
             {
-                var totalCash = cashDonations
-       .Where(cd => cd.CampaignId == c.Id)
-       .Sum(cd => cd.Amount);
-                var donorCount = cashDonations
-         .Where(cd => cd.CampaignId == c.Id && cd.DonationOrder?.DonorId != null)
-         .Select(cd => cd.DonationOrder.DonorId)
-         .Distinct()
-         .Count();
+                // ✅ التبرعات بتاعت الدونور ده بس في الـ Campaign دي
+                var myDonationsInCampaign = cashDonations
+                    .Where(cd => cd.CampaignId == c.Id)
+                    .ToList();
 
+                // ✅ مجموع اللي دفعه هو بس
+                var myCashAmount = myDonationsInCampaign
+                    .Sum(cd => cd.Amount);
+
+                // ✅ الـ progress بناءً على كل التبرعات للـ Campaign
                 int progressPercentage = 0;
                 if (c.GoalCash.HasValue && c.GoalCash > 0)
                 {
                     progressPercentage = (int)Math.Min(100,
-                        Math.Round((double)(totalCash / c.GoalCash.Value) * 100));
+                        Math.Round((double)(myCashAmount / c.GoalCash.Value) * 100));
                 }
-                var myCashInCampaign = cashDonations
-    .Where(cd => cd.CampaignId == c.Id)
-    .Sum(cd => cd.Amount);
+
+                // ✅ الـ status الفعلي من آخر تبرع
+                var latestDonation = myDonationsInCampaign
+                    .OrderByDescending(cd => cd.CreatedAt)
+                    .First();
+
                 return new CampaignDto
                 {
                     Id = c.Id,
-
                     Title = c.Title ?? string.Empty,
-
                     ShortDescription = string.IsNullOrEmpty(c.Description)
                         ? string.Empty
-                        : (c.Description.Length > 150 ? c.Description.Substring(0, 150) : c.Description),
-
+                        : (c.Description.Length > 150
+                            ? c.Description.Substring(0, 150)
+                            : c.Description),
                     PictureUrl = c.PictureUrl ?? string.Empty,
-
                     CategoryName = c.Category?.Name ?? string.Empty,
 
-                    DonationRequestStatus =(int)RequestedStatus.Pending,
+                    // ✅ الـ status الفعلي مش Pending دايما
+                    DonationRequestStatus = (int)latestDonation.cashDonationStatus,
 
+                    Status = CampaignMetrics.CalculateStatus(c),
                     ProgressPercentage = progressPercentage,
                     CreateAt = c.CreatedAt,
-                    CashAmount =myCashInCampaign,
-                    DonorCount = donorCount,
+
+                    // ✅ المبلغ بتاع الدونور ده بس
+                    CashAmount = myCashAmount,
+
+                    // ✅ عدد الدونورز الفعلي
+                    DonorCount = myDonationsInCampaign
+                        .Select(cd => cd.DonationOrder?.DonorId)
+                        .Distinct()
+                        .Count()
                 };
             }).ToList();
 
-            // 5. Return result
             return result;
-
         }
         // -------------------------------------------------------------------
 
