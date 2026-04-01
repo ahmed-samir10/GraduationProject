@@ -1,11 +1,12 @@
-﻿using KonSanad.Core.Entities;
-using KonSanad.Core.Entity;
-using KonSanad.Core.Entity.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
 {
@@ -464,5 +465,200 @@ namespace KonSanad.Services.Services
 
             return "Invalid request type";
         }
+
+        #region Donation
+        public async Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize)
+        {
+
+
+            // Cash Donations
+            //بجيب كل التبرعات من جدول ال cash donation وربط بجدول DonationOrder و Donor علشان هجيب داتا منهم
+            var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
+                .GetQueryable()
+                .Include(cd => cd.DonationOrder)
+                .ThenInclude(d => d.Donor)
+                .Where(cd => !cd.IsDeleted) // هات كل التبرعات اللي مش محذوفة.
+
+                .Select(cd => new GetAllDonationDto //بدل ما نرجع Entity من الداتابيز بنحولها إلى DTO.
+                {
+                    Id = cd.DonationOrder.Id,
+                    UserName = cd.DonationOrder.Donor.FullName,
+
+                    DonationStatus = (RequestedStatus)cd.cashDonationStatus,
+
+                    DonationCategory = DonationCategory.Cash,
+
+                    CreatedAt = cd.CreatedAt,
+
+                    AmountCashDonation = cd.Amount,
+
+                    CampaignTitle = cd.CampaignId != 0    // جلب اسم الحملة
+                        ? _unitOfWork.Repository<Campaign, int>()  //الوصول لجدول الحملات.
+                            .GetQueryable()
+                            .Where(c => c.Id == cd.CampaignId)  //اختيار الحملة المطلوبة.
+                            .Select(c => c.Title)  // جلب اسم الحملة.
+                            .FirstOrDefault()  //إرجاع أول نتيجة.
+                        : null,
+
+
+
+                    SupplyName = cd.CampaignId == 0 && cd.HelpOrderId != 0  // جلب اسم المنتج  
+                        ? _unitOfWork.Repository<Supply, int>()  // الوصول لجدول المنتجات .
+                            .GetQueryable()
+                            .Where(s => s.Id == cd.HelpOrderId)  // اختيار المنتج المرتبط بالطلب .
+                            .Select(s => s.Name) // جلب اسم المنتج.
+                            .FirstOrDefault()  //إرجاع أول نتيجة.
+                        : null,
+
+                    SupplyId = cd.HelpOrderId.HasValue ? cd.HelpOrderId.Value : 0, // لو فيه HelpOrderId
+                                                                                   //  هات قيمته
+                                                                                   //  غير كده خليها 0.
+
+                    Quantity = 0  // لأن التبرع النقدي مفيهوش كمية.
+                })
+                .ToListAsync();
+
+
+            // Item Donations
+            var itemDonations = await _unitOfWork.Repository<OrderItem, int>()
+                .GetQueryable()
+                .Include(oi => oi.DonationOrder)
+                    .ThenInclude(d => d.Donor)
+                .Where(oi => !oi.IsDeleted)
+
+                .Select(oi => new GetAllDonationDto
+                {
+                    Id = oi.DonationOrder.Id,
+                    UserName = oi.DonationOrder.Donor.FullName,
+
+                    // ✅ التعديل هنا — الـ Status كان nullable وبيرمي Exception لو NULL
+                    DonationStatus = oi.Status != null
+                        ? (RequestedStatus)oi.orderItemStatus
+                        : RequestedStatus.Pending,
+
+                    DonationCategory = DonationCategory.Item,
+
+                    CreatedAt = oi.CreatedAt,
+
+                    SupplyId = oi.SupplyId ?? 0,
+                    SupplyName = oi.CustomSupplyName ?? "",
+
+                    Quantity = oi.Quantity,
+
+                    AmountCashDonation = 0,
+                    CampaignTitle = null
+                })
+                .ToListAsync();
+
+            // Pagination
+            var allDonations = cashDonations  //دمج التبرعات    //Cash Donations +  Item Donations                                           
+                .Concat(itemDonations)
+                .OrderBy(d => d.Id) //ترتيب التبرعات حسب: Id من الأصغر للأكبر
+                .ToList();
+
+            return allDonations
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize);
+        }
+
+        //---------------------------------------------------------------------------------------
+        public async Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId)
+        {
+            // ======= Try Cash Donation first =======
+            var cashDonation = await _unitOfWork.Repository<CashDonation, int>()
+                .GetQueryable()
+                .Include(cd => cd.DonationOrder)
+                    .ThenInclude(d => d.Donor)
+                .Where(cd => !cd.IsDeleted && cd.DonationOrder.Id == DonationOrderId) //هات التبرع اللي: مش محذوف , رقم الطلب بتاعه = الـ id اللي جايلي.
+                .FirstOrDefaultAsync(); 
+
+            if (cashDonation != null)
+            {
+                // Base fields
+                var dto = new GetAllDonationDetailsDto
+                {
+                    Id = cashDonation.DonationOrder.Id,
+                    UserName = cashDonation.DonationOrder.Donor.FullName,
+                    DonationStatus = (RequestedStatus)cashDonation.cashDonationStatus,
+                    DonationCategory = DonationCategory.Cash,
+                    CreatedAt = cashDonation.CreatedAt,
+                    AmountCashDonation = cashDonation.Amount,
+                    SupplyId = cashDonation.HelpOrderId.HasValue ? cashDonation.HelpOrderId.Value : 0,
+                    Quantity = 0,
+                };
+
+                // If linked to a Campaign → get campaign details
+                if (cashDonation.CampaignId != 0 && cashDonation.CampaignId != null)
+                {
+                    var campaign = await _unitOfWork.Repository<Campaign, int>()
+                        .GetQueryable()
+                        .Where(c => c.Id == cashDonation.CampaignId)
+                        .FirstOrDefaultAsync();
+
+                    if (campaign != null)
+                    {
+                        dto.CampaignTitle = campaign.Title;
+                        dto.CampaignDescription = campaign.Description;
+                        dto.StartDate = campaign.StartDate;
+                        dto.EndDate = campaign.EndDate;
+                        dto.ImageFile = campaign.PictureUrl;
+                    }
+                }
+                // If linked to a Supply (HelpOrder) → get supply name
+                else if (cashDonation.HelpOrderId != null && cashDonation.HelpOrderId != 0)
+                {
+                    var supply = await _unitOfWork.Repository<Supply, int>()
+                        .GetQueryable()
+                        .Where(s => s.Id == cashDonation.HelpOrderId)
+                        .FirstOrDefaultAsync();
+
+                    dto.SupplyName = supply?.Name ?? string.Empty;
+                    dto.ImageFile = supply?.ImageUrl ?? string.Empty; //الصور فجدول supply في الداتا بيز بايظه
+       
+                }
+
+                return dto;
+            }
+
+            // ======= Try Item Donation =======
+            var orderItem = await _unitOfWork.Repository<OrderItem, int>()
+                .GetQueryable()
+                .Include(oi => oi.DonationOrder)
+                    .ThenInclude(d => d.Donor)
+                .Where(oi => !oi.IsDeleted && oi.DonationOrder.Id == DonationOrderId)
+                .FirstOrDefaultAsync();
+
+            if (orderItem != null)
+            {
+                var dto = new GetAllDonationDetailsDto
+                {
+                    Id = orderItem.DonationOrder.Id,
+                    UserName = orderItem.DonationOrder.Donor.FullName,
+                    DonationStatus = orderItem.Status != null
+                        ? (RequestedStatus)orderItem.orderItemStatus
+                        : RequestedStatus.Pending,
+                    DonationCategory = DonationCategory.Item,
+                    CreatedAt = orderItem.CreatedAt,
+                    SupplyId = orderItem.SupplyId ?? 0,
+                    SupplyName = orderItem.CustomSupplyName ?? string.Empty,
+                    Quantity = orderItem.Quantity,
+                    AmountCashDonation = 0,
+                    CampaignTitle = null,
+
+                    // Extra details from OrderItem
+                    ImageFile = orderItem.ImageUrl,
+                    Unit = orderItem.Unit,
+                    SupplyDescription = orderItem.Description,
+                    SupplyStatus = orderItem.StatusPro,
+                };
+
+                return dto;
+            }
+
+            // ======= Not Found =======
+            return null;
+        }
+
+        #endregion
     }
 }

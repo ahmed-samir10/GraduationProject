@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
 {
@@ -18,10 +19,8 @@ namespace KonSanad.Services.Services
 
         public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
         {
-            // نوع أول عنصر في الكارت
             var type = cart.Items.FirstOrDefault()?.Type;
 
-            // إنشاء الـ DonationOrder
             var donation = new DonationOrder
             {
                 DonorId = userId,
@@ -34,13 +33,14 @@ namespace KonSanad.Services.Services
             _context.DonationOrders.Add(donation);
             await _context.SaveChangesAsync();
 
-            // معالجة كل العناصر
+            // ✅ شيل الـ donation من الـ tracker عشان EF ميتدخلش في الـ relationships
+            _context.Entry(donation).State = EntityState.Detached;
+
             foreach (var item in cart.Items)
             {
                 switch (item.Type)
                 {
                     case "donationItem":
-                       
                         var orderItem = new OrderItem
                         {
                             DonationOrderId = donation.Id,
@@ -57,22 +57,42 @@ namespace KonSanad.Services.Services
                         _context.OrderItems.Add(orderItem);
                         await _context.SaveChangesAsync();
                         break;
+
                     case "donationCash":
-                        // ← افصل الـ donation من الـ Tracker عشان EF ميحاولش يعمل Navigation Fix
-                        _context.Entry(donation).State = EntityState.Detached;
+                        var existingCashDonation = await _context.CashDonations
+                            .FirstOrDefaultAsync(c => c.DonationOrderId == donation.Id);
+
+                        if (existingCashDonation != null) break;
+
+                        // ✅ تحقق إن الـ CampaignId موجود فعلاً في الداتا بيز
+                        int? campaignId = null;
+                        if (item.ExtraData.ContainsKey("CampaignId"))
+                        {
+                            var parsedCampaignId = int.Parse(item.ExtraData["CampaignId"]);
+                            var campaignExists = await _context.Campaigns
+                                .AnyAsync(c => c.Id == parsedCampaignId);
+
+                            // ✅ لو موجود خد الـ Id، لو مش موجود خليه null
+                            campaignId = campaignExists ? parsedCampaignId : null;
+                        }
+
+                        // ✅ نفس الفكرة للـ HelpOrderId
+                        int? helpOrderId = null;
+                        if (item.ExtraData.ContainsKey("HelpOrderId"))
+                        {
+                            var parsedHelpOrderId = int.Parse(item.ExtraData["HelpOrderId"]);
+                            helpOrderId = parsedHelpOrderId == 0 ? null : parsedHelpOrderId;
+                        }
 
                         var cashDonation = new CashDonation
                         {
-                            DonationOrderId = donation.Id, // Id بس، مش Object
+                            DonationOrderId = donation.Id,
                             Amount = decimal.Parse(item.ExtraData["CashAmount"]),
-                            CampaignId = item.ExtraData.ContainsKey("CampaignId")
-                                ? int.Parse(item.ExtraData["CampaignId"]) : (int?)null,
-                            HelpOrderId = item.ExtraData.ContainsKey("HelpOrderId")
-                                ? int.Parse(item.ExtraData["HelpOrderId"]) : (int?)null,
+                            CampaignId = campaignId,   // ✅ آمن دلوقتي
+                            HelpOrderId = helpOrderId, // ✅ مش هيبعت 0
                             CreatedAt = DateTime.Now,
                             cashDonationStatus = RequestedStatus.Pending
                         };
-
                         _context.CashDonations.Add(cashDonation);
                         await _context.SaveChangesAsync();
 
@@ -85,20 +105,15 @@ namespace KonSanad.Services.Services
                             ManagerId = 1,
                             CreatedAt = DateTime.Now,
                         };
-
                         _context.Receipts.Add(receipt);
                         await _context.SaveChangesAsync();
 
-                        // حدّث receiptId بدون Update كامل
                         cashDonation.receiptId = receipt.Id;
+                        _context.CashDonations.Update(cashDonation);
                         await _context.SaveChangesAsync();
-
-                        // ← رجّع الـ donation للـ Tracker عشان الـ cases التانية تشتغل
-                        _context.Entry(donation).State = EntityState.Unchanged;
                         break;
 
                     case "custom":
-                      
                         var customOrderItem = new OrderItem
                         {
                             DonationOrderId = donation.Id,
@@ -109,15 +124,13 @@ namespace KonSanad.Services.Services
                             Unit = item.ExtraData["Unit"],
                             ImageUrl = item.imagUrl,
                             orderItemStatus = RequestedStatus.Pending,
-                             StatusPro = item.ExtraData?["Status"]
+                            StatusPro = item.ExtraData?["Status"]
                         };
                         _context.OrderItems.Add(customOrderItem);
                         await _context.SaveChangesAsync();
                         break;
                 }
             }
-
-          
 
             return new SubmitResultDto { Success = true };
         }

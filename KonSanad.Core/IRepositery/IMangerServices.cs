@@ -25,6 +25,10 @@ namespace KonSanad.Core.IRepositery
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
         Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize);
 
+        Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize);
+
+        Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
+
 
     }
 }
