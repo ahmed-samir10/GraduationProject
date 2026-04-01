@@ -23,14 +23,14 @@ namespace KonSanad.Services.Services
         }
 
         // Helper to map DonationOrder.Status string to DonationRequestStatus enum
-        private DonationRequestStatus MapDonationOrderStatus(string status)
+        private RequestedStatus MapDonationOrderStatus(string status)
         {
-            if (string.IsNullOrWhiteSpace(status)) return DonationRequestStatus.Pending;
+            if (string.IsNullOrWhiteSpace(status)) return RequestedStatus.Pending;
             var s = status.Trim().ToLower();
-            if (s.Contains("قيد") || s.Contains("مراجعة") || s.Contains("pending")) return DonationRequestStatus.Pending;
-            if (s.Contains("مكتمل") || s.Contains("completed") || s.Contains("complete")) return DonationRequestStatus.Completed;
-            if (s.Contains("مرفوض") || s.Contains("rejected")) return DonationRequestStatus.Rejected;
-            return DonationRequestStatus.Pending;
+            if (s.Contains("قيد") || s.Contains("مراجعة") || s.Contains("pending")) return RequestedStatus.Pending;
+            if (s.Contains("مكتمل") || s.Contains("completed") || s.Contains("complete")) return RequestedStatus.Approved;
+            if (s.Contains("مرفوض") || s.Contains("rejected")) return RequestedStatus.Rejected;
+            return RequestedStatus.Pending;
         }
 
 

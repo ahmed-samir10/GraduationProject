@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Drawing;
 using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Repository.Entities
 {
@@ -15,7 +16,7 @@ namespace KonSanad.Repository.Entities
         public decimal? CashAmount { get; set; }
 
         // Donation request status stored as enum (0=Pending,1=Completed,2=Rejected)
-        public DonationRequestStatus? DonationRequestStatus { get; set; } = Core.Entity.DonationRequestStatus.Pending;
+        public RequestedStatus? DonationRequestStatus { get; set; } = Core.Entity.Enums.RequestedStatus.Pending;
 
         public DateTime? OrderDate { get; set; }
 
