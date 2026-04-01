@@ -208,7 +208,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
-
+        //-------------------------------------------------------------------------------------------
         [HttpGet("Donation-Details/{id}")]
         public async Task<IActionResult> DonationDetails(int id)
         {
@@ -219,5 +219,9 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(result);
         }
+        //---------------------------------------------------------------------------------------------
+
+
+
     }
 }

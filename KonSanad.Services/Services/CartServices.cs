@@ -173,7 +173,7 @@ namespace KonSanad.Services.Services
                         if (existingItem3 != null)
                         {
                             var currentAmount = decimal.Parse(existingItem3.ExtraData["CashAmount"]);
-                            currentAmount =(decimal) cash.CashAmount;
+                            currentAmount +=(decimal) cash.CashAmount;
 
                             existingItem3.ExtraData["CashAmount"] = currentAmount.ToString();
                         }
