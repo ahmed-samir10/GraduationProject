@@ -69,7 +69,7 @@ namespace KonSanad.Services.Services
             // جيب كل الـ CashDonations
             var cashDonations = await _unitOfWork.Repository<CashDonation, int>()
        .FindAllAsync(
-           cd => cd.HelpOrderId != 0,  // التعديل ال عملته علشان ارجع التبرعات بالكاش لل HelpOrderId بس 
+           cd => cd.HelpOrderId != null,  // التعديل ال عملته علشان ارجع التبرعات بالكاش لل HelpOrderId بس 
            include: q => q
                .Include(cd => cd.DonationOrder)
                .Include(cd => cd.Receipt)
@@ -185,7 +185,13 @@ namespace KonSanad.Services.Services
                 UpdatedAt = oi.UpdatedAt,
                 IsDeleted = oi.IsDeleted,
 
-                orderItemStatus = oi.orderItemStatus
+                orderItemStatus = oi.orderItemStatus,
+                // ✅ لو الـ status = Rejected (1) هات سبب الرفض، غير كده خليها null
+                RejectReason = oi.orderItemStatus == RequestedStatus.Rejected
+        ? oi.RejectReason
+        : null
+
+
 
             }).ToList();
 

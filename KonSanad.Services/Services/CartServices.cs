@@ -150,6 +150,11 @@ namespace KonSanad.Services.Services
                             var campaign = await _context.Campaigns
                                 .FirstOrDefaultAsync(x => x.Id == cash.CampaignId);
 
+                            // ✅ بنتحقق إن تاريخ انتهاء الحملة لسه ماجاش
+                            // لو EndDate أصغر من الوقت الحالي يعني الحملة خلصت ومش هنسمح بالتبرع
+                            if (campaign.EndDate < DateTime.UtcNow)
+                                return "الحملة انتهت ومش قادر تتبرع ليها";
+
                             productName = campaign.Title;
                             donationKey = cash.CampaignId.ToString();
                         }

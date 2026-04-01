@@ -25,6 +25,8 @@ namespace KonSanad.Core.Dtos
         public string? Description { get; set; }
 
         //OrderItemStatus
-        public RequestedStatus orderItemStatus { get; set; }  
+        public RequestedStatus orderItemStatus { get; set; }
+
+        public string? RejectReason { get; set; }
     }
 }
