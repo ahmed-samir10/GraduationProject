@@ -532,9 +532,9 @@ namespace KonSanad.Services.Services
                     UserName = oi.DonationOrder.Donor.FullName,
 
                     // ✅ التعديل هنا — الـ Status كان nullable وبيرمي Exception لو NULL
-                    DonationStatus = oi.Status != null
-                        ? (RequestedStatus)oi.orderItemStatus
-                        : RequestedStatus.Pending,
+                    DonationStatus = oi.orderItemStatus != null
+                                     ? (RequestedStatus)oi.orderItemStatus
+                                     : RequestedStatus.Pending,
 
                     DonationCategory = DonationCategory.Item,
 
@@ -634,9 +634,9 @@ namespace KonSanad.Services.Services
                 {
                     Id = orderItem.DonationOrder.Id,
                     UserName = orderItem.DonationOrder.Donor.FullName,
-                    DonationStatus = orderItem.Status != null
-                        ? (RequestedStatus)orderItem.orderItemStatus
-                        : RequestedStatus.Pending,
+                    DonationStatus = orderItem.orderItemStatus != null
+    ? (RequestedStatus)orderItem.orderItemStatus
+    : RequestedStatus.Pending,
                     DonationCategory = DonationCategory.Item,
                     CreatedAt = orderItem.CreatedAt,
                     SupplyId = orderItem.SupplyId ?? 0,
@@ -650,6 +650,8 @@ namespace KonSanad.Services.Services
                     Unit = orderItem.Unit,
                     SupplyDescription = orderItem.Description,
                     SupplyStatus = orderItem.StatusPro,
+
+                    RejectReason = orderItem.RejectReason,
                 };
 
                 return dto;
@@ -658,6 +660,118 @@ namespace KonSanad.Services.Services
             // ======= Not Found =======
             return null;
         }
+        //---------------------------------------------------------------------------------------
+
+        public async Task<string> AcceptDonation(int DonationOrderId)
+        {
+            var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(d => d.Id == DonationOrderId);
+            if (donationOrder == null)
+                return "التبرع مش موجود";
+
+            if (donationOrder.DonationCategoryStatus != "donationItem" &&
+                donationOrder.DonationCategoryStatus != "custom")
+                return "مينفعش توافق على النوع ده، بس donationItem أو custom";
+
+            var orderItems = await _unitOfWork.Repository<OrderItem, int>()
+                .GetQueryable()
+                .Where(oi => oi.DonationOrderId == DonationOrderId && !oi.IsDeleted)
+                .ToListAsync();
+
+            if (orderItems == null || !orderItems.Any())
+                return "مفيش items مرتبطة بالتبرع ده";
+
+            if (orderItems.Any(oi => oi.orderItemStatus == RequestedStatus.Rejected))
+                return "مينفعش توافق على تبرع اترفض قبل كده";
+
+            if (donationOrder.DonationCategoryStatus == "custom")
+            {
+                foreach (var item in orderItems)
+                {
+                    item.orderItemStatus = RequestedStatus.Approved;
+
+                    var supply = new Supply
+                    {
+                        Name = item.CustomSupplyName,
+                        Description = item.Description,
+                        Unit = item.Unit,
+                        StockQuantity = item.Quantity,
+                        MinimumLevel = 5,
+                        CategoryId = null,
+                        Status = RequestedStatus.Approved,
+                        IsDeleted = false,
+                        ImageUrl = item.ImageUrl,
+                        Title = "غذائي",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                    };
+
+                    await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
+                }
+            }
+            else if (donationOrder.DonationCategoryStatus == "donationItem")
+            {
+                foreach (var item in orderItems)
+                {
+                    item.orderItemStatus = RequestedStatus.Approved;
+
+                    var supply = await _unitOfWork.Repository<Supply, int>()
+                        .GetQueryable()
+                        .FirstOrDefaultAsync(s => s.Id == item.SupplyId); // ✅ جيب الـ Supply الموجود
+
+                    if (supply == null)
+                        return $"الـ Supply مش موجود للـ item رقم {item.Id}";
+
+                    supply.StockQuantity += item.Quantity; // ✅ زود الكمية
+                    supply.UpdatedAt = DateTime.Now;
+                }
+            }
+
+            await _unitOfWork.Complete();
+            return "تم الموافقة على التبرع بنجاح";
+        }
+        //--------------------------------------------------------------------------------------
+        public async Task<string> RejectDonation(int DonationOrderId, string RejectReason)
+        {
+            // جيب الـ DonationOrder
+            var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(d => d.Id == DonationOrderId);
+
+            if (donationOrder == null)
+                return "التبرع مش موجود";
+
+            // تأكد إن النوع donationItem أو custom بس
+            if (donationOrder.DonationCategoryStatus != "donationItem" &&
+                donationOrder.DonationCategoryStatus != "custom")
+                return "مينفعش ترفض النوع ده، بس donationItem أو custom";
+
+            // جيب الـ OrderItems المرتبطة بالـ DonationOrder ده
+            var orderItems = await _unitOfWork.Repository<OrderItem, int>()
+                .GetQueryable()
+                .Where(oi => oi.DonationOrderId == DonationOrderId && !oi.IsDeleted)
+                .ToListAsync();
+
+            if (orderItems == null || !orderItems.Any())
+                return "مفيش items مرتبطة بالتبرع ده";
+
+            if (orderItems.Any(oi => oi.orderItemStatus == RequestedStatus.Approved))
+                return "مينفعش ترفض  تبرع اتوافق عليه قبل كده";
+
+            // غير الـ status لـ Rejected وحط سبب الرفض
+            foreach (var item in orderItems)
+            {
+                item.orderItemStatus = RequestedStatus.Rejected;
+                item.RejectReason = RejectReason;
+            }
+
+            await _unitOfWork.Complete();
+            return "تم رفض التبرع ";
+        }
+        //---------------------------------------------------------------------------------------
+
+
 
         #endregion
     }

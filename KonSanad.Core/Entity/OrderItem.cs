@@ -31,5 +31,7 @@ namespace KonSanad.Repository.Entities
        
         //OrderItemStatus
         public RequestedStatus orderItemStatus { get; set; }
+      
+        public string? RejectReason { get; set; }   // خاصه بالمدير 
     }
 }

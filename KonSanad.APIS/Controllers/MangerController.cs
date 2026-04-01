@@ -208,7 +208,7 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
-
+        //-------------------------------------------------------------------------------------------
         [HttpGet("Donation-Details/{id}")]
         public async Task<IActionResult> DonationDetails(int id)
         {
@@ -218,6 +218,32 @@ namespace KonSanad.APIS.Controllers
                 return NotFound("Donation not found");
 
             return Ok(result);
+        }
+        //---------------------------------------------------------------------------------------------
+
+        [HttpPut("accept-donation/{DonationOrderId}")]
+        public async Task<IActionResult> AcceptDonation(int DonationOrderId)
+        {
+            var result = await _mangerServices.AcceptDonation(DonationOrderId);
+            if (result != "تم الموافقة على التبرع بنجاح")
+                return BadRequest(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+        //------------------------------------------------------------------------------------------------
+
+        [HttpPut("reject-donation/{DonationOrderId}")]
+        public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason)
+        {
+            if (string.IsNullOrEmpty(RejectReason))
+                return BadRequest(new { success = false, message = "لازم تكتب سبب الرفض" });
+
+            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason);
+
+            if (result != "تم رفض التبرع ")
+                return BadRequest(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
         }
     }
 }

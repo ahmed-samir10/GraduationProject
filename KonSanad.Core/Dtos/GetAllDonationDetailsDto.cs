@@ -20,5 +20,7 @@ namespace KonSanad.Core.Dtos
         public string? SupplyDescription { get; set; }
 
         public string? SupplyStatus { get; set; }
+
+        public string? RejectReason { get; set; }   // خاصه بالمدير 
     }
 }
