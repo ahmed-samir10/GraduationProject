@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Dtos;
+using KonSanad.Core.Entity.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,13 +18,15 @@ namespace KonSanad.Core.IRepositery
          Task<string> RejectOrder(int orderId);
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize);
         Task<string> AcceptVolunteer(int orderId);
-        Task<string> RejectVolunteer(int orderId);
+        Task<string> RejectVolunteer(int Id, string ReajectReason);
 
         Task<string> AcceptRequst(int Requsttype , int referenceId);
-        Task<string> RejectRequst(int Requsttype, int referenceId);
+        Task<string> RejectRequst(int Requsttype, int referenceId , string ReajectReason);
 
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
         Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize);
+        Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
+    int referenceId, RefType type);
 
         Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize);
 

@@ -20,6 +20,7 @@ namespace KonSanad.Core.Entities
         public int VolunteerId { get; set; }
         [ForeignKey(nameof(VolunteerId))]
         public Volunteer? Volunteer { get; set; }
+        public string? ReajectReason { get; set; }
 
         // Additional Properties (Optional)
         public DateTime? JoinedDate { get; set; }

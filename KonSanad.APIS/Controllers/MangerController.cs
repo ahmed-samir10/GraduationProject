@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using KonSanad.Core.Entity.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 
@@ -130,11 +131,11 @@ namespace KonSanad.APIS.Controllers
         }
         //---------------------------------------------------------------------------------------
         [HttpPost("reject-volunteer/{volunteerId}")]
-        public async Task<IActionResult> RejectVolunteer(int volunteerId)
+        public async Task<IActionResult> RejectVolunteer(int volunteerId , string  ReajectReason)
         {
             if (volunteerId <= 0)
                 return Ok(new { success = false, massage = "Invalid volunteerId" });
-            var result = await _mangerServices.RejectVolunteer(volunteerId);
+            var result = await _mangerServices.RejectVolunteer(volunteerId , ReajectReason);
             if (result.Contains("not found"))
                 return Ok(new { success = false, massage = "not found" });
             return Ok(new
@@ -154,6 +155,17 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        [HttpGet("{referenceId}/details")]
+        public async Task<IActionResult> GetRequestDetails(
+    int referenceId,
+    [FromQuery] RefType type)
+        {
+            var result = await _mangerServices
+                .GetRequestDetailsAsync(referenceId, type);
+
+            return Ok(result);
+        }
+
         //---------------------------------------------------------------------------------------
         // ✅ Accept Request
         [HttpPost("accept-request")]
@@ -177,12 +189,12 @@ namespace KonSanad.APIS.Controllers
 
         // ✅ Reject Request
         [HttpPost("reject-request")]
-        public async Task<IActionResult> RejectRequest(int requestType, int referenceId)
+        public async Task<IActionResult> RejectRequest(int requestType, int referenceId, string ReajectReason)
         {
             if (referenceId <= 0)
                return Ok (new { success = false, message = "Invalid referenceId" });
 
-            var result = await _mangerServices.RejectRequst(requestType, referenceId);
+            var result = await _mangerServices.RejectRequst(requestType, referenceId , ReajectReason);
 
             if (result.Contains("not found") || result.Contains("Invalid"))
                return Ok (new { success = false, message = result });

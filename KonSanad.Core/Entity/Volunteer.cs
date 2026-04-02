@@ -21,6 +21,7 @@ namespace KonSanad.Repository.Entities
         public string Availability { get; set; }
         public string? NationalId { get; set; }
 
+        public string? ReajectReason { get; set; }
 
         // Relationships Between Manager and Volunteer 
         public int? ManagerId { get; set; }

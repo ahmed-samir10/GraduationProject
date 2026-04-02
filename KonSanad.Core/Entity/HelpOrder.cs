@@ -12,6 +12,7 @@ namespace KonSanad.Repository.Entities
         // The status of the help order (Pending, Rejected, Approved)
         public RequestedStatus HelpOrderStatus { get; set; } = RequestedStatus.Pending;
 
+
         // This My Relations Between ( Beneficiary And HelpOrder )
         public int BeneficiaryId { get; set; }
        
