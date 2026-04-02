@@ -353,6 +353,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ResultMission")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -404,6 +407,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.Property<int>("MissionStatus")
                         .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ResultMission")
                         .HasColumnType("nvarchar(max)");
@@ -658,7 +664,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("cashDonationStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("receiptId")
+                    b.Property<int?>("receiptId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -1064,13 +1070,19 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("Status")
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusPro")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SupplyId")
@@ -1508,9 +1520,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasOne("KonSanad.Repository.Entities.Receipt", "Receipt")
                         .WithMany()
-                        .HasForeignKey("receiptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("receiptId");
 
                     b.Navigation("Campaign");
 

@@ -170,7 +170,7 @@ namespace KonSanad.APIS.Controllers
 
 
 
-
+        // ----------------------------------------------------------
         [Authorize]
         [HttpDelete("delete-report/{missionId}")]
         public async Task<IActionResult> DeleteMissionReport(int missionId)
@@ -195,6 +195,40 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, data = result });
         }
+        // ----------------------------------------------------------
+
+        // ----------------------------------------------------------
+        [Authorize]
+        [HttpPost("reject-mission")]
+        public async Task<IActionResult> RejectMissionAssignment([FromBody] RejectMissionDto dto)
+        {
+            if (dto is null || dto.MissionId <= 0)
+                return Ok(new { success = false, message = "Invalid data" });
+
+            if (string.IsNullOrWhiteSpace(dto.RejectReason))
+                return Ok(new { success = false, message = "سبب الرفض مطلوب" });
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value; // get user id from token
+
+            if (string.IsNullOrEmpty(userId))
+                return Ok(new { success = false, message = "User id not found in token" });
+
+            var volunteer = await _unitOfWork
+                .Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.AppUserId == userId);
+
+            if (volunteer is null)
+                return Ok(new { success = false, message = "المتطوع غير موجود" });
+
+            var result = await _volunteerService
+                .RejectMissionAssignmentAsync(volunteer.Id, dto.MissionId, dto.RejectReason);
+
+            if (result.Contains("غير موجودة") || result.Contains("مطلوب") || result.Contains("يمكن") || result.Contains("بالفعل"))
+                return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+        // ----------------------------------------------------------
 
 
         // ----------------------------------------------------------

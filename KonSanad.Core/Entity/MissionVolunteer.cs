@@ -20,5 +20,7 @@ namespace KonSanad.Core.Entity
         public int MissionId { get; set; }
         public Mission Mission { get; set; } = null!;
         public VolunteerMissionStatus MissionStatus { get; set; }
+
+        public string? RejectReason { get; set; }
     }
 }
