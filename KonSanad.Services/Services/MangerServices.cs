@@ -317,7 +317,10 @@ namespace KonSanad.Services.Services
             // 1️⃣ Campaign Join Requests
             var campaignRequests = await _unitOfWork.Repository<CampaignVolunteer, int>()
                 .GetQueryable()
-                .Where(cv => !cv.IsDeleted && cv.Status == RequestedStatus.Pending)
+                .Where(cv => !cv.IsDeleted &&
+       (cv.Status == RequestedStatus.Pending ||
+        cv.Status == RequestedStatus.Rejected ||
+        cv.Status == RequestedStatus.Approved))
                 .Include(cv => cv.Volunteer)
                 .Include(cv => cv.Campaign)
                 .Skip((pageNumber - 1) * pageSize)
@@ -339,7 +342,10 @@ namespace KonSanad.Services.Services
             // 2️⃣ Mission Start Requests
             var missionRequests = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
-                .Where(mv => !mv.IsDeleted && mv.MissionStatus == VolunteerMissionStatus.InReview)
+                .Where(mv => !mv.IsDeleted &&
+       (mv.MissionStatus == VolunteerMissionStatus.InReview ||
+        mv.MissionStatus == VolunteerMissionStatus.Rejected ||
+        mv.MissionStatus == VolunteerMissionStatus.WaitingForReport))
                 .Include(mv => mv.Volunteer)
                 .Include(mv => mv.Mission)
                 .Select(mv => new GetVolunteerRequestsDto
