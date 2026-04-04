@@ -10,6 +10,7 @@ namespace KonSanad.Core.IRepositery
 {
     public interface IMangerServices
     {
+        Task<string> MakeManagerAsync(int volunteerId);
             Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize);
         Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync();
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId);
@@ -26,7 +27,7 @@ namespace KonSanad.Core.IRepositery
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
         Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize);
         Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
-    int referenceId, RefType type);
+    int referenceId, int type);
 
         Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize);
 

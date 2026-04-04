@@ -11,7 +11,7 @@ namespace KonSanad.Core.Dtos
     public class GetAllDonationDto
     {
         public int Id { get; set; }
-        public int SupplyId { get; set; }
+        public int? SupplyId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public RequestedStatus DonationStatus { get; set; }
         public DonationCategory DonationCategory { get; set; }

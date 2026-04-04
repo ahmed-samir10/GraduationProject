@@ -158,7 +158,7 @@ namespace KonSanad.APIS.Controllers
         [HttpGet("{referenceId}/details")]
         public async Task<IActionResult> GetRequestDetails(
     int referenceId,
-    [FromQuery] RefType type)
+    int type)
         {
             var result = await _mangerServices
                 .GetRequestDetailsAsync(referenceId, type);
@@ -233,7 +233,17 @@ namespace KonSanad.APIS.Controllers
         }
         //---------------------------------------------------------------------------------------------
 
-        [HttpPut("accept-donation/{DonationOrderId}")]
+        [HttpPost("make-manager/{volunteerId}")]
+        public async Task<IActionResult> MakeManager(int volunteerId)
+        {
+            var result = await _mangerServices.MakeManagerAsync(volunteerId);
+
+            if (result.Contains("not found"))
+                return NotFound(result);
+
+            return Ok(result);
+        }
+        [HttpPost("accept-donation/{DonationOrderId}")]
         public async Task<IActionResult> AcceptDonation(int DonationOrderId)
         {
             var result = await _mangerServices.AcceptDonation(DonationOrderId);
@@ -244,7 +254,7 @@ namespace KonSanad.APIS.Controllers
         }
         //------------------------------------------------------------------------------------------------
 
-        [HttpPut("reject-donation/{DonationOrderId}")]
+        [HttpPost("reject-donation/{DonationOrderId}")]
         public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason)
         {
             if (string.IsNullOrEmpty(RejectReason))

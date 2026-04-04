@@ -14,10 +14,52 @@ namespace KonSanad.Services.Services
     public class MangerServices : IMangerServices
     {
         private readonly IUnitOfWork _unitOfWork;
-        public MangerServices(IUnitOfWork unitOfWork)
+        public MangerServices(IUnitOfWork unitOfWork,
+            UserManager<AppUser> userManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork;
+            _userManager = userManager;
+            _roleManager = roleManager;
 
+        }
+        private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+
+        public async Task<string> MakeManagerAsync(int volunteerId)
+        {
+            // 1️⃣ هات الـ Volunteer
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(v => v.Id == volunteerId);
+
+            if (volunteer == null)
+                return "Volunteer not found";
+
+            // 2️⃣ هات الـ User من Identity (بالبريد مثلا)
+            var user = await _userManager.FindByEmailAsync(volunteer.Email);
+
+            if (user == null)
+                return "User not found in Identity";
+
+            // 3️⃣ تأكد إن Role موجود
+            if (!await _roleManager.RoleExistsAsync("Manager"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Manager"));
+            }
+
+            // 4️⃣ شيل أي Roles قديمة (اختياري)
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (currentRoles.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            }
+
+            // 5️⃣ أضف Role الجديد
+            await _userManager.AddToRoleAsync(user, "Manager");
+
+            return "Volunteer promoted to Manager successfully";
         }
 
         public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId)
@@ -513,7 +555,7 @@ namespace KonSanad.Services.Services
                             .FirstOrDefault()  //إرجاع أول نتيجة.
                         : null,
 
-                    SupplyId = cd.HelpOrderId.HasValue ? cd.HelpOrderId.Value : 0, // لو فيه HelpOrderId
+                  //  SupplyId = cd.HelpOrderId.HasValue ? cd.HelpOrderId.Value : 0, // لو فيه HelpOrderId
                                                                                    //  هات قيمته
                                                                                    //  غير كده خليها 0.
 
@@ -542,8 +584,10 @@ namespace KonSanad.Services.Services
                     DonationCategory = DonationCategory.Item,
 
                     CreatedAt = oi.CreatedAt,
-
-                    SupplyId = oi.SupplyId ?? 0,
+                  //  cd.HelpOrderId.HasValue ? cd.HelpOrderId.Value : 0
+                    SupplyId = oi.SupplyId.HasValue ? oi.SupplyId.Value : 0, // لو فيه SupplyId
+                                                                                   //  هات قيمته
+                                                                                   //  غير كده خليها 0.
                     SupplyName = oi.CustomSupplyName ?? "",
 
                     Quantity = oi.Quantity,
@@ -564,9 +608,9 @@ namespace KonSanad.Services.Services
                 .Take(pageSize);
         }
         public async Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
-    int referenceId, RefType type)
+    int referenceId, int type)
         {
-            if (type == RefType.Campaign)
+            if (type == 1)
             {
                 var cv = await _unitOfWork.Repository<CampaignVolunteer, int>()
                     .GetQueryable()
@@ -763,10 +807,6 @@ namespace KonSanad.Services.Services
             if (donationOrder == null)
                 return "التبرع مش موجود";
 
-            if (donationOrder.DonationCategoryStatus != "donationItem" &&
-                donationOrder.DonationCategoryStatus != "custom")
-                return "مينفعش توافق على النوع ده، بس donationItem أو custom";
-
             var orderItems = await _unitOfWork.Repository<OrderItem, int>()
                 .GetQueryable()
                 .Where(oi => oi.DonationOrderId == DonationOrderId && !oi.IsDeleted)
@@ -835,10 +875,6 @@ namespace KonSanad.Services.Services
             if (donationOrder == null)
                 return "التبرع مش موجود";
 
-            // تأكد إن النوع donationItem أو custom بس
-            if (donationOrder.DonationCategoryStatus != "donationItem" &&
-                donationOrder.DonationCategoryStatus != "custom")
-                return "مينفعش ترفض النوع ده، بس donationItem أو custom";
 
             // جيب الـ OrderItems المرتبطة بالـ DonationOrder ده
             var orderItems = await _unitOfWork.Repository<OrderItem, int>()
