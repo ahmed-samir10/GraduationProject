@@ -163,7 +163,11 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices
                 .GetRequestDetailsAsync(referenceId, type);
 
-            return Ok(result);
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
         }
 
         //---------------------------------------------------------------------------------------
