@@ -33,6 +33,8 @@ namespace KonSanad.Core.IRepositery
 
         Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
 
+
+
         Task<string> AcceptDonation(int DonationOrderId);
 
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
