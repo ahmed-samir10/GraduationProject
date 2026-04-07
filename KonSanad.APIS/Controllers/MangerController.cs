@@ -154,10 +154,11 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
-        [HttpGet("{referenceId}/details")]
+        //---------------------------------------------------------------------------------------
+
         public async Task<IActionResult> GetRequestDetails(
-    int referenceId,
-    int type)
+int referenceId,
+int type)
         {
             var result = await _mangerServices
                 .GetRequestDetailsAsync(referenceId, type);
@@ -168,11 +169,6 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
-
-        //---------------------------------------------------------------------------------------
-
-
-
         //---------------------------------------------------------------------------------------
         // ✅ Accept Request
         [HttpPost("accept-request")]
