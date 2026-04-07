@@ -28,6 +28,8 @@ namespace KonSanad.Core.IRepositery
         Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize);
 
         Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
+        Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
+  int referenceId, int type);
 
         Task<string> AcceptDonation(int DonationOrderId);
 
