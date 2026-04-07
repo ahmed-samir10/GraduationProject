@@ -155,7 +155,7 @@ namespace KonSanad.APIS.Controllers
             });
         }
         //---------------------------------------------------------------------------------------
-
+        [HttpGet("{referenceId}/details")]
         public async Task<IActionResult> GetRequestDetails(
 int referenceId,
 int type)
