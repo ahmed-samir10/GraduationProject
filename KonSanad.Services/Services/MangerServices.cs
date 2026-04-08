@@ -62,7 +62,7 @@ namespace KonSanad.Services.Services
             return "Volunteer promoted to Manager successfully";
         }
 
-        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId)
+        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId , DateTime Start , DateTime End)
         {
             // 1️⃣ هات الـ HelpOrder
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
@@ -80,8 +80,8 @@ namespace KonSanad.Services.Services
                 Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
                 Address = helpOrder.Beneficiary.Address,
                 PhoneNumber = helpOrder.Beneficiary.Phone,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(3), // حسب اللوجيك بتاعك
+                StartDate = Start,
+                EndDate = End, // حسب اللوجيك بتاعك
                 ManagerId = 1,
                 HelpOrderId = helpOrder.Id,
 

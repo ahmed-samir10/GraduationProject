@@ -39,7 +39,7 @@ namespace KonSanad.APIS.Controllers
             if (dto == null || dto.HelpOrderId <= 0 || dto.VolunteerId <= 0)
                 return Ok(new { success = false, massage = "Invaild Data" });
 
-            var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId);
+            var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId , dto.StartDate , dto.EndDate) ;
 
             if (result.Contains("not found"))
                 return Ok(new { success = false, massage = "not found" });
