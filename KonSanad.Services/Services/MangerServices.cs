@@ -262,13 +262,13 @@ namespace KonSanad.Services.Services
         {
             var volunteers = await _unitOfWork.Repository<Volunteer, int>()
                 .GetQueryable()
-                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted)
+                .Where(v => !v.IsDeleted)
                  .Skip((pageNumber - 1) * pageSize)
                  .Take(pageSize)// pending + مش محذوف
                 .Select(v => new GetJoinVolunteerDto
                 {
                     Id = v.Id,
-                    Status = RequestedStatus.Pending,
+                    Status =(RequestedStatus)v.Status,
                     Email = v.Email,
                     JoinDate = v.CreatedAt,
                     Name = v.FullName,
@@ -345,7 +345,8 @@ namespace KonSanad.Services.Services
                 .Where(mv => !mv.IsDeleted &&
        (mv.MissionStatus == VolunteerMissionStatus.InReview ||
         mv.MissionStatus == VolunteerMissionStatus.Rejected ||
-        mv.MissionStatus == VolunteerMissionStatus.WaitingForReport))
+        mv.MissionStatus == VolunteerMissionStatus.WaitingForReport ||
+        mv.Mission.MissionStatus == MissionStatus.Assigend))
                 .Include(mv => mv.Volunteer)
                 .Include(mv => mv.Mission)
                 .Select(mv => new GetVolunteerRequestsDto
@@ -400,13 +401,8 @@ namespace KonSanad.Services.Services
                 if (missionRequest == null)
                     return "Mission request not found";
 
-                if (missionRequest.MissionStatus == VolunteerMissionStatus.WaitingForReport)
-                {
-                    var mission = await _unitOfWork.Repository<Mission,int>()
-                         .GetQueryable()
-                         .FirstOrDefaultAsync (m => m.Id == referenceId);
-                    mission.MissionStatus = MissionStatus.Assigend;
-
+                if (missionRequest.Mission.MissionStatus == MissionStatus.Assigend)
+                {                  
                     return "This Mission Is Aready Approved From Another Volunteer";
                 }
 
