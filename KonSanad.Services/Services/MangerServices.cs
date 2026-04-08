@@ -425,7 +425,7 @@ namespace KonSanad.Services.Services
             return "Invalid request type";
         }
 
-        public async Task<string> RejectRequst(int requstType, int referenceId)
+        public async Task<string> RejectRequst(int requstType, int referenceId, string Reason)
         {
             // 🔹 Campaign Request
             if (requstType == (int)RefType.Campaign)
@@ -442,6 +442,7 @@ namespace KonSanad.Services.Services
                     return "Request already processed";
 
                 campaignRequest.Status = RequestedStatus.Rejected;
+                campaignRequest.ReajectReason = Reason;
 
                 await _unitOfWork.Complete();
 
