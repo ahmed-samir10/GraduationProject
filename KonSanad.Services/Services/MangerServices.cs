@@ -305,13 +305,13 @@ namespace KonSanad.Services.Services
         {
             var volunteers = await _unitOfWork.Repository<Volunteer, int>()
                 .GetQueryable()
-                .Where(v => v.Status == RequestedStatus.Pending && !v.IsDeleted)
+                .Where(v => !v.IsDeleted)
                  .Skip((pageNumber - 1) * pageSize)
                  .Take(pageSize)// pending + مش محذوف
                 .Select(v => new GetJoinVolunteerDto
                 {
                     Id = v.Id,
-                    Status = RequestedStatus.Pending,
+                    Status =(RequestedStatus)v.Status,
                     Email = v.Email,
                     JoinDate = v.CreatedAt,
                     Name = v.FullName,
@@ -361,7 +361,10 @@ namespace KonSanad.Services.Services
             // 1️⃣ Campaign Join Requests
             var campaignRequests = await _unitOfWork.Repository<CampaignVolunteer, int>()
                 .GetQueryable()
-                .Where(cv => !cv.IsDeleted && cv.Status == RequestedStatus.Pending)
+                .Where(cv => !cv.IsDeleted &&
+       (cv.Status == RequestedStatus.Pending ||
+        cv.Status == RequestedStatus.Rejected ||
+        cv.Status == RequestedStatus.Approved))
                 .Include(cv => cv.Volunteer)
                 .Include(cv => cv.Campaign)
                 .Skip((pageNumber - 1) * pageSize)
@@ -383,7 +386,11 @@ namespace KonSanad.Services.Services
             // 2️⃣ Mission Start Requests
             var missionRequests = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
-                .Where(mv => !mv.IsDeleted && mv.MissionStatus == VolunteerMissionStatus.InReview)
+                .Where(mv => !mv.IsDeleted &&
+       (mv.MissionStatus == VolunteerMissionStatus.InReview ||
+        mv.MissionStatus == VolunteerMissionStatus.Rejected ||
+        mv.MissionStatus == VolunteerMissionStatus.WaitingForReport ||
+        mv.Mission.MissionStatus == MissionStatus.Assigend))
                 .Include(mv => mv.Volunteer)
                 .Include(mv => mv.Mission)
                 .Select(mv => new GetVolunteerRequestsDto
@@ -438,6 +445,12 @@ namespace KonSanad.Services.Services
                 if (missionRequest == null)
                     return "Mission request not found";
 
+                if (missionRequest.Mission.MissionStatus == MissionStatus.Assigend)
+                {                  
+                    return "This Mission Is Aready Approved From Another Volunteer";
+                }
+
+
                 // ✅ Update volunteer mission
                 missionRequest.MissionStatus = VolunteerMissionStatus.WaitingForReport;
 
@@ -446,6 +459,7 @@ namespace KonSanad.Services.Services
                 {
                     missionRequest.Mission.MissionStatus = MissionStatus.Assigend;
                 }
+
 
                 await _unitOfWork.Complete();
 
@@ -509,6 +523,98 @@ namespace KonSanad.Services.Services
             }
 
             return "Invalid request type";
+        }
+
+        public async Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
+int referenceId, int type)
+        {
+            if (type == 1)
+            {
+                var cv = await _unitOfWork.Repository<CampaignVolunteer, int>()
+                    .GetQueryable()
+                    .Where(cv => cv.Id == referenceId && !cv.IsDeleted)
+                    .Include(cv => cv.Volunteer)
+                        .ThenInclude(v => v.VolunteerMissions)
+                    .Include(cv => cv.Volunteer)
+                        .ThenInclude(v => v.CampaignVolunteers)
+                    .Include(cv => cv.Campaign)
+                    .FirstOrDefaultAsync();
+                /*
+                                if (cv == null)
+                                    throw new NoContentResult("Request not found.");
+                */
+                return new VolunteerRequestDetailDto
+                {
+                    RequestType = RefType.Campaign,
+                    ReferenceId = cv.Id,
+                    Status = (int)cv.Status,
+                    CreatedAt = cv.CreatedAt,
+
+                    // Volunteer
+                    VolunteerId = cv.VolunteerId,
+                    VolunteerName = cv.Volunteer.FullName,
+                    Email = cv.Volunteer.Email,
+                    Phone = cv.Volunteer.Phone,
+                    Address = cv.Volunteer.Address,
+
+                    TotalMissions = cv.Volunteer.VolunteerMissions
+                                            .Count(m => !m.IsDeleted),
+                    TotalCampaigns = cv.Volunteer.CampaignVolunteers
+                                            .Count(c => !c.IsDeleted),
+
+                    // Campaign
+                    Title = cv.Campaign.Title,
+                    Description = cv.Campaign.Description,
+                    StartDate = cv.Campaign.StartDate,
+                    EndDate = cv.Campaign.EndDate,
+
+                    CampaignJoinStatus = cv.Status,
+                    CampaignVolunteersCount = cv.Campaign.CampaignVolunteers
+                                                .Count(x => !x.IsDeleted),
+                };
+            }
+            else // RefType.Mission
+            {
+                var mv = await _unitOfWork.Repository<MissionVolunteers, int>()
+                    .GetQueryable()
+                    .Where(mv => mv.Id == referenceId && !mv.IsDeleted)
+                    .Include(mv => mv.Volunteer)
+                        .ThenInclude(v => v.VolunteerMissions)
+                    .Include(mv => mv.Volunteer)
+                        .ThenInclude(v => v.CampaignVolunteers)
+                    .Include(mv => mv.Mission)
+                    .FirstOrDefaultAsync();
+                /*
+                                if (mv == null)
+                                    throw new NotFoundException("Request not found.");
+                */
+                return new VolunteerRequestDetailDto
+                {
+                    RequestType = RefType.Mission,
+                    ReferenceId = mv.Id,
+                    Status = (int)mv.MissionStatus,
+                    CreatedAt = mv.CreatedAt,
+
+                    // Volunteer
+                    VolunteerId = mv.VolunteerId,
+                    VolunteerName = mv.Volunteer.FullName,
+                    Email = mv.Volunteer.Email,
+                    Phone = mv.Volunteer.Phone,
+                    Address = mv.Volunteer.Address,
+                    TotalMissions = mv.Volunteer.VolunteerMissions
+                                            .Count(m => !m.IsDeleted),
+                    TotalCampaigns = mv.Volunteer.CampaignVolunteers
+                                            .Count(c => !c.IsDeleted),
+
+                    // Mission
+                    Title = mv.Mission.Title,
+                    Description = mv.Mission.Description,
+                    StartDate = mv.Mission.StartDate,
+                    EndDate = mv.Mission.EndDate,
+                    MissionStatus = mv.MissionStatus,
+
+                };
+            }
         }
 
         #region Donation
