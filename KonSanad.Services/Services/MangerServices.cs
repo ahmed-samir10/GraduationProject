@@ -367,8 +367,7 @@ namespace KonSanad.Services.Services
         cv.Status == RequestedStatus.Approved))
                 .Include(cv => cv.Volunteer)
                 .Include(cv => cv.Campaign)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+               
                 .Select(cv => new GetVolunteerRequestsDto
                 {
                     RequestType = RefType.Campaign,
@@ -393,6 +392,7 @@ namespace KonSanad.Services.Services
         mv.Mission.MissionStatus == MissionStatus.Assigend))
                 .Include(mv => mv.Volunteer)
                 .Include(mv => mv.Mission)
+            
                 .Select(mv => new GetVolunteerRequestsDto
                 {
                     RequestType = RefType.Mission,
@@ -410,8 +410,12 @@ namespace KonSanad.Services.Services
             result.AddRange(campaignRequests);
             result.AddRange(missionRequests);
 
+            result= result.OrderByDescending(r => r.CreatedAt)
+                  
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize).ToList();
             // 3️⃣ Sort by newest first
-            return result.OrderByDescending(r => r.CreatedAt);
+            return result;
         }
 
         public async Task<string> AcceptRequst(int requstType, int referenceId)

@@ -10,7 +10,6 @@ namespace KonSanad.Core.Dtos
     {
         public int HelpOrderId { get; set; }
         public int VolunteerId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+     
     }
 }
