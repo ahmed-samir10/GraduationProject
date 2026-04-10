@@ -89,6 +89,7 @@ namespace KonSanad.APIS.Controllers
 
 
         // ----------------------------------------------------------
+        // Notfication of submit report////////////////////////////////////////
         // POST: api/Volunteer/ReportSubmitted
         [HttpPost("ReportSubmitted")]
         [Consumes("multipart/form-data")]
@@ -141,8 +142,10 @@ namespace KonSanad.APIS.Controllers
         // ----------------------------------------------------------
 
 
+        // Notfication of submit report////////////////////////////////////////
         [HttpPut("update")]
         [Consumes("multipart/form-data")]
+
         public async Task<IActionResult> UpdateMissionReport([FromForm] UpdateMissionReportDto requst)
         {
 
@@ -198,7 +201,7 @@ namespace KonSanad.APIS.Controllers
 
 
         // ----------------------------------------------------------
-
+        // Notfication of submit report////////////////////////////////////////
         [Authorize]
         [HttpPost("{id}/start")]
         public async Task<IActionResult> StartTask(int id)
@@ -224,7 +227,7 @@ namespace KonSanad.APIS.Controllers
           
         }
         // ----------------------------------------------------------
-
+        // Notfication of submit report////////////////////////////////////////
         [Authorize]
         [HttpPost("join-campaign/{campaignId}")]
         public async Task<IActionResult> JoinCampaign(int campaignId)
