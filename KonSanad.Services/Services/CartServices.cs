@@ -21,12 +21,18 @@ namespace KonSanad.Services.Services
         private readonly IDatabase _redis;
         private readonly KonSanadDbContext _context;
         private readonly IFileService _fileService;
+        private readonly INotificationService _notificationService;
 
-        public CartService(IConnectionMultiplexer redis, KonSanadDbContext context , IFileService fileService)
+        public CartService(
+            IConnectionMultiplexer redis,
+            KonSanadDbContext context,
+            IFileService fileService,
+            INotificationService notificationService)
         {
             _redis = redis.GetDatabase();
             _context = context;
             _fileService = fileService;
+            _notificationService = notificationService;
         }
 
         private string GetCartKey(int userId, string role)
@@ -353,8 +359,8 @@ namespace KonSanad.Services.Services
 
             ICartSubmitStrategy strategy =
                 role == "beneficiary"
-                ? new BeneficiarySubmitStrategy(_context)
-                : new DonorSubmitStrategy(_context);
+                ? new BeneficiarySubmitStrategy(_context, _notificationService)
+                : new DonorSubmitStrategy(_context, _notificationService);
 
             var result = await strategy.SubmitAsync(userId, cart);
 

@@ -6,6 +6,7 @@ using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Data.Identity.ctx;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Repository;
+using KonSanad.Services.Realtime;
 using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -30,6 +31,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 
 builder.Services.AddDbContext<KonSanadDbContext>(option =>
@@ -61,6 +63,7 @@ builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService,VolunteerService>();
 builder.Services.AddScoped<IMangerServices, MangerServices>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
@@ -216,6 +219,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications").RequireCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();

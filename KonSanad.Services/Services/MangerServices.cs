@@ -14,15 +14,17 @@ namespace KonSanad.Services.Services
     public class MangerServices : IMangerServices
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
         public MangerServices(IUnitOfWork unitOfWork,
             UserManager<AppUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _roleManager = roleManager;
-
+            _notificationService = notificationService;
         }
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -112,6 +114,21 @@ namespace KonSanad.Services.Services
 
             await _unitOfWork.Complete();
 
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.Id == volunteerId);
+
+            if (!string.IsNullOrWhiteSpace(volunteer?.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(volunteer.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionAssigned,
+                    Title = "تم إسناد مهمة جديدة",
+                    Message = $"تم إسناد مهمة جديدة لك تخص الطلب رقم {helpOrder.Id}.",
+                    EntityType = nameof(Mission),
+                    EntityId = mission.Id
+                });
+            }
+
             return "Volunteer assigned successfully";
         }
 
@@ -184,6 +201,8 @@ namespace KonSanad.Services.Services
             var mission = await _unitOfWork.Repository<Mission, int>()
                .GetQueryable()
                .Include(m => m.HelpOrder)
+                   .ThenInclude(h => h.Beneficiary)
+               .Include(m => m.HelpOrder)
                    .ThenInclude(h => h.HelpOrderItems)
                .FirstOrDefaultAsync(m => m.Id == missionId);
 
@@ -219,6 +238,18 @@ namespace KonSanad.Services.Services
             // ✅ Save changes
             await _unitOfWork.Complete();
 
+            if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(mission.HelpOrder.Beneficiary.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.HelpRequestRejected,
+                    Title = "تم رفض الطلب",
+                    Message = $"تم رفض طلبك رقم {mission.HelpOrder.Id}.",
+                    EntityType = nameof(HelpOrder),
+                    EntityId = mission.HelpOrder.Id
+                });
+            }
+
             return "تم رفض الطلب ";
 
         }
@@ -226,6 +257,8 @@ namespace KonSanad.Services.Services
         {
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
+                .Include(m => m.HelpOrder)
+                    .ThenInclude(h => h.Beneficiary)
                 .Include(m => m.HelpOrder)
                     .ThenInclude(h => h.HelpOrderItems)
                 .FirstOrDefaultAsync(m => m.Id == missionId);
@@ -263,6 +296,18 @@ namespace KonSanad.Services.Services
 
             // ✅ Save changes
             await _unitOfWork.Complete();
+
+            if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(mission.HelpOrder.Beneficiary.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.HelpRequestApproved,
+                    Title = "تمت الموافقة على الطلب",
+                    Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
+                    EntityType = nameof(HelpOrder),
+                    EntityId = mission.HelpOrder.Id
+                });
+            }
 
             return "تم قبول الطلب بنجاح";
         }
@@ -335,6 +380,19 @@ namespace KonSanad.Services.Services
             volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
             await _unitOfWork.Complete();
+
+            if (!string.IsNullOrWhiteSpace(volunteer.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(volunteer.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.VolunteerRegistrationApproved,
+                    Title = "تم قبول طلب التطوع",
+                    Message = "تم قبول طلب التطوع الخاص بك من المدير.",
+                    EntityType = nameof(Volunteer),
+                    EntityId = volunteer.Id
+                });
+            }
+
             return "Volunteer accepted successfully";
         }
 
@@ -350,6 +408,19 @@ namespace KonSanad.Services.Services
             volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
             await _unitOfWork.Complete();
+
+            if (!string.IsNullOrWhiteSpace(volunteer.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(volunteer.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.VolunteerRegistrationRejected,
+                    Title = "تم رفض طلب التطوع",
+                    Message = $"تم رفض طلب التطوع الخاص بك. السبب: {Reason}",
+                    EntityType = nameof(Volunteer),
+                    EntityId = volunteer.Id
+                });
+            }
+
             return "Volunteer rejected successfully";
 
         }
@@ -425,6 +496,8 @@ namespace KonSanad.Services.Services
             {
                 var campaignRequest = await _unitOfWork.Repository<CampaignVolunteer, int>()
                     .GetQueryable()
+                    .Include(c => c.Campaign)
+                    .Include(c => c.Volunteer)
                     .FirstOrDefaultAsync(c => c.Id == referenceId);
 
                 if (campaignRequest == null)
@@ -434,6 +507,18 @@ namespace KonSanad.Services.Services
 
                 await _unitOfWork.Complete();
 
+                if (!string.IsNullOrWhiteSpace(campaignRequest.Volunteer?.AppUserId))
+                {
+                    await _notificationService.NotifyUserAsync(campaignRequest.Volunteer.AppUserId, new NotificationMessageDto
+                    {
+                        Type = NotificationType.VolunteerCampaignJoinApproved,
+                        Title = "تم قبول طلبك",
+                        Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
+                        EntityType = nameof(CampaignVolunteer),
+                        EntityId = campaignRequest.Id
+                    });
+                }
+
                 return "Campaign request accepted successfully";
             }
 
@@ -442,6 +527,7 @@ namespace KonSanad.Services.Services
             {
                 var missionRequest = await _unitOfWork.Repository<MissionVolunteers, int>()
                     .GetQueryable()
+                    .Include(mv => mv.Volunteer)
                     .Include(mv => mv.Mission)
                         .ThenInclude(m => m.HelpOrder)
                     .FirstOrDefaultAsync(mv => mv.Id == referenceId);
@@ -467,6 +553,18 @@ namespace KonSanad.Services.Services
 
                 await _unitOfWork.Complete();
 
+                if (!string.IsNullOrWhiteSpace(missionRequest.Volunteer?.AppUserId))
+                {
+                    await _notificationService.NotifyUserAsync(missionRequest.Volunteer.AppUserId, new NotificationMessageDto
+                    {
+                        Type = NotificationType.MissionRequestApproved,
+                        Title = "تم قبول طلب المهمة",
+                        Message = $"تم قبول طلبك لبدء المهمة رقم {missionRequest.MissionId}.",
+                        EntityType = nameof(MissionVolunteers),
+                        EntityId = missionRequest.Id
+                    });
+                }
+
                 return "Mission request accepted successfully";
             }
 
@@ -480,6 +578,8 @@ namespace KonSanad.Services.Services
             {
                 var campaignRequest = await _unitOfWork.Repository<CampaignVolunteer, int>()
                     .GetQueryable()
+                    .Include(c => c.Campaign)
+                    .Include(c => c.Volunteer)
                     .FirstOrDefaultAsync(c => c.Id == referenceId);
 
                 if (campaignRequest == null)
@@ -494,6 +594,18 @@ namespace KonSanad.Services.Services
 
                 await _unitOfWork.Complete();
 
+                if (!string.IsNullOrWhiteSpace(campaignRequest.Volunteer?.AppUserId))
+                {
+                    await _notificationService.NotifyUserAsync(campaignRequest.Volunteer.AppUserId, new NotificationMessageDto
+                    {
+                        Type = NotificationType.VolunteerCampaignJoinRejected,
+                        Title = "تم رفض الطلب",
+                        Message = $"تم رفض طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}. السبب: {Reason}",
+                        EntityType = nameof(CampaignVolunteer),
+                        EntityId = campaignRequest.Id
+                    });
+                }
+
                 return "Campaign request rejected successfully";
             }
 
@@ -502,6 +614,7 @@ namespace KonSanad.Services.Services
             {
                 var missionRequest = await _unitOfWork.Repository<MissionVolunteers, int>()
                     .GetQueryable()
+                    .Include(mv => mv.Volunteer)
                     .Include(mv => mv.Mission)
                     .FirstOrDefaultAsync(mv => mv.Id == referenceId);
 
@@ -522,6 +635,18 @@ namespace KonSanad.Services.Services
                 }
 
                 await _unitOfWork.Complete();
+
+                if (!string.IsNullOrWhiteSpace(missionRequest.Volunteer?.AppUserId))
+                {
+                    await _notificationService.NotifyUserAsync(missionRequest.Volunteer.AppUserId, new NotificationMessageDto
+                    {
+                        Type = NotificationType.MissionRequestRejected,
+                        Title = "تم رفض طلب المهمة",
+                        Message = $"تم رفض طلبك لبدء المهمة رقم {missionRequest.MissionId}. السبب: {Reason}",
+                        EntityType = nameof(MissionVolunteers),
+                        EntityId = missionRequest.Id
+                    });
+                }
 
                 return "Mission request rejected successfully";
             }
@@ -824,6 +949,7 @@ int referenceId, int type)
         {
             var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
                 .GetQueryable()
+                .Include(d => d.Donor)
                 .FirstOrDefaultAsync(d => d.Id == DonationOrderId);
             if (donationOrder == null)
                 return "التبرع مش موجود";
@@ -883,6 +1009,19 @@ int referenceId, int type)
             }
 
             await _unitOfWork.Complete();
+
+            if (!string.IsNullOrWhiteSpace(donationOrder.Donor?.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(donationOrder.Donor.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.DonationApproved,
+                    Title = "تم قبول التبرع",
+                    Message = $"تمت الموافقة على التبرع رقم {donationOrder.Id}.",
+                    EntityType = nameof(DonationOrder),
+                    EntityId = donationOrder.Id
+                });
+            }
+
             return "تم الموافقة على التبرع بنجاح";
         }
         //--------------------------------------------------------------------------------------
@@ -891,6 +1030,7 @@ int referenceId, int type)
             // جيب الـ DonationOrder
             var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
                 .GetQueryable()
+                .Include(d => d.Donor)
                 .FirstOrDefaultAsync(d => d.Id == DonationOrderId);
 
             if (donationOrder == null)
@@ -917,6 +1057,19 @@ int referenceId, int type)
             }
 
             await _unitOfWork.Complete();
+
+            if (!string.IsNullOrWhiteSpace(donationOrder.Donor?.AppUserId))
+            {
+                await _notificationService.NotifyUserAsync(donationOrder.Donor.AppUserId, new NotificationMessageDto
+                {
+                    Type = NotificationType.DonationRejected,
+                    Title = "تم رفض التبرع",
+                    Message = $"تم رفض التبرع رقم {donationOrder.Id}. السبب: {RejectReason}",
+                    EntityType = nameof(DonationOrder),
+                    EntityId = donationOrder.Id
+                });
+            }
+
             return "تم رفض التبرع ";
         }
         //---------------------------------------------------------------------------------------

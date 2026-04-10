@@ -9,13 +9,19 @@ namespace KonSanad.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
+        private readonly INotificationService _notificationService;
 
 
-        public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper, UserManager<AppUser> userManager)
+        public HelpRequestService(
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            UserManager<AppUser> userManager,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
             _userManager = userManager;
-
+            _notificationService = notificationService;
         }
 
         /*   public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
@@ -279,6 +285,15 @@ namespace KonSanad.Services.Services
 
             // احفظ التغييرات
             await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.BeneficiaryCampaignJoinRequested,
+                Title = "طلب انضمام مستفيد",
+                Message = $"المستفيد {beneficiary.FullName} طلب الانضمام إلى الحملة {campaign.Title}.",
+                EntityType = nameof(BeneficiaryCampaign),
+                EntityId = joinRequest.Id
+            });
 
             return "تم إرسال الطلب بنجاح";
         }

@@ -7,10 +7,13 @@ namespace KonSanad.Services.Services
     {
         private readonly KonSanadDbContext _db;
         private readonly IMapper _mapper;
-        public CampaignService(KonSanadDbContext db, IMapper mapper)
+        private readonly INotificationService _notificationService;
+
+        public CampaignService(KonSanadDbContext db, IMapper mapper, INotificationService notificationService)
         {
             _db = db;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
         public async Task<List<CampaignDto>> GetAllAsync(int pageNumber, int pageSize)
         {
@@ -59,6 +62,26 @@ namespace KonSanad.Services.Services
             var entity = _mapper.Map<Campaign>(createDto);
             _db.Campaigns.Add(entity);
             await _db.SaveChangesAsync();
+
+            var notification = new NotificationMessageDto
+            {
+                Type = NotificationType.CampaignCreated,
+                Title = "حملة جديدة",
+                Message = $"تمت إضافة حملة جديدة باسم {entity.Title}.",
+                EntityType = nameof(Campaign),
+                EntityId = entity.Id
+            };
+
+            await _notificationService.NotifyRoleAsync("Donor", notification);
+            await _notificationService.NotifyRoleAsync("Beneficiary", new NotificationMessageDto
+            {
+                Type = notification.Type,
+                Title = notification.Title,
+                Message = notification.Message,
+                EntityType = notification.EntityType,
+                EntityId = notification.EntityId
+            });
+
             // reload with includes for mapping presentation fields
             return await GetByIdAsync(entity.Id) ?? _mapper.Map<CampaignDto>(entity);
         }
