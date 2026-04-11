@@ -21,6 +21,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Security.Principal;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
 var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
@@ -135,7 +136,7 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-builder.Services.AddCors(options =>
+/*builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
@@ -144,7 +145,18 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowCredentials();
     });
+});*/
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins("https://kon-345.runasp.net")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -172,6 +184,7 @@ var Identitycontext = services.GetRequiredService<AppIdentityDbContext>();
 var userManager = services.GetRequiredService<UserManager<AppUser>>();
 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 var ILoggerFactory = services.GetRequiredService<ILoggerFactory>();
+
 
 try
 {
@@ -210,6 +223,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
     c.InjectStylesheet("/swagger-ui/custom.css");
 });
+
 
 // في الأول
 
