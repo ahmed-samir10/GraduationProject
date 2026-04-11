@@ -161,6 +161,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(config);
 });
 var app = builder.Build();
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
@@ -200,11 +202,13 @@ catch (Exception ex)
 }
 
 // Configure the HTTP request pipeline.
+app.UseStaticFiles();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "KonSanad API V1");
-    c.RoutePrefix = string.Empty;
+    c.RoutePrefix = "swagger";
+    c.InjectStylesheet("/swagger-ui/custom.css");
 });
 
 // في الأول
@@ -215,13 +219,10 @@ app.UseSwaggerUI(c =>
 // في الـ middleware
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireCors("AllowAll");
-
-if (app.Environment.IsDevelopment())
-    app.UseDeveloperExceptionPage();
 
 app.Run();

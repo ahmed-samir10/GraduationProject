@@ -46,6 +46,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("ReajectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -161,7 +164,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("CampaignId");
 
-                    b.ToTable("BeneficiaryCampaign", (string)null);
+                    b.ToTable("BeneficiaryCampaign");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.Cart", b =>
@@ -200,7 +203,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("UserId1");
 
-                    b.ToTable("Carts", (string)null);
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.CartItem", b =>
@@ -252,7 +255,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("SupplyId");
 
-                    b.ToTable("CartItems", (string)null);
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.Identity.AppUser", b =>
@@ -326,7 +329,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppUser", (string)null);
+                    b.ToTable("AppUser");
                 });
 
             modelBuilder.Entity("KonSanad.Core.Entity.MissionVolunteers", b =>
@@ -435,7 +438,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("VolunteerId");
 
-                    b.ToTable("VolunteerMissions", (string)null);
+                    b.ToTable("VolunteerMissions");
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
@@ -661,7 +664,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("cashDonationStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("receiptId")
+                    b.Property<int?>("receiptId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -1067,6 +1070,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1333,6 +1339,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("ReajectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1514,9 +1523,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasOne("KonSanad.Repository.Entities.Receipt", "Receipt")
                         .WithMany()
-                        .HasForeignKey("receiptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("receiptId");
 
                     b.Navigation("Campaign");
 
