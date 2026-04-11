@@ -38,7 +38,7 @@ public class VolunteerRequestDetailDto
     public string Email { get; set; }
     public string Phone { get; set; }
     public string Address { get; set; }
-   
+
     public int TotalMissions { get; set; }
     public int TotalCampaigns { get; set; }
 
