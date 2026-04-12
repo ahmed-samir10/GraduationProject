@@ -12,16 +12,23 @@ namespace KonSanad.Repository.Data.Identity.ctx
      
         public static async Task SeedUsersAsync(UserManager<AppUser> userManager)
         {
-            // لو مفيش Manager موجود
-            if (await userManager.FindByEmailAsync("manager@konsanad.com") == null)
+            var normalizedEmail = userManager.NormalizeEmail("manager@konsanad.com");
+
+            // نتجنب تحميل AppUser بالكامل لأن بعض السجلات القديمة قد تحتوي قيماً NULL
+            if (!await userManager.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
             {
                 var manager = new AppUser
-                {    FirstName = "Manager",
-                PhoneNumber = "01000000000",
-                EmailConfirmed = true,
+                {
+                    FirstName = "Manager",
+                    LastName = "KonSanad",
+                    FullName = "Manager KonSanad",
+                    Phone = "01000000000",
+                    PhoneNumber = "01000000000",
+                    Address = "Cairo, Egypt",
+                    NationalId = "00000000000000",
+                    EmailConfirmed = true,
                     UserName = "manager@konsanad.com",
                     Email = "manager@konsanad.com",
-                    // ... باقي الـ properties
                 };
 
                 var result = await userManager.CreateAsync(manager, "Manager@123");
