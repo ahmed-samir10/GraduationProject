@@ -22,11 +22,12 @@ namespace KonSanad.Services.Services
 
 
         // Method to get all missions with beneficiary details
-        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId)
+        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId , int pageNumber = 1, int pageSize = 8)
         {
             var volunteerMissions = await _context.MissionVolunteers
                 .Where(mv => mv.VolunteerId == volunteerId)
                 .Select(mv => new { mv.MissionId, mv.MissionStatus })
+                 
                 .ToListAsync();
 
             var volunteerMissionDict = volunteerMissions
@@ -35,7 +36,8 @@ namespace KonSanad.Services.Services
             var missions = await _context.Missions
                 .AsNoTracking()
                 .Where(m => m.MissionStatus == MissionStatus.New
-                         || volunteerMissionDict.Keys.Contains(m.Id))
+                         || volunteerMissionDict.Keys.Contains(m.Id)).Skip((pageNumber - 1) * pageSize)
+                 .Take(pageSize)
                 .Select(m => new MissionDto
                 {
                     Id = m.Id,

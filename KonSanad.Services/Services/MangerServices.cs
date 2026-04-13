@@ -72,6 +72,16 @@ namespace KonSanad.Services.Services
 
             if (helpOrder == null)
                 return "HelpOrder not found";
+            var he = await _unitOfWork.Repository<Mission, int>()
+               .GetQueryable()
+               .Include(m => m.HelpOrder)
+                   .ThenInclude(h => h.Beneficiary)
+               .Include(m => m.HelpOrder)
+                   .ThenInclude(h => h.HelpOrderItems)
+               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
+            if (he != null)
+                return "This HelpOrder Is Aready Assigned To Another Volunteer";
+
 
             // 2️⃣ Create Mission
             var mission = new Mission
