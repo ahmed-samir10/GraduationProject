@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /KonSanad.APIS/Controllers/CampaignController.cs
 /KonSanad.Services/Services/DonorServices.cs
+/KonSanad.Core/Dtos/NotificationDto.cs
