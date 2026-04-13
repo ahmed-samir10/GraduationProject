@@ -14,17 +14,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                 name: "FK_CashDonation_Receipts_receiptId",
                 table: "CashDonation");
 
-            migrationBuilder.AddColumn<string>(
-                name: "ReajectReason",
-                table: "Volunteers",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "RejectReason",
-                table: "OrderItems",
-                type: "nvarchar(max)",
-                nullable: true);
+          
 
             migrationBuilder.AlterColumn<int>(
                 name: "receiptId",
@@ -34,11 +24,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AddColumn<string>(
-                name: "ReajectReason",
-                table: "CampaignVolunteers",
-                type: "nvarchar(max)",
-                nullable: true);
+          
 
             migrationBuilder.AddForeignKey(
                 name: "FK_CashDonation_Receipts_receiptId",
