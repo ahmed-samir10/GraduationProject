@@ -220,10 +220,8 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "KonSanad API V1");
-    c.RoutePrefix = "swagger";
-    c.InjectStylesheet("/swagger-ui/custom.css");
+    c.RoutePrefix = string.Empty;
 });
-
 
 // في الأول
 
