@@ -11,10 +11,12 @@ namespace KonSanad.Services.Services
     public class DonorSubmitStrategy : ICartSubmitStrategy
     {
         private readonly KonSanadDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public DonorSubmitStrategy(KonSanadDbContext context)
+        public DonorSubmitStrategy(KonSanadDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
@@ -111,6 +113,33 @@ namespace KonSanad.Services.Services
                         cashDonation.receiptId = receipt.Id;
                         _context.CashDonations.Update(cashDonation);
                         await _context.SaveChangesAsync();
+
+                        if (campaignId.HasValue)
+                        {
+                            var campaign = await _context.Campaigns
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(c => c.Id == campaignId.Value);
+
+                            if (campaign?.GoalCash > 0)
+                            {
+                                var totalAmount = await _context.CashDonations
+                                    .Where(c => c.CampaignId == campaignId.Value)
+                                    .SumAsync(c => c.Amount);
+
+                                var previousTotal = totalAmount - cashDonation.Amount;
+                                if (previousTotal < campaign.GoalCash && totalAmount >= campaign.GoalCash)
+                                {
+                                    await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                                    {
+                                        Type = NotificationType.CampaignGoalReached,
+                                        Title = "الحملة وصلت للهدف",
+                                        Message = $"الحملة {campaign.Title} وصلت أو تجاوزت المبلغ المطلوب.",
+                                        EntityType = nameof(Campaign),
+                                        EntityId = campaign.Id
+                                    });
+                                }
+                            }
+                        }
                         break;
 
                     case "custom":
@@ -131,6 +160,15 @@ namespace KonSanad.Services.Services
                         break;
                 }
             }
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.DonationSubmitted,
+                Title = "تبرع جديد",
+                Message = $"تم استلام تبرع جديد برقم {donation.Id} ويحتاج متابعة المدير.",
+                EntityType = nameof(DonationOrder),
+                EntityId = donation.Id
+            });
 
             return new SubmitResultDto { Success = true };
         }

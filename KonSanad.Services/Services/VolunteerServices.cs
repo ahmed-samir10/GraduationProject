@@ -11,22 +11,30 @@ namespace KonSanad.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
         private readonly UserManager<AppUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public VolunteerService(KonSanadDbContext context , IUnitOfWork unitOfWork , IFileService fileService , UserManager<AppUser> userManager)
+        public VolunteerService(
+            KonSanadDbContext context,
+            IUnitOfWork unitOfWork,
+            IFileService fileService,
+            UserManager<AppUser> userManager,
+            INotificationService notificationService)
         {
             _context = context;
             _unitOfWork = unitOfWork;
             _fileService = fileService;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
 
         // Method to get all missions with beneficiary details
-        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId)
+        public async Task<IEnumerable<MissionDto>> GetAllMissionsAsync(int volunteerId , int pageNumber = 1, int pageSize = 8)
         {
             var volunteerMissions = await _context.MissionVolunteers
                 .Where(mv => mv.VolunteerId == volunteerId)
                 .Select(mv => new { mv.MissionId, mv.MissionStatus })
+                 
                 .ToListAsync();
 
             var volunteerMissionDict = volunteerMissions
@@ -35,7 +43,8 @@ namespace KonSanad.Services.Services
             var missions = await _context.Missions
                 .AsNoTracking()
                 .Where(m => m.MissionStatus == MissionStatus.New
-                         || volunteerMissionDict.Keys.Contains(m.Id))
+                         || volunteerMissionDict.Keys.Contains(m.Id)).Skip((pageNumber - 1) * pageSize)
+                 .Take(pageSize)
                 .Select(m => new MissionDto
                 {
                     Id = m.Id,
@@ -74,6 +83,8 @@ namespace KonSanad.Services.Services
              .Repository<MissionVolunteers, int>()
              .FindAllAsync(x => x.MissionId == missionId&& x.VolunteerId == volunteerId);
             var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
+            if (volunteer is null)
+                return "المتطوع غير موجود";
             if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
                 return "طلب التطوع الخاص بك قيد المراجعة أو تم رفضه، لا يمكنك بدء المهمة";
             if (existing.Any())
@@ -106,6 +117,16 @@ namespace KonSanad.Services.Services
 
 
             await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionRequestSubmitted,
+                Title = "طلب مهمة جديد",
+                Message = $"المتطوع {volunteer.FullName} طلب بدء المهمة رقم {missionId}.",
+                EntityType = nameof(MissionVolunteers),
+                EntityId = MissionVolunteer.Id
+            });
+
             return "تم استقبال طلبك";
         }
         // ----------------------------------------------------------
@@ -148,10 +169,9 @@ namespace KonSanad.Services.Services
             // Validate volunteer exists
             var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
 
-           
+            if (volunteer is null) return "المتطوع غير موجود";
             if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
                 throw new Exception("Volunteer request was pending");
-            if (volunteer is null) return "المتطوع غير موجود";
 
 
 
@@ -203,6 +223,15 @@ namespace KonSanad.Services.Services
             //volunteerMission.Status ="Completed";
             vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionReportSubmitted,
+                Title = "تقرير ميداني جديد",
+                Message = $"المتطوع {volunteer.FullName} رفع تقريرًا للمهمة رقم {missionId}.",
+                EntityType = nameof(MissionVolunteers),
+                EntityId = volunteerMission.Id
+            });
 
             return relativeUrl;
         }
@@ -345,12 +374,11 @@ namespace KonSanad.Services.Services
                 .Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
 
+            if (volunteer is null)
+                return "المطتوع غير موجود";
             
             if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
                 throw new Exception("Volunteer request was pending");
-
-            if (volunteer is null)
-                return "المطتوع غير موجود";
 
             // تأكد الـ campaign موجودة
             var campaign = await _unitOfWork
@@ -383,6 +411,15 @@ namespace KonSanad.Services.Services
                 .AddAsync(campaignVolunteer);
 
             await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.VolunteerCampaignJoinRequested,
+                Title = "طلب انضمام متطوع",
+                Message = $"المتطوع {volunteer.FullName} طلب الانضمام إلى الحملة {campaign.Title}.",
+                EntityType = nameof(CampaignVolunteer),
+                EntityId = campaignVolunteer.Id
+            });
 
             return "تم إرسال الطلب بنجاح";
         }

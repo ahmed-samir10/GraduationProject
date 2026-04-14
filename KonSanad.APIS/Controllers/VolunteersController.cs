@@ -27,7 +27,7 @@ namespace KonSanad.APIS.Controllers
         // GET: api/Volunteer/missions
         [Authorize]
         [HttpGet("missions")]
-        public async Task<IActionResult> GetMissions()
+        public async Task<IActionResult> GetMissions(int pageNumber = 1, int pageSize = 8)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -43,7 +43,7 @@ namespace KonSanad.APIS.Controllers
 
             int VolID = Vol.Id;
 
-            var missions = await _volunteerService.GetAllMissionsAsync(VolID);
+            var missions = await _volunteerService.GetAllMissionsAsync(VolID, pageNumber, pageSize);
             return Ok(new { success = true, data = missions });
         }
 

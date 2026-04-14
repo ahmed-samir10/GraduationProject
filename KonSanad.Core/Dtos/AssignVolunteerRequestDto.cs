@@ -10,5 +10,6 @@ namespace KonSanad.Core.Dtos
     {
         public int HelpOrderId { get; set; }
         public int VolunteerId { get; set; }
+     
     }
 }

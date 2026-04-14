@@ -10,14 +10,20 @@ namespace KonSanad.Repository.Data.migration
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Description",
-                table: "HelpOrders");
+            // ✅ Drop columns safely
+            migrationBuilder.Sql(@"
+        IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                   WHERE TABLE_NAME = 'HelpOrders' AND COLUMN_NAME = 'Description')
+        BEGIN ALTER TABLE [HelpOrders] DROP COLUMN [Description] END
+    ");
 
-            migrationBuilder.DropColumn(
-                name: "Title",
-                table: "HelpOrders");
+            migrationBuilder.Sql(@"
+        IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                   WHERE TABLE_NAME = 'HelpOrders' AND COLUMN_NAME = 'Title')
+        BEGIN ALTER TABLE [HelpOrders] DROP COLUMN [Title] END
+    ");
 
+            // ✅ Alter column safely
             migrationBuilder.AlterColumn<string>(
                 name: "Category",
                 table: "OrderItems",
@@ -26,39 +32,36 @@ namespace KonSanad.Repository.Data.migration
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
 
-            migrationBuilder.AddColumn<int>(
-                name: "orderItemStatus",
-                table: "OrderItems",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            // ✅ Add columns safely (IF NOT EXISTS)
+            migrationBuilder.Sql(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                       WHERE TABLE_NAME = 'OrderItems' AND COLUMN_NAME = 'orderItemStatus')
+        BEGIN ALTER TABLE [OrderItems] ADD [orderItemStatus] int NOT NULL DEFAULT 0 END
+    ");
 
-            migrationBuilder.AddColumn<int>(
-                name: "HelpOrderStatus",
-                table: "HelpOrders",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.Sql(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                       WHERE TABLE_NAME = 'HelpOrders' AND COLUMN_NAME = 'HelpOrderStatus')
+        BEGIN ALTER TABLE [HelpOrders] ADD [HelpOrderStatus] int NOT NULL DEFAULT 0 END
+    ");
 
-            migrationBuilder.AddColumn<int>(
-                name: "HelpOrderStatus",
-                table: "HelpOrderItem",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.Sql(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                       WHERE TABLE_NAME = 'HelpOrderItem' AND COLUMN_NAME = 'HelpOrderStatus')
+        BEGIN ALTER TABLE [HelpOrderItem] ADD [HelpOrderStatus] int NOT NULL DEFAULT 0 END
+    ");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Title",
-                table: "HelpOrderItem",
-                type: "nvarchar(max)",
-                nullable: true);
+            migrationBuilder.Sql(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                       WHERE TABLE_NAME = 'HelpOrderItem' AND COLUMN_NAME = 'Title')
+        BEGIN ALTER TABLE [HelpOrderItem] ADD [Title] nvarchar(max) NULL END
+    ");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Reason",
-                table: "BeneficiaryCampaign",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
+            migrationBuilder.Sql(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                       WHERE TABLE_NAME = 'BeneficiaryCampaign' AND COLUMN_NAME = 'Reason')
+        BEGIN ALTER TABLE [BeneficiaryCampaign] ADD [Reason] nvarchar(max) NOT NULL DEFAULT '' END
+    ");
         }
 
         /// <inheritdoc />
