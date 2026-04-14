@@ -150,25 +150,22 @@ namespace KonSanad.Services.Services
 
         public async Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(int helpOrderItemId, int newQuantity)
         {
+            // 1️⃣ هات الـ HelpOrderItem
             var helpOrderItem = await _unitOfWork.Repository<HelpOrderItem, int>()
                 .FirstOrDefaultAsync(h => h.Id == helpOrderItemId);
 
-            if (helpOrderItem == null)
+            // 2️⃣ تأكد إن الـ HelpOrderItem موجود
+            if (helpOrderItem is null)
                 return (false, "HelpOrderItem مش موجود", null);
 
-            var supply = await _unitOfWork.Repository<OrderItem, int>()
-                .FirstOrDefaultAsync(s => s.Id == helpOrderItem.SupplyId);
-
-            if (supply == null)
-                return (false, "Supply مش موجود", null);
-
-            if (newQuantity > supply.Quantity)
-                return (false, $"الكمية المطلوبة ({newQuantity}) أكبر من المتاح ({supply.Quantity})", null);
-
+            // 3️⃣ حدث الكمية
             helpOrderItem.QuantityRequested = newQuantity;
             _unitOfWork.Repository<HelpOrderItem, int>().Update(helpOrderItem);
+
+            // 4️⃣ احفظ التغييرات
             await _unitOfWork.Complete();
 
+            // 5️⃣ رجع النتيجة
             return (true, "تم التحديث بنجاح", helpOrderItem);
         }
 
