@@ -67,6 +67,8 @@ namespace KonSanad.Services.Services
 
         public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId , DateTime Start , DateTime End)
         {
+            if (Start >= End)
+                return "Invalid dates: Start date must be before end date.";
             // 1️⃣ هات الـ HelpOrder
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
       .GetQueryable()
