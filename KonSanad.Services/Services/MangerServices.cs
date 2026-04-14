@@ -1,13 +1,14 @@
-﻿using System;
+﻿using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
+using KonSanad.Repository.Entities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KonSanad.Core.Entities;
-using KonSanad.Core.Entity;
-using KonSanad.Core.Entity.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
 {
@@ -80,8 +81,8 @@ namespace KonSanad.Services.Services
                    .ThenInclude(h => h.Beneficiary)
                .Include(m => m.HelpOrder)
                    .ThenInclude(h => h.HelpOrderItems)
-               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
-            if (he != null)
+               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
+           if (he != null)
                 return "This HelpOrder Is Aready Assigned To Another Volunteer";
 
 
@@ -323,13 +324,18 @@ namespace KonSanad.Services.Services
         }
         public async Task<ViewReportDto> ViewReport(int helpOrderId)
         {
+            var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
+.GetQueryable()
+.Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
+.FirstOrDefaultAsync(h => h.Id == helpOrderId);
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
                 .Include(m => m.HelpOrder)
                     .ThenInclude(h => h.Beneficiary)
                 .Include(m => m.HelpOrder)
                     .ThenInclude(h => h.HelpOrderItems)
-                .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
+                  .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone);
+
 
             if (mission == null)
                 return null;
