@@ -37,12 +37,12 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto , [FromQuery] DateTime  StartDate, [FromQuery] DateTime EndDate)
         {
             if (dto == null || dto.HelpOrderId <= 0 || dto.VolunteerId <= 0)
-                return Ok(new { success = false, massage = "Invaild Data" });
+                return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
             var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId , StartDate , EndDate) ;
 
             if (result.Contains("not found"))
-                return Ok(new { success = false, massage = "not found" });
+                return Ok(new { success = false, massage = "لم يتم العثور على البيانات المطلوبة" });
 
             return Ok(new { success = true, data = result });
         }
@@ -54,7 +54,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.ViewReport(helpOrderId);
 
             if (result == null)
-                return Ok(new { success = false, massage = "Report not found" });
+                return Ok(new { success = false, massage = "لم يتم العثور على التقرير" });
 
             return Ok(new { success = true, data = result });
         }
@@ -65,7 +65,7 @@ namespace KonSanad.APIS.Controllers
         {
             if (missionId <= 0)
                
-            return Ok(new { success = false, massage = "Invalid missionId" });
+            return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
             var result = await _mangerServices.AcceptOrder(missionId);
 
@@ -85,7 +85,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> RejectOrder(int missionId)
         {
             if (missionId <= 0)
-               return Ok(new { success = false, massage = "Invalid missionId" });
+               return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
             var result = await _mangerServices.RejectOrder(missionId);
 
@@ -106,7 +106,7 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.GetJoinVolunteer(pageNumber, pageSize);
 
             if (result == null || !result.Any())
-              return Ok(new { success = false, massage = "No join volunteer requests found" });
+              return Ok(new { success = false, massage = "لا توجد طلبات انضمام للمتطوعين" });
 
             return Ok(new
             {
@@ -119,7 +119,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AcceptVolunteer(int volunteerId)
         {
             if (volunteerId <= 0)
-               return Ok(new { success = false, massage = "Invalid volunteerId" });
+               return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
             var result = await _mangerServices.AcceptVolunteer(volunteerId);
             if (result.Contains("not found"))
                return Ok(new { success = false, massage = "not found" });
@@ -134,7 +134,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> RejectVolunteer(int volunteerId , string  ReajectReason)
         {
             if (volunteerId <= 0)
-                return Ok(new { success = false, massage = "Invalid volunteerId" });
+                return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
             var result = await _mangerServices.RejectVolunteer(volunteerId , ReajectReason);
             if (result.Contains("not found"))
                 return Ok(new { success = false, massage = "not found" });
@@ -176,7 +176,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AcceptRequest(int requestType, int referenceId)
         {
             if (referenceId <= 0)
-               return Ok (new { success = false, message = "Invalid referenceId" });
+               return Ok (new { success = false, message = "برجاء التأكد من البيانات المدخلة" });
 
             var result = await _mangerServices.AcceptRequst(requestType, referenceId);
 
@@ -196,7 +196,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> RejectRequest(int requestType, int referenceId, string ReajectReason)
         {
             if (referenceId <= 0)
-               return Ok (new { success = false, message = "Invalid referenceId" });
+               return Ok (new { success = false, message = "برجاء التأكد من البيانات المدخلة" });
 
             var result = await _mangerServices.RejectRequst(requestType, referenceId , ReajectReason);
 

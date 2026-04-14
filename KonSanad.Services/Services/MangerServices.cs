@@ -68,7 +68,7 @@ namespace KonSanad.Services.Services
         public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId , DateTime Start , DateTime End)
         {
             if (Start >= End)
-                return "Invalid dates: Start date must be before end date.";
+                return "برجاء التأكد من تواريخ البدء والانتهاء";
             // 1️⃣ هات الـ HelpOrder
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
       .GetQueryable()
@@ -76,7 +76,7 @@ namespace KonSanad.Services.Services
       .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
             if (helpOrder == null)
-                return "HelpOrder not found";
+                return "الطلب غير موجود";
             var he = await _unitOfWork.Repository<Mission, int>()
                .GetQueryable()
                .Include(m => m.HelpOrder)
@@ -85,7 +85,7 @@ namespace KonSanad.Services.Services
                    .ThenInclude(h => h.HelpOrderItems)
                .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
            if (he != null)
-                return "This HelpOrder Is Aready Assigned To Another Volunteer";
+                return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
 
 
             // 2️⃣ Create Mission
@@ -142,7 +142,7 @@ namespace KonSanad.Services.Services
                 });
             }
 
-            return "Volunteer assigned successfully";
+            return "تم إسناد المهمة بنجاح";
         }
 
         //Get HelpOrder 
@@ -220,14 +220,14 @@ namespace KonSanad.Services.Services
                .FirstOrDefaultAsync(m => m.Id == missionId);
 
             if (mission == null)
-                return "Mission not found";
+                return "المهمة غير موجودة";
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
                 .FirstOrDefaultAsync(mv => mv.MissionId == missionId);
 
             if (vm == null)
-                return "Volunteer mission not found";
+                return "المهمة التطوعية غير موجودة";
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
@@ -277,14 +277,14 @@ namespace KonSanad.Services.Services
                 .FirstOrDefaultAsync(m => m.Id == missionId);
 
             if (mission == null)
-                return "Mission not found";
+                return "المهمة غير موجودة";
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
                 .FirstOrDefaultAsync(mv => mv.MissionId == missionId);
 
             if (vm == null)
-                return "Volunteer mission not found";
+                return "المهمة التطوعية غير موجودة";
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
@@ -393,7 +393,7 @@ namespace KonSanad.Services.Services
                  .GetQueryable()
                  .FirstOrDefault(v => v.Id == VolId);
             if (volunteer == null)
-                return "Volunteer not found";
+                return "المتطوع غير موجود";
             volunteer.Status = RequestedStatus.Approved;
             volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             _unitOfWork.Repository<Volunteer, int>().Update(volunteer);
@@ -411,7 +411,7 @@ namespace KonSanad.Services.Services
                 });
             }
 
-            return "Volunteer accepted successfully";
+            return "تم قبول طلب التطوع بنجاح";
         }
 
         public async Task<string> RejectVolunteer(int VolId , string Reason)
@@ -420,7 +420,7 @@ namespace KonSanad.Services.Services
                  .GetQueryable()
                  .FirstOrDefault(v => v.Id == VolId);
             if (volunteer == null)
-                return "Volunteer not found";
+                return "المتطوع غير موجود";
             volunteer.Status = RequestedStatus.Rejected;
             volunteer.ReajectReason = Reason;
             volunteer.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
@@ -439,7 +439,7 @@ namespace KonSanad.Services.Services
                 });
             }
 
-            return "Volunteer rejected successfully";
+            return "تم رفض طلب التطوع ";
 
         }
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ]
@@ -519,7 +519,7 @@ namespace KonSanad.Services.Services
                     .FirstOrDefaultAsync(c => c.Id == referenceId);
 
                 if (campaignRequest == null)
-                    return "Campaign request not found";
+                    return "طلب الحملة غير موجود";
 
                 campaignRequest.Status = RequestedStatus.Approved;
 
@@ -537,7 +537,7 @@ namespace KonSanad.Services.Services
                     });
                 }
 
-                return "Campaign request accepted successfully";
+                return "تم قبول طلب الحملة بنجاح";
             }
 
             // 🔹 Mission Request
@@ -551,11 +551,11 @@ namespace KonSanad.Services.Services
                     .FirstOrDefaultAsync(mv => mv.Id == referenceId);
 
                 if (missionRequest == null)
-                    return "Mission request not found";
+                    return "طلب المهمة غير موجود";
 
                 if (missionRequest.Mission.MissionStatus == MissionStatus.Assigend)
                 {                  
-                    return "This Mission Is Aready Approved From Another Volunteer";
+                    return "تم قبول هذه المهمة بالفعل من قبل متطوع آخر";
                 }
 
 
@@ -583,10 +583,10 @@ namespace KonSanad.Services.Services
                     });
                 }
 
-                return "Mission request accepted successfully";
+                return "تم قبول طلب المهمة بنجاح";
             }
 
-            return "Invalid request type";
+            return "نوع الطلب غير صالح";
         }
 
         public async Task<string> RejectRequst(int requstType, int referenceId , string Reason)
@@ -601,12 +601,11 @@ namespace KonSanad.Services.Services
                     .FirstOrDefaultAsync(c => c.Id == referenceId);
 
                 if (campaignRequest == null)
-                    return "Campaign request not found";
+                    return "طلب الحملة غير موجود";
 
                 // ✅ منع التكرار
                 if (campaignRequest.Status != RequestedStatus.Pending)
-                    return "Request already processed";
-
+                    return "تم معالجة الطلب بالفعل";
                 campaignRequest.Status = RequestedStatus.Rejected;
                 campaignRequest.ReajectReason = Reason;
 
@@ -624,7 +623,7 @@ namespace KonSanad.Services.Services
                     });
                 }
 
-                return "Campaign request rejected successfully";
+                return "تم رفض طلب الحملة ";
             }
 
             // 🔹 Mission Request
@@ -637,12 +636,11 @@ namespace KonSanad.Services.Services
                     .FirstOrDefaultAsync(mv => mv.Id == referenceId);
 
                 if (missionRequest == null)
-                    return "Mission request not found";
+                    return "طلب المهمة غير موجود";
 
                 // ✅ منع التكرار
                 if (missionRequest.MissionStatus != VolunteerMissionStatus.InReview)
-                    return "Request already processed";
-
+                    return "تم معالجة الطلب بالفعل";
                 // ✅ تحديث حالة المتطوع
                 missionRequest.MissionStatus = VolunteerMissionStatus.Rejected;
 
@@ -666,10 +664,10 @@ namespace KonSanad.Services.Services
                     });
                 }
 
-                return "Mission request rejected successfully";
+                return "تم رفض طلب المهمة بنجاح";
             }
 
-            return "Invalid request type";
+            return "نوع الطلب غير صالح";
         }
 
         public async Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
