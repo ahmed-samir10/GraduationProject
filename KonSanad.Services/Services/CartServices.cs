@@ -73,34 +73,32 @@ namespace KonSanad.Services.Services
                 // جلب المنتج من الداتا بيز
                 var product = await _context.OrderItems
                     .FirstOrDefaultAsync(p => p.Id == data.ProductId);
+
                 if(product == null)
                     return " طلب غير موجود";
-                if (data.QuantityRequested > product.Quantity)
-                    return "  كميه غير صحيحه";
+                //if (data.QuantityRequested > product.Quantity)
+                //    return "  كميه غير صحيحه";
                   cart.Items = cart.Items ?? new List<CartItemDto>();
                 var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == product.Id);
 
                 if (existingItem != null)
                 {
-                    // المنتج موجود → زود الكمية
-                    if (existingItem.Quantity + data.QuantityRequested > product.Quantity)
-                        return "الكمية المطلوبة أكبر من المتاح";
-
                     existingItem.Quantity += data.QuantityRequested;
                 }
-
-
-                else {  cart.Items.Add(new CartItemDto
+                else
                 {
-                    ProductId = product.Id,
-                    Quantity = data.QuantityRequested,
-                    imagUrl = product.ImageUrl,
-                    ProductName = product.CustomSupplyName,
-                    Category = product.Category,
-                    Type = "beneficiary",
-                    Reason = data.Reason
-                });}
-               
+                    cart.Items.Add(new CartItemDto
+                    {
+                        ProductId = product.Id,
+                        Quantity = data.QuantityRequested,
+                        imagUrl = product.ImageUrl,
+                        ProductName = product.CustomSupplyName,
+                        Category = product.Category,
+                        Type = "beneficiary",
+                        Reason = data.Reason
+                    });
+                }
+
             }
             else if (role == "donor")
             {
@@ -254,10 +252,17 @@ namespace KonSanad.Services.Services
             {
                 var product = await _context.OrderItems
                        .FirstOrDefaultAsync(p => p.Id == productId);
+
                 if (product == null)
                     return "منتج غير موجود";
-                if (quantity > product.Quantity)
-                    return "خطا في الكميه";
+
+                // This Removed because we want to allow beneficiaries
+                // to request more than the available quantity,
+                // as it might be fulfilled by multiple donors or partial donations.
+
+                //if (quantity > product.Quantity)
+                //    return "خطا في الكميه";
+
                 item.Quantity = quantity;
 
                 await SaveCart(userId, role, cart);

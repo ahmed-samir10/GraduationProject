@@ -24,4 +24,6 @@ public interface IVolunteerService
       IFormFile? newFile,
       string? notes = null);
     Task<string> DeleteMissionReportAsync(int volunteerId, int missionId);
+
+    Task<string> RejectMissionAssignmentAsync(int volunteerId, int missionId, string rejectReason);
 }

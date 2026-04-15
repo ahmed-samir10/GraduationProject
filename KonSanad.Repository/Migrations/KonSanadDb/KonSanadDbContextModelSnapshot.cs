@@ -356,6 +356,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ResultMission")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");

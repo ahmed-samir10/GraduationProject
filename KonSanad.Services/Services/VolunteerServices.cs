@@ -536,7 +536,34 @@ namespace KonSanad.Services.Services
             return $" تم الحذف ";
         }
 
+        public async Task<string> RejectMissionAssignmentAsync(int volunteerId, int missionId, string rejectReason)
+        {
+            if (string.IsNullOrWhiteSpace(rejectReason))
+                return "سبب الرفض مطلوب";
 
+            var missionVolunteer = await _unitOfWork
+                .Repository<MissionVolunteers, int>()
+                .FirstOrDefaultAsync(mv => mv.VolunteerId == volunteerId
+                                        && mv.MissionId == missionId);
+
+            if (missionVolunteer == null)
+                return "المهمة غير موجودة لهذا المتطوع";
+
+            if (missionVolunteer.MissionStatus == VolunteerMissionStatus.Completed)
+                return "لا يمكن رفض مهمة مكتملة";
+
+            if (missionVolunteer.MissionStatus == VolunteerMissionStatus.Rejected)
+                return "تم رفض هذه المهمة بالفعل";
+
+            missionVolunteer.MissionStatus = VolunteerMissionStatus.Rejected;
+            missionVolunteer.RejectReason = rejectReason;
+            missionVolunteer.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<MissionVolunteers, int>().Update(missionVolunteer);
+            await _unitOfWork.Complete();
+
+            return "تم رفض المهمة بنجاح";
+        }
 
 
     }
