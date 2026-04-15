@@ -3,6 +3,8 @@ using KonSanad.APIS.DTOs;
 using KonSanad.Core.Dtos;
 using KonSanad.Core.Dtos.KonSanad.APIS.DTOs;
 using KonSanad.Core.Entities; // ← هنا Donor و Beneficiary و Volunteer
+using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
 using KonSanad.Core.Entity.Identity;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
@@ -23,7 +25,8 @@ namespace KonSanad.APIS.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IMapper _mapper;
-        private readonly IUnitOfWork _unitOfWork; // مهم جدًا عشان نضيف Donor/Beneficiary
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService; // مهم جدًا عشان نضيف Donor/Beneficiary
 
         public AccountController(
             UserManager<AppUser> userManager,
@@ -31,7 +34,8 @@ namespace KonSanad.APIS.Controllers
             ITokenService tokenService,
             SignInManager<AppUser> signInManager,
             IMapper mapper,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -39,6 +43,7 @@ namespace KonSanad.APIS.Controllers
             _signInManager = signInManager;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         [HttpPost("login")]
@@ -179,6 +184,14 @@ namespace KonSanad.APIS.Controllers
                         NationalId = registerDto.NationalId ?? "غير محدد" // مهم
                     };
                     await _unitOfWork.Repository<Volunteer, int>().AddAsync(volunteer);
+                    await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                    {
+                        Type = NotificationType.MissionRequestSubmitted,
+                        Title = "طلب انضام جديد",
+                        Message = $"طلب انضام جديد",
+                        EntityType = nameof(MissionVolunteers),
+                       // EntityId = (int)user.Id
+                    });
                     break;
             }
 
