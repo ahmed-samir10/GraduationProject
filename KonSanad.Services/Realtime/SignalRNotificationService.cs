@@ -171,7 +171,7 @@ namespace KonSanad.Services.Realtime
                 var notification = JsonSerializer.Deserialize<NotificationMessageDto>(values[i]!);
                 if (notification?.Id != notificationId) continue;
 
-                notification.IsRead = true;
+                notification.isRead = true;
                 var updated = JsonSerializer.Serialize(notification);
                 await _redis.ListSetByIndexAsync(key, i, updated);
                 break;

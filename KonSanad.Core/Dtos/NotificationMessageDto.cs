@@ -13,6 +13,6 @@ namespace KonSanad.Core.Dtos
         public string? RecipientRole { get; set; }
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public Dictionary<string, string>? Data { get; set; }
-        public bool IsRead { get; set; } = false;
+        public bool isRead { get; set; } = false;
     }
 }
