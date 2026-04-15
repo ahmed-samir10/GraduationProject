@@ -369,17 +369,25 @@ namespace KonSanad.Services.Services
             return report;
         }
 
-        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize)
+        public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize, RequestedStatus? status) // ✅ UPDATED: استقبلنا status
         {
-            var volunteers = await _unitOfWork.Repository<Volunteer, int>()
+            var query = _unitOfWork.Repository<Volunteer, int>()
                 .GetQueryable()
-                .Where(v => !v.IsDeleted)
-                 .Skip((pageNumber - 1) * pageSize)
-                 .Take(pageSize)// pending + مش محذوف
+                .Where(v => !v.IsDeleted); // existing condition
+
+            // ✅ NEW: فلترة على الـ status لو المستخدم بعت قيمة
+            if (status.HasValue)
+            {
+                query = query.Where(v => v.Status == status.Value);
+            }
+            //-------------------------------------------------------
+            var volunteers = await query // ✅ UPDATED: بقينا نشتغل على query بدل ما كنا شغالين مباشرة
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(v => new GetJoinVolunteerDto
                 {
                     Id = v.Id,
-                    Status =(RequestedStatus)v.Status,
+                    Status = (RequestedStatus)v.Status,
                     Email = v.Email,
                     JoinDate = v.CreatedAt,
                     Name = v.FullName,
