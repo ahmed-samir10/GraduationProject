@@ -12,7 +12,11 @@ namespace KonSanad.Core.IRepositery
     {
         Task<string> MakeManagerAsync(int volunteerId);
             Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize);
-        Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync();
+        Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
+         string? search = null,
+         RequestedStatus? status = null,
+         int pageNumber = 1,
+         int pageSize = 8);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId);
         Task <string> AcceptOrder(int orderId);
@@ -23,16 +27,29 @@ namespace KonSanad.Core.IRepositery
 
         Task<string> AcceptRequst(int Requsttype , int referenceId);
         Task<string> RejectRequst(int Requsttype, int referenceId, string Reason);
-     
+
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
-        Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(int pageNumber, int pageSize);
+        // في IMangerServices
+        Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(
+            int pageNumber,
+            int pageSize,
+            string? search = null,                      // سيرش في كل حقول الـ DTO
+            RefType? requestType = null,                // فيلتر 1: حملة أو مهمة
+            VolunteerMissionStatus? missionStatus = null); // فيلتر 2: حالة الطلب
         Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
     int referenceId, int type);
 
-        Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(int pageNumber, int pageSize);
+        Task<IEnumerable<GetAllDonationDto>> GetDonationAsync(
+      int pageNumber,
+      int pageSize,
+      string? search = null,           // سيرش في حقول الـ DTO
+      DonationCategory? category = null, // فيلتر بنوع التبرع
+      RequestedStatus? status = null); // فيلتر بالحالة
 
         Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
         
+
+
 
         Task<string> AcceptDonation(int DonationOrderId);
 

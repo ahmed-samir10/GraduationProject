@@ -26,9 +26,13 @@ namespace KonSanad.APIS.Controllers
 
         //---------------------------------------------------------------------------------------
         [HttpGet("AllVolunteer")]
-        public async Task<IActionResult> GetVolunteers()
+        public async Task<IActionResult> GetVolunteers(
+     string? search = null,          // اسم المتطوع أو موقعه أو مهارته
+     RequestedStatus? status = null, // حالة الطلب (Rejected/Pending/Approved) - لو null هيجيب الكل
+     int pageNumber = 1,             // رقم الصفحة
+     int pageSize = 8)               // عدد العناصر في الصفحة
         {
-            var result = await _mangerServices.GetVolunteerAsync();
+            var result = await _mangerServices.GetVolunteerAsync(search, status, pageNumber, pageSize);
             return Ok(new { success = true, data = result });
         }
         //---------------------------------------------------------------------------------------
@@ -144,16 +148,18 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
-
         [HttpGet("volunteer-requests")]
-        public async Task<IActionResult> GetAllVolunteerRequests(int pageNumber = 1, int pageSize = 8)
+        public async Task<IActionResult> GetAllVolunteerRequests(
+            int pageNumber = 1,
+            int pageSize = 8,
+            string? search = null,                          // سيرش في كل حقول الـ DTO
+            RefType? requestType = null,                    // فيلتر 1: Campaign=1 or Mission=2
+            VolunteerMissionStatus? missionStatus = null)   // فيلتر 2: حالة الطلب من الـ Enum
         {
-            var result = await _mangerServices.GetAllVolunteerRequestsAsync(pageNumber, pageSize);
-          return Ok(new
-            {
-                success = true,
-                data = result
-            });
+            var result = await _mangerServices.GetAllVolunteerRequestsAsync(
+                pageNumber, pageSize, search, requestType, missionStatus);
+
+            return Ok(new { success = true, data = result });
         }
         [HttpGet("{referenceId}/details")]
         public async Task<IActionResult> GetRequestDetails(
@@ -171,6 +177,8 @@ namespace KonSanad.APIS.Controllers
         }
 
         //---------------------------------------------------------------------------------------
+
+
         // ✅ Accept Request
         [HttpPost("accept-request")]
         public async Task<IActionResult> AcceptRequest(int requestType, int referenceId)
@@ -213,16 +221,17 @@ namespace KonSanad.APIS.Controllers
 
         // GET: api/Donation
         [HttpGet("Donations")]
-        public async Task<IActionResult> GetAllDonations(int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> GetAllDonations(
+      int pageNumber = 1,
+      int pageSize = 10,
+      string? search = null,                    // سيرش في: اسم المتبرع، اسم المنتج، اسم الحملة، المبلغ
+      DonationCategory? category = null,        // فيلتر 1: Cash=1 أو Item=2
+      RequestedStatus? status = null)           // فيلتر 2: Rejected=1, Pending=2, Approved=3
         {
-            var result = await _mangerServices.GetDonationAsync(pageNumber, pageSize);
+            var result = await _mangerServices.GetDonationAsync(
+                pageNumber, pageSize, search, category, status);
 
-            return Ok(new
-            {
-                success = true,
-             
-                data = result
-            });
+            return Ok(new { success = true, data = result });
         }
         //-------------------------------------------------------------------------------------------
         [HttpGet("Donation-Details/{id}")]

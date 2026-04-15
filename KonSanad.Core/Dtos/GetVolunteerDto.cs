@@ -15,6 +15,8 @@ namespace KonSanad.Core.Dtos
         public string Skills { get; set; } = string.Empty;
          public string Availability { get; set; } = string.Empty;
 
+        public RequestedStatus Status { get; set; } // اتغيرت من int لـ Enum عشان الريسبونس يبعت "Approved" بدل 3
+
     }
     public class GetJoinVolunteerDto
     {
