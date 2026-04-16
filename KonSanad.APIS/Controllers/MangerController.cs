@@ -105,12 +105,15 @@ namespace KonSanad.APIS.Controllers
         //---------------------------------------------------------------------------------------
 
         [HttpGet("join-volunteers")]
-        public async Task<IActionResult> GetJoinVolunteers(int pageNumber = 1, int pageSize = 8)
+        public async Task<IActionResult> GetJoinVolunteers(
+    int pageNumber = 1,
+    int pageSize = 8,
+    RequestedStatus? status = null) // ✅ NEW: إضافة فلتر اختياري للـ status
         {
-            var result = await _mangerServices.GetJoinVolunteer(pageNumber, pageSize);
+            var result = await _mangerServices.GetJoinVolunteer(pageNumber, pageSize, status); // ✅ UPDATED: بعتنا الـ status للـ service
 
             if (result == null || !result.Any())
-              return Ok(new { success = false, massage = "لا توجد طلبات انضمام للمتطوعين" });
+              return Ok(new { success = false, massage = "No join volunteer requests found" });
 
             return Ok(new
             {

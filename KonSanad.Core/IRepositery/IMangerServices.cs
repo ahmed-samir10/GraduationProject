@@ -21,7 +21,10 @@ namespace KonSanad.Core.IRepositery
         Task<ViewReportDto> ViewReport(int HelpOrderId);
         Task <string> AcceptOrder(int orderId);
          Task<string> RejectOrder(int orderId);
-        Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize);
+        Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(
+     int pageNumber,
+     int pageSize,
+     RequestedStatus? status); // ✅ UPDATED: إضافة parameter للفلترة
         Task<string> AcceptVolunteer(int orderId);
         Task<string> RejectVolunteer(int Id, string ReajectReason);
 
