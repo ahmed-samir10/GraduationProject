@@ -258,6 +258,49 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.ToTable("CartItems");
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.HelpOrderFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HelpOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HelpOrderId");
+
+                    b.ToTable("HelpOrderFiles");
+                });
+
             modelBuilder.Entity("KonSanad.Core.Entity.Identity.AppUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1435,6 +1478,17 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Navigation("supply");
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.HelpOrderFile", b =>
+                {
+                    b.HasOne("KonSanad.Repository.Entities.HelpOrder", "HelpOrder")
+                        .WithMany("HelpOrderFiles")
+                        .HasForeignKey("HelpOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HelpOrder");
+                });
+
             modelBuilder.Entity("KonSanad.Core.Entity.MissionVolunteers", b =>
                 {
                     b.HasOne("KonSanad.Repository.Entities.Mission", "Mission")
@@ -1777,6 +1831,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
             modelBuilder.Entity("KonSanad.Repository.Entities.HelpOrder", b =>
                 {
+                    b.Navigation("HelpOrderFiles");
+
                     b.Navigation("HelpOrderItems");
                 });
 

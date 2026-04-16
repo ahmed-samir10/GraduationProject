@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using KonSanad.Core.Entity.Enums;
+﻿using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Services.Services
 {
@@ -18,8 +13,10 @@ namespace KonSanad.Services.Services
             _notificationService = notificationService;
         }
 
+
         public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
         {
+            // ✅ Create the HelpOrder with the beneficiary's user ID and set its status to Pending
             var helpOrder = new HelpOrder
             {
                 BeneficiaryId = userId,
@@ -27,39 +24,45 @@ namespace KonSanad.Services.Services
                 HelpOrderStatus = RequestedStatus.Pending
             };
 
+            // ✅ Add HelpOrderItems for each item in the cart that is of type "beneficiary"
             foreach (var item in cart.Items.Where(x => x.Type == "beneficiary"))
             {
                 helpOrder.HelpOrderItems.Add(new HelpOrderItem
                 {
                     SupplyId = item.ProductId.Value,
-                    QuantityRequested = (int) item.Quantity,
+                    QuantityRequested = (int)item.Quantity,
                     reason = item.Reason,
                     ImageUrl = item.imagUrl,
-                    Title =item.ProductName
-                    
+                    Title = item.ProductName
                 });
             }
+
+            // ✅ Save the HelpOrder to the database to generate its ID
             _context.HelpOrders.Add(helpOrder);
             await _context.SaveChangesAsync();
-            var beneficiary = await _context.Beneficiaries.FindAsync(userId);
-       /*     var Mission = new Mission
+
+
+            // ✅ Save supporting files from ALL beneficiary items
+            foreach (var item in cart.Items.Where(x => x.Type == "beneficiary"))
             {
-                CreatedAt = DateTime.Now,
-                HelpOrderId = helpOrder.Id,
-                Title = beneficiary.FullName,
-                Description =" زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
-                Address = beneficiary.Address,
-                PhoneNumber = beneficiary.Phone,
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(7),
-                MissionStatus = MissionStatus.New,
-                Status = RequestedStatus.Pending,
-                ManagerId = 1
-            };
+                if (item.SupportingFileUrls != null && item.SupportingFileUrls.Any())
+                {
+                    foreach (var fileUrl in item.SupportingFileUrls)
+                    {
+                        _context.Set<HelpOrderFile>().Add(new HelpOrderFile
+                        {
+                            HelpOrderId = helpOrder.Id,
+                            FileUrl = fileUrl,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+                }
+            }
 
-            _context.Missions.Add(Mission);
-            await _context.SaveChangesAsync();*/
+            // ✅ Save all changes to the database
+            await _context.SaveChangesAsync();
 
+            // notifications...
             await _notificationService.NotifyManagersAsync(new NotificationMessageDto
             {
                 Type = NotificationType.HelpRequestSubmitted,

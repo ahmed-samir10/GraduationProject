@@ -1,4 +1,5 @@
 ﻿// KonSanad.Repository\Entities\HelpOrder.cs
+using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,7 +8,7 @@ namespace KonSanad.Repository.Entities
     [Table("HelpOrders")]
     public class HelpOrder : BaseEntity<int>
     {
-      
+
 
         // The status of the help order (Pending, Rejected, Approved)
         public RequestedStatus HelpOrderStatus { get; set; } = RequestedStatus.Pending;
@@ -15,9 +16,9 @@ namespace KonSanad.Repository.Entities
 
         // This My Relations Between ( Beneficiary And HelpOrder )
         public int BeneficiaryId { get; set; }
-       
+
         [ForeignKey(nameof(BeneficiaryId))]
-        public Beneficiary? Beneficiary { get; set; } 
+        public Beneficiary? Beneficiary { get; set; }
 
 
         // This My Relations Between ( Manager And HelpOrder )
@@ -28,5 +29,9 @@ namespace KonSanad.Repository.Entities
 
         // This My Relations Between ( HelpOrder And HelpOrderItems )
         public ICollection<HelpOrderItem> HelpOrderItems { get; set; } = new List<HelpOrderItem>();
+
+
+        // this My Relations Between ( HelpOrder And HelpOrderFiles )
+        public ICollection<HelpOrderFile> HelpOrderFiles { get; set; } = new List<HelpOrderFile>();
     }
 }

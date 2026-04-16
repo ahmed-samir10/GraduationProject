@@ -18,5 +18,9 @@ namespace KonSanad.Core.Dtos
         public string  Description { get; set; }
         public string? ResultMission { get; set; }
         public string? Notes { get; set; }
+
+
+        // ✅ New — list of supporting file URLs for the beneficiary's mission submission
+        public List<string> BeneficiaryFiles { get; set; } = new List<string>();
     }
 }

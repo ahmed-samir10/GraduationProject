@@ -66,6 +66,7 @@ namespace KonSanad.Services.Services
 
             if (role == "beneficiary")
             {
+                // التحقق من نوع الداتا
                 var data = dto as AddToCartDto;
                 if (data == null)
                     return "dto must be AddToCartDto for beneficiary";
@@ -76,8 +77,7 @@ namespace KonSanad.Services.Services
 
                 if(product == null)
                     return " طلب غير موجود";
-                //if (data.QuantityRequested > product.Quantity)
-                //    return "  كميه غير صحيحه";
+                
                   cart.Items = cart.Items ?? new List<CartItemDto>();
                 var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == product.Id);
 
@@ -87,6 +87,17 @@ namespace KonSanad.Services.Services
                 }
                 else
                 {
+                    var fileUrls = new List<string>();
+
+                    if (data.SupportingFiles != null && data.SupportingFiles.Any())
+                    {
+                        foreach (var file in data.SupportingFiles)
+                        {
+                            var url = await _fileService.SaveFileAsync(file, "uploads");
+                            fileUrls.Add(url);
+                        }
+                    }
+
                     cart.Items.Add(new CartItemDto
                     {
                         ProductId = product.Id,
@@ -95,11 +106,13 @@ namespace KonSanad.Services.Services
                         ProductName = product.CustomSupplyName,
                         Category = product.Category,
                         Type = "beneficiary",
-                        Reason = data.Reason
+                        Reason = data.Reason,
+                        SupportingFileUrls = fileUrls
                     });
                 }
 
             }
+
             else if (role == "donor")
             {
                

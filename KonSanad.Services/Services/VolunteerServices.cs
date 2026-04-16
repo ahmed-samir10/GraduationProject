@@ -133,15 +133,20 @@ namespace KonSanad.Services.Services
 
         public async Task<IEnumerable<VolunteerMissionDto>> GetMissionsByVolunteerId(int volunteerId)
         {
+            var volunteer = await _unitOfWork.Repository<Volunteer, int>()
+                .FirstOrDefaultAsync(v => v.Id == volunteerId);
 
-            var volunteer = await _unitOfWork.Repository<Volunteer, int>().FirstOrDefaultAsync(v => v.Id == volunteerId);
-            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status==RequestedStatus.Pending)
+            if (volunteer.Status == RequestedStatus.Rejected || volunteer.Status == RequestedStatus.Pending)
                 throw new Exception("Volunteer request was pending");
+
             var missions = await _unitOfWork
                 .Repository<MissionVolunteers, int>()
                 .FindAllAsync(
                     predicate: vm => vm.VolunteerId == volunteerId,
-                    include: q => q.Include(vm => vm.Mission)
+                    include: q => q
+                        .Include(vm => vm.Mission)
+                            .ThenInclude(m => m.HelpOrder)
+                                .ThenInclude(h => h.HelpOrderFiles)  // ✅
                 );
 
             if (!missions.Any())
@@ -156,7 +161,12 @@ namespace KonSanad.Services.Services
                 CreatedAt = vm.CreatedAt,
                 Description = "مطلوب زياره ميدانيه",
                 ResultMission = vm.ResultMission,
-                Notes = vm.Notes
+                Notes = vm.Notes,
+
+                // ✅ Beneficiary files — only if HelpOrder and files exist
+                BeneficiaryFiles = vm.Mission.HelpOrder != null && vm.Mission.HelpOrder.HelpOrderFiles != null
+                    ? vm.Mission.HelpOrder.HelpOrderFiles.Select(f => f.FileUrl).ToList()
+                    : new List<string>()
             });
         }
         // ----------------------------------------------------------

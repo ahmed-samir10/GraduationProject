@@ -18,6 +18,9 @@ namespace KonSanad.Core.Dtos
         public string? Reason { get; set; }
 
         public Dictionary<string, string>? ExtraData { get; set; }
+
+        // beneficiary supporting files (stored as base64 or saved URLs)
+        public List<string>? SupportingFileUrls { get; set; }
     }
 
     public class CartResponseDto
