@@ -301,13 +301,15 @@ namespace KonSanad.Services.Services
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
+            var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
 
 
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
-        /*    var Suply = await _unitOfWork.Repository<Supply , int>()
-                .FirstOrDefaultAsync(s => s.Id == mission.HelpOrder.HelpOrderItems.First);
-*/
+           var Suply = await _unitOfWork.Repository<Supply , int>()
+                .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
+
+
             // ✅ Update help order
             mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
             mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
@@ -316,7 +318,7 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             mission.HelpOrder.Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrder نفسه
             mission.HelpOrder.UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث  
-
+            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault().QuantityRequested;
             // ✅ Update first item (لو موجود)
             var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
             if (item != null)
