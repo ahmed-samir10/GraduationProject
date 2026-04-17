@@ -305,7 +305,9 @@ namespace KonSanad.Services.Services
 
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
-
+        /*    var Suply = await _unitOfWork.Repository<Supply , int>()
+                .FirstOrDefaultAsync(s => s.Id == mission.HelpOrder.HelpOrderItems.First);
+*/
             // ✅ Update help order
             mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
             mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
