@@ -126,6 +126,18 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Repository<MissionVolunteers, int>().AddAsync(missionVolunteer);
 
             await _unitOfWork.Complete();
+            var VolReprot = new VolunteerReport
+            {
+                VolunteerId = volunteerId,
+              BenficieryID = helpOrder.Beneficiary.Id,
+              SupportFile = helpOrder.Beneficiary.SupportFile,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(VolReprot);
+
+            await _unitOfWork.Complete();
+
 
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);

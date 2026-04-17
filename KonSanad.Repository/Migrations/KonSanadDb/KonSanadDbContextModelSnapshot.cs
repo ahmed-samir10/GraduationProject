@@ -441,6 +441,54 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.ToTable("VolunteerMissions");
                 });
 
+            modelBuilder.Entity("KonSanad.Core.Entity.VolunteerReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BeneficiaryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BenficieryID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupportFile")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VolunteerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BeneficiaryId");
+
+                    b.HasIndex("VolunteerId");
+
+                    b.ToTable("volunteerReports");
+                });
+
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
                 {
                     b.Property<int>("Id")
@@ -497,6 +545,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("SupportFile")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1466,6 +1517,25 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .IsRequired();
 
                     b.Navigation("Mission");
+
+                    b.Navigation("Volunteer");
+                });
+
+            modelBuilder.Entity("KonSanad.Core.Entity.VolunteerReport", b =>
+                {
+                    b.HasOne("KonSanad.Repository.Entities.Beneficiary", "Beneficiary")
+                        .WithMany()
+                        .HasForeignKey("BeneficiaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KonSanad.Repository.Entities.Volunteer", "Volunteer")
+                        .WithMany()
+                        .HasForeignKey("VolunteerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Beneficiary");
 
                     b.Navigation("Volunteer");
                 });
