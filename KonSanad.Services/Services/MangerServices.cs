@@ -233,6 +233,9 @@ namespace KonSanad.Services.Services
 
             if (mission == null)
                 return "المهمة غير موجودة";
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+              .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -249,6 +252,7 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             mission.HelpOrder.Status = RequestedStatus.Rejected; // لو عندك حقل Status في HelpOrder نفسه
             mission.HelpOrder.UpdatedAt = DateTime.Now;
+            repo.SupportFile = vm.ResultMission;
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
 
@@ -287,6 +291,10 @@ namespace KonSanad.Services.Services
                 .Include(m => m.HelpOrder)
                     .ThenInclude(h => h.HelpOrderItems)
                 .FirstOrDefaultAsync(m => m.Id == missionId);
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+                .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+           
+
 
             if (mission == null)
                 return "المهمة غير موجودة";
@@ -300,10 +308,11 @@ namespace KonSanad.Services.Services
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
+            repo.SupportFile = vm.ResultMission;
 
 
-            // ✅ Update volunteer mission
-            vm.MissionStatus = VolunteerMissionStatus.Completed;
+           // ✅ Update volunteer mission
+           vm.MissionStatus = VolunteerMissionStatus.Completed;
 
             // ✅ Update help order
             mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
