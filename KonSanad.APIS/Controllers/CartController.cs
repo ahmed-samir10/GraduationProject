@@ -76,7 +76,8 @@ public class CartController : ControllerBase
     // =========================
     [HttpPost("Additems")]
     [Authorize(Roles = "Beneficiary")]
-    public async Task<IActionResult> AddItemToCart([FromBody] AddToCartDto dto)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> AddItemToCart([FromForm] AddToCartDto dto)
     {
         var user = await GetCurrentUser();
         if (user == null) return Unauthorized();
@@ -85,7 +86,7 @@ public class CartController : ControllerBase
 
         return Ok(new { success = true, data = result });
     }
-
+    
     // =========================
     // Add Donation Item
     // =========================

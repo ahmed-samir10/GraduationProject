@@ -35,6 +35,7 @@ namespace KonSanad.Repository.Data.Persistence
         // Help Orders
         public DbSet<HelpOrder> HelpOrders { get; set; }
         public DbSet<HelpOrderItem> HelpOrderItems { get; set; }
+        public DbSet<HelpOrderFile> HelpOrderFiles { get; set; }
 
         // MyInventory
         public DbSet<Supply> Supplies { get; set; }
@@ -53,6 +54,9 @@ namespace KonSanad.Repository.Data.Persistence
         public DbSet<Mission> Missions { get; set; }
 
         public DbSet<MissionVolunteers> MissionVolunteer { get; set; }
+
+
+        
 
         #endregion
 
@@ -102,8 +106,6 @@ namespace KonSanad.Repository.Data.Persistence
             }
         }
         #endregion
-
-        // Yousseif
 
     }
 }
