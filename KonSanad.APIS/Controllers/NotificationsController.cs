@@ -140,5 +140,25 @@ namespace KonSanad.APIS.Controllers
                 message = "Test notification sent to managers"
             });
         }
+        [Authorize]
+        [HttpPost("mark-as-read")]
+        public async Task<IActionResult> MarkAsRead([FromBody] MarkAsReadRequestDto request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { success = false, message = "User id not found in token" });
+
+            if (string.IsNullOrWhiteSpace(request?.NotificationId))
+                return BadRequest(new { success = false, message = "NotificationId is required" });
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(x => x.Value)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
+
+            await _notificationService.MarkAsReadAsync(userId, roles, request.NotificationId);
+
+            return Ok(new { success = true });
+        }
     }
 }

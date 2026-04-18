@@ -13,5 +13,6 @@ namespace KonSanad.Core.IRepositery
             IEnumerable<string> roles,
             int pageNumber = 1,
             int pageSize = 20);
+        Task MarkAsReadAsync(string appUserId, IEnumerable<string> roles, string notificationId);
     }
 }

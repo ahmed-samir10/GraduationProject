@@ -16,7 +16,9 @@ namespace KonSanad.Core.Dtos
         public DateTime CreatedAt { get; set; }
        
         public string  Description { get; set; }
+        public string SupportFile { get; set; }
         public string? ResultMission { get; set; }
+        public int? BeneficiaryId { get; set; }
         public string? Notes { get; set; }
     }
 }
