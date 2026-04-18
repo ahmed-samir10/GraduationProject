@@ -333,9 +333,13 @@ namespace KonSanad.Services.Services
             // ✅ جيب الـ report بعد التحقق
             var repo = await _unitOfWork.Repository<VolunteerReport, int>()
                 .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+            var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
 
-            if (repo == null)
-                return "تقرير المتطوع غير موجود";
+            var Suply = await _unitOfWork.Repository<Supply, int>()
+     .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
+            if (Suply == null)
+                return "لا يوجد عناصر في الطلب";
+
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
@@ -348,6 +352,7 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
             mission.HelpOrder.ManagerId = 1;
             mission.HelpOrder.Status = RequestedStatus.Approved;
+            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault().QuantityRequested;
             mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
 
             // ✅ Update first item لو موجود
