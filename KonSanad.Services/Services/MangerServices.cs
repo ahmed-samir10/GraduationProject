@@ -137,18 +137,28 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Repository<MissionVolunteers, int>().AddAsync(missionVolunteer);
 
             await _unitOfWork.Complete();
-            var VolReprot = new VolunteerReport
+            // ✅ أضفنا Status و IsDeleted لأنهم not null في الـ DB
+            // وكان بيفشل بصمت لأن الـ BaseEntity مش بيديهم قيمة default
+
+
+            //----------------------------------------------------------------------------------------
+            // ✅ جيب الـ Beneficiary object كامل قبل الـ Insert
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.Id == helpOrder.Beneficiary.Id);
+            var volunteerReport = new VolunteerReport
             {
                 VolunteerId = volunteerId,
-              BenficieryID = helpOrder.Beneficiary.Id,
-              SupportFile = helpOrder.Beneficiary.SupportFile,
+                BenficieryID = helpOrder.Beneficiary.Id,
+                SupportFile = helpOrder.Beneficiary.SupportFile,
+                Beneficiary = beneficiary, // ✅ ده اللي كان ناقص
+                Status = RequestedStatus.Pending,  // ✅ إضافة جديدة - كان بيـ fail لأنه not null في الـ DB
+                IsDeleted = false,                    // ✅ إضافة جديدة - نفس السبب
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(VolReprot);
-
+            await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(volunteerReport);
             await _unitOfWork.Complete();
-
+            //-------------------------------------------------------------------------------------------
 
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
