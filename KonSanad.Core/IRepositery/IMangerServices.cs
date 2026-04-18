@@ -62,12 +62,11 @@ namespace KonSanad.Core.IRepositery
 
         #region Filter HelpOrderId
         // الـ 2 Signatures الجديدة
-        Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync(
-            int pageNumber,
-            int pageSize);
+        Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync();
+            
 
         // ✅ رجّعنا GetHelpOrderWithItemsDto بدل IEnumerable
-        Task<GetHelpOrderWithItemsDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId); 
+        Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId); 
         #endregion
     }
 }

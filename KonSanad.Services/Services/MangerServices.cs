@@ -1211,9 +1211,7 @@ int referenceId, int type)
         // ============================================================
         // Endpoint 1 - كل الـ HelpOrders متجمعة بالـ HelpOrderId
         // ============================================================
-        public async Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync(
-            int pageNumber,
-            int pageSize)
+        public async Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync()
         {
             var result = await _unitOfWork.Repository<HelpOrder, int>()
                 .GetQueryable()
@@ -1221,8 +1219,7 @@ int referenceId, int type)
                 .Include(h => h.HelpOrderItems)
                 .Where(h => !h.IsDeleted)
                 .OrderByDescending(h => h.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+               
                 .Select(h => new GetHelpOrderGroupedDto
                 {
                     HelpOrderId = h.Id,
@@ -1241,7 +1238,7 @@ int referenceId, int type)
         // ============================================================
         // Endpoint 2 - كل الـ HelpOrderItems بتاع HelpOrder معين
         // ============================================================
-        public async Task<GetHelpOrderWithItemsDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId)
+        public async Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId)
         {
             // ✅ جيب الـ HelpOrder مع الـ Beneficiary والـ Items مع بعض في query واحدة
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
@@ -1255,33 +1252,25 @@ int referenceId, int type)
             if (helpOrder == null)
                 return null;
 
-            var dto = new GetHelpOrderWithItemsDto
+            var dto = new GetHelpOrderDto
             {
-                HelpOrderId = helpOrder.Id,
+                Id = helpOrder.Id,
                 UserName = helpOrder.Beneficiary.FullName,
+                Tilte = helpOrder.HelpOrderItems
+                                   .Select(i => i.Title)
+                                   .FirstOrDefault(),
                 PhoneNumber = helpOrder.Beneficiary.Phone,
                 Address = helpOrder.Beneficiary.Address,
                 HelpOrderStatus = helpOrder.HelpOrderStatus,
                 CreatedAt = helpOrder.CreatedAt,
-                TotalItems = helpOrder.HelpOrderItems.Count(i => !i.IsDeleted),
 
-                // ✅ لو في Items هيملى، لو مفيش هيبقى List فاضية
-                Items = helpOrder.HelpOrderItems
-                    .Where(i => !i.IsDeleted)
-                    .OrderByDescending(i => i.CreatedAt)
-                    .Select(i => new GetHelpOrderItemDto
-                    {
-                        ItemId = i.Id,
-                        HelpOrderId = i.HelpOrderId,
-                        SupplyId = i.SupplyId,
-                        Title = i.Title,
-                        Reason = i.reason,
-                        QuantityRequested = i.QuantityRequested,
-                        ImageUrl = i.ImageUrl,
-                        HelpOrderItemStatus = i.HelpOrderStatus,
-                        CreatedAt = i.CreatedAt
-                    })
-                    .ToList()
+                Reason = helpOrder.HelpOrderItems
+                                   .Select(i => i.reason)
+                                   .FirstOrDefault(),
+
+                Quantity = helpOrder.HelpOrderItems
+                                   .Select(i => i.QuantityRequested)
+                                   .FirstOrDefault()
             };
 
             return dto;
