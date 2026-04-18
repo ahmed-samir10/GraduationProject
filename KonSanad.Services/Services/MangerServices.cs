@@ -1,14 +1,15 @@
-﻿using KonSanad.Core.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entities;
 using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KonSanad.Services.Services
 {
@@ -1202,6 +1203,89 @@ int referenceId, int type)
 
 
 
+        #endregion
+
+
+        #region filter HelpOrderId
+
+        // ============================================================
+        // Endpoint 1 - كل الـ HelpOrders متجمعة بالـ HelpOrderId
+        // ============================================================
+        public async Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync(
+            int pageNumber,
+            int pageSize)
+        {
+            var result = await _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .Include(h => h.HelpOrderItems)
+                .Where(h => !h.IsDeleted)
+                .OrderByDescending(h => h.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(h => new GetHelpOrderGroupedDto
+                {
+                    HelpOrderId = h.Id,
+                    UserName = h.Beneficiary.FullName,
+                    PhoneNumber = h.Beneficiary.Phone,
+                    Address = h.Beneficiary.Address,
+                    HelpOrderStatus = h.HelpOrderStatus,
+                    CreatedAt = h.CreatedAt,
+                    TotalItems = h.HelpOrderItems.Count(i => !i.IsDeleted)
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        // ============================================================
+        // Endpoint 2 - كل الـ HelpOrderItems بتاع HelpOrder معين
+        // ============================================================
+        public async Task<GetHelpOrderWithItemsDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId)
+        {
+            // ✅ جيب الـ HelpOrder مع الـ Beneficiary والـ Items مع بعض في query واحدة
+            var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .Include(h => h.HelpOrderItems)
+                .Where(h => h.Id == helpOrderId && !h.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            // لو الـ HelpOrder مش موجود خالص
+            if (helpOrder == null)
+                return null;
+
+            var dto = new GetHelpOrderWithItemsDto
+            {
+                HelpOrderId = helpOrder.Id,
+                UserName = helpOrder.Beneficiary.FullName,
+                PhoneNumber = helpOrder.Beneficiary.Phone,
+                Address = helpOrder.Beneficiary.Address,
+                HelpOrderStatus = helpOrder.HelpOrderStatus,
+                CreatedAt = helpOrder.CreatedAt,
+                TotalItems = helpOrder.HelpOrderItems.Count(i => !i.IsDeleted),
+
+                // ✅ لو في Items هيملى، لو مفيش هيبقى List فاضية
+                Items = helpOrder.HelpOrderItems
+                    .Where(i => !i.IsDeleted)
+                    .OrderByDescending(i => i.CreatedAt)
+                    .Select(i => new GetHelpOrderItemDto
+                    {
+                        ItemId = i.Id,
+                        HelpOrderId = i.HelpOrderId,
+                        SupplyId = i.SupplyId,
+                        Title = i.Title,
+                        Reason = i.reason,
+                        QuantityRequested = i.QuantityRequested,
+                        ImageUrl = i.ImageUrl,
+                        HelpOrderItemStatus = i.HelpOrderStatus,
+                        CreatedAt = i.CreatedAt
+                    })
+                    .ToList()
+            };
+
+            return dto;
+        }
         #endregion
     }
 }
