@@ -97,10 +97,14 @@ namespace KonSanad.Services.Services
 
             if (alreadyAssigned)
                 return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
+            Mission mission = new Mission { };
 
             // 2️⃣ Create Mission
+
             var Created = await _unitOfWork.Repository<Mission , int> ().GetQueryable().AnyAsync(m => m.HelpOrderId == helpOrderId && m.PhoneNumber == helpOrder.Beneficiary.Phone);
-            var mission = new Mission
+           if (Created ==null)
+            {
+         mission = new Mission
             {
                 Title = helpOrder.Beneficiary.FullName,
                 Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
@@ -120,9 +124,12 @@ namespace KonSanad.Services.Services
 
                 CreatedAt = DateTime.UtcNow
             };
-
             await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
-            await _unitOfWork.Complete(); // مهم عشان تاخد Id
+            await _unitOfWork.Complete();
+            }
+
+           
+ // مهم عشان تاخد Id
 
             // 3️⃣ Create MissionVolunteer
             var missionVolunteer = new MissionVolunteers
@@ -389,6 +396,7 @@ namespace KonSanad.Services.Services
 .GetQueryable()
 .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
 .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
                 .Include(m => m.HelpOrder)
@@ -399,7 +407,7 @@ namespace KonSanad.Services.Services
 
 
             if (mission == null)
-                return null;
+                return  null;
 
             var report = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
