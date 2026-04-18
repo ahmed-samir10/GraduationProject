@@ -77,18 +77,28 @@ namespace KonSanad.Services.Services
 
             if (helpOrder == null)
                 return "الطلب غير موجود";
-            var he = await _unitOfWork.Repository<Mission, int>()
-               .GetQueryable()
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.Beneficiary)
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.HelpOrderItems)
-               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
-           if (he != null)
+            /*   var he = await _unitOfWork.Repository<Mission, int>()
+                  .GetQueryable()
+                  .Include(m => m.HelpOrder)
+                      .ThenInclude(h => h.Beneficiary)
+                  .Include(m => m.HelpOrder)
+                      .ThenInclude(h => h.HelpOrderItems)
+                  .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
+              if (he != null)
+                   return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";*/
+
+            // ✅ أبسط وأصح
+            var alreadyAssigned = await _unitOfWork.Repository<MissionVolunteers, int>()
+                .GetQueryable()
+                .Include(h=> h.Mission)
+                .ThenInclude(m => m.HelpOrder)
+                .AnyAsync(m => m.Mission.HelpOrderId == helpOrderId && m.Mission.HelpOrder.Beneficiary.Id == helpOrder.Beneficiary.Id && m.Mission.HelpOrder.Beneficiary.NationalId == helpOrder.Beneficiary.NationalId);
+
+            if (alreadyAssigned)
                 return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
 
-
             // 2️⃣ Create Mission
+            var Created = await _unitOfWork.Repository<Mission , int> ().GetQueryable().AnyAsync(m => m.HelpOrderId == helpOrderId && m.PhoneNumber == helpOrder.Beneficiary.Phone);
             var mission = new Mission
             {
                 Title = helpOrder.Beneficiary.FullName,

@@ -453,7 +453,8 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasColumnType("int");
 
                     b.Property<int>("BenficieryID")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("BeneficiaryId");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -471,7 +472,6 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .HasColumnType("int");
 
                     b.Property<string>("SupportFile")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -486,7 +486,11 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("VolunteerId");
 
-                    b.ToTable("volunteerReports");
+                    b.ToTable("volunteerReports", t =>
+                        {
+                            t.Property("BeneficiaryId")
+                                .HasColumnName("BeneficiaryId1");
+                        });
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
