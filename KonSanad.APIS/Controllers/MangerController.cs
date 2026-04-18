@@ -1,7 +1,8 @@
-﻿using KonSanad.Core.Entity.Enums;
+﻿using System.Collections.Generic;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entity.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -283,5 +284,92 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, message = result });
         }
+
+        //-------------------------------------------------------------------------------------------------
+
+        #region المستودع
+
+        // ============================================================
+        // GET /api/Manger/supplies
+        // ============================================================
+        [HttpGet("supplies")]
+        public async Task<IActionResult> GetSupplies(
+            int pageNumber = 1,
+            int pageSize = 8,
+            string? title = null,
+            string? search = null)
+        {
+            var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, title, search);
+            return Ok(new { success = true, data = result });
+        }
+
+        // ============================================================
+        // POST /api/Manger/supplies
+        // ============================================================
+        [HttpPost("Add-supplies")]
+        public async Task<IActionResult> CreateSupply([FromForm] CreateSupplyDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
+                return Ok(new { success = false, message = "بيانات غير صحيحة" });
+
+            // ✅ لو في صورة احفظها وحط الـ URL في الـ DTO
+            if (dto.Image != null && dto.Image.Length > 0)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Image.FileName)}";
+                var savePath = Path.Combine("wwwroot", "uploads", fileName);
+
+                Directory.CreateDirectory(Path.Combine("wwwroot", "uploads")); // عشان لو المجلد مش موجود
+
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(stream);
+                }
+
+                // ✅ بنحط الـ URL في الـ DTO عشان الـ Service يشوفه
+                dto.ImageUrl = $"/uploads/{fileName}";
+            }
+
+            var result = await _mangerServices.CreateSupplyAsync(dto);
+
+            if (result != "تم إضافة الصنف بنجاح")
+                return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+
+        // ============================================================
+        // PUT /api/Manger/supplies/{id}
+        // ============================================================
+        [HttpPut("Update-supplies/{id}")]
+        public async Task<IActionResult> UpdateSupply(int id, [FromForm] UpdateSupplyDto dto)
+        {
+            if (id <= 0)
+                return Ok(new { success = false, message = "Id غير صحيح" });
+
+            // ✅ لو في صورة جديدة احفظها وحط الـ URL في الـ DTO
+            if (dto.Image != null && dto.Image.Length > 0)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Image.FileName)}";
+                var savePath = Path.Combine("wwwroot", "uploads", fileName);
+
+                Directory.CreateDirectory(Path.Combine("wwwroot", "uploads")); // عشان لو المجلد مش موجود
+
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(stream);
+                }
+
+                // ✅ بنحط الـ URL في الـ DTO عشان الـ Service يشوفه
+                dto.ImageUrl = $"/uploads/{fileName}";
+            }
+
+            var result = await _mangerServices.UpdateSupplyAsync(id, dto);
+
+            if (result != "تم تعديل الصنف بنجاح")
+                return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+        #endregion
     }
 }

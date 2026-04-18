@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Dtos.ManagerDtos;
 using KonSanad.Core.Entities;
 using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
@@ -1175,6 +1176,151 @@ int referenceId, int type)
 
 
 
+        #endregion
+
+        #region المستودع
+
+        #region المستودع
+
+        // ============================================================
+        // GET Supplies
+        // ============================================================
+        public async Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+            int pageNumber,
+            int pageSize,
+            string? title = null,
+            string? search = null)
+        {
+            var query = _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .Where(s => !s.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(title))
+                query = query.Where(s => s.Title == title);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(s => s.Name.Contains(search));
+
+            var result = await query
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new GetSupplyDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Description = s.Description,
+                    Unit = s.Unit,
+                    StockQuantity = s.StockQuantity,
+                    MinimumLevel = s.MinimumLevel,
+                    Title = s.Title,
+                    ImageUrl = s.ImageUrl,  // ✅ بيرجع الـ URL المحفوظ
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt,
+                    IsLowStock = s.StockQuantity < s.MinimumLevel
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        // ============================================================
+        // CREATE Supply
+        // ============================================================
+        public async Task<string> CreateSupplyAsync(CreateSupplyDto dto)
+        {
+            var existing = await _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(s => s.Name == dto.Name && !s.IsDeleted);
+
+            if (existing != null)
+                return "هذا الصنف موجود بالفعل في المستودع";
+
+            var supply = new Supply
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Unit = dto.Unit,
+                StockQuantity = dto.StockQuantity,
+                MinimumLevel = dto.MinimumLevel,
+                Title = dto.Title,
+                ImageUrl = dto.ImageUrl,    // ✅ هنا بنحفظ الـ URL اللي جه من الـ Controller
+                Status = RequestedStatus.Approved,
+                IsDeleted = false,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+
+            await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
+            await _unitOfWork.Complete();
+
+            if (supply.StockQuantity < supply.MinimumLevel)
+            {
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Title = "تنبيه مخزون منخفض",
+                    Message = $"الصنف {supply.Name} أضيف بكمية أقل من الحد الأدنى.",
+                    EntityType = nameof(Supply),
+                    EntityId = supply.Id
+                });
+            }
+
+            return "تم إضافة الصنف بنجاح";
+        }
+
+        // ============================================================
+        // UPDATE Supply
+        // ============================================================
+        public async Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(s => s.Id == supplyId && !s.IsDeleted);
+
+            if (supply == null)
+                return "الصنف غير موجود";
+
+            if (!string.IsNullOrWhiteSpace(dto.Name) && dto.Name != "string")
+                supply.Name = dto.Name;
+
+            if (!string.IsNullOrWhiteSpace(dto.Description) && dto.Description != "string")
+                supply.Description = dto.Description;
+
+            if (!string.IsNullOrWhiteSpace(dto.Unit) && dto.Unit != "string")
+                supply.Unit = dto.Unit;
+
+            if (dto.StockQuantity.HasValue && dto.StockQuantity.Value > 0)
+                supply.StockQuantity = dto.StockQuantity.Value;
+
+            if (dto.MinimumLevel.HasValue && dto.MinimumLevel.Value > 0)
+                supply.MinimumLevel = dto.MinimumLevel.Value;
+
+            if (!string.IsNullOrWhiteSpace(dto.Title) && dto.Title != "string")
+                supply.Title = dto.Title;
+
+            // ✅ بنحدث الصورة بس لو في صورة جديدة اتبعتت
+            if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
+                supply.ImageUrl = dto.ImageUrl;
+
+            supply.UpdatedAt = DateTime.Now;
+
+            _unitOfWork.Repository<Supply, int>().Update(supply);
+            await _unitOfWork.Complete();
+
+            if (supply.StockQuantity < supply.MinimumLevel)
+            {
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Title = "تنبيه مخزون منخفض",
+                    Message = $"كمية الصنف {supply.Name} أقل من الحد الأدنى.",
+                    EntityType = nameof(Supply),
+                    EntityId = supply.Id
+                });
+            }
+
+            return "تم تعديل الصنف بنجاح";
+        }
+        #endregion
         #endregion
     }
 }

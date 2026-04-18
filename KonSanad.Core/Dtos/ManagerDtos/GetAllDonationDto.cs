@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using KonSanad.Core.Entity.Enums;
 
-namespace KonSanad.Core.Dtos
+namespace KonSanad.Core.Dtos.ManagerDtos
 {
     public class GetAllDonationDto
     {

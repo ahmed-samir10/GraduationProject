@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace KonSanad.Core.Dtos
+namespace KonSanad.Core.Dtos.ManagerDtos
 {
     public class GetAllDonationDetailsDto : GetAllDonationDto
     {

@@ -1,4 +1,4 @@
-﻿using KonSanad.Core.Dtos;
+﻿using KonSanad.Core.Dtos.ManagerDtos;
 using KonSanad.Core.Entity.Enums;
 using System;
 using System.Collections.Generic;
@@ -57,6 +57,18 @@ namespace KonSanad.Core.IRepositery
         Task<string> AcceptDonation(int DonationOrderId);
 
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
+
+
+        // الـ 3 Signatures الجديدة بس
+        Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+            int pageNumber,
+            int pageSize,
+            string? title = null,    // فيلتر: غذائي / ملابس / مستلزمات
+            string? search = null);  // سيرش في الاسم
+
+        Task<string> CreateSupplyAsync(CreateSupplyDto dto);
+
+        Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto);
 
     }
 }

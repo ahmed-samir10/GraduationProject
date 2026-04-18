@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KonSanad.Core.Dtos
+namespace KonSanad.Core.Dtos.ManagerDtos
 {
     public class GetVolunteerDto
     {
