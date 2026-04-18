@@ -315,13 +315,13 @@ namespace KonSanad.Services.Services
                 .Include(m => m.HelpOrder)
                     .ThenInclude(h => h.HelpOrderItems)
                 .FirstOrDefaultAsync(m => m.Id == missionId);
-            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
-                .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
-           
 
-
+            // ✅ تحقق الأول قبل أي حاجة
             if (mission == null)
                 return "المهمة غير موجودة";
+
+            if (mission.HelpOrder == null)
+                return "لا يوجد طلب مرتبط بهذه المهمة";
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -330,41 +330,50 @@ namespace KonSanad.Services.Services
             if (vm == null)
                 return "المهمة التطوعية غير موجودة";
 
+            // ✅ جيب الـ report بعد التحقق
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+                .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+
+            if (repo == null)
+                return "تقرير المتطوع غير موجود";
+
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
+
+            // ✅ Update volunteer mission
+            vm.MissionStatus = VolunteerMissionStatus.Completed;
             repo.SupportFile = vm.ResultMission;
 
-
-           // ✅ Update volunteer mission
-           vm.MissionStatus = VolunteerMissionStatus.Completed;
-
             // ✅ Update help order
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
-            mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
-            mission.HelpOrder.Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrder نفسه
-            mission.HelpOrder.UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث  
+            mission.HelpOrder.ManagerId = 1;
+            mission.HelpOrder.Status = RequestedStatus.Approved;
+            mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
 
-            // ✅ Update first item (لو موجود)
+            // ✅ Update first item لو موجود
             var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
             if (item != null)
+            {
                 item.HelpOrderStatus = RequestedStatus.Approved;
+                item.Status = RequestedStatus.Approved;
+                item.UpdatedAt = DateTime.UtcNow;
+            }
 
-            // ✅ Save changes
             await _unitOfWork.Complete();
 
+            // ✅ Send notification
             if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
             {
-                await _notificationService.NotifyUserAsync(mission.HelpOrder.Beneficiary.AppUserId, new NotificationMessageDto
-                {
-                    Type = NotificationType.HelpRequestApproved,
-                    Title = "تمت الموافقة على الطلب",
-                    Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
-                    EntityType = nameof(HelpOrder),
-                    EntityId = mission.HelpOrder.Id
-                });
+                await _notificationService.NotifyUserAsync(
+                    mission.HelpOrder.Beneficiary.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.HelpRequestApproved,
+                        Title = "تمت الموافقة على الطلب",
+                        Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = mission.HelpOrder.Id
+                    });
             }
 
             return "تم قبول الطلب بنجاح";

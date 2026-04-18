@@ -292,11 +292,9 @@ namespace KonSanad.APIS.Controllers
         // يجيب كل الـ HelpOrders - كل طلب بالـ Id بتاعه
         // ============================================================
         [HttpGet("help-orders/grouped")]
-        public async Task<IActionResult> GetHelpOrdersGrouped(
-            int pageNumber = 1,
-            int pageSize = 8)
+        public async Task<IActionResult> GetHelpOrdersGrouped()
         {
-            var result = await _mangerServices.GetHelpOrdersGroupedAsync(pageNumber, pageSize);
+            var result = await _mangerServices.GetHelpOrdersGroupedAsync();
 
             return Ok(new { success = true, data = result });
         }
