@@ -85,7 +85,7 @@ namespace KonSanad.Services.Services
                             var parsedHelpOrderId = int.Parse(item.ExtraData["HelpOrderId"]);
                             helpOrderId = parsedHelpOrderId == 0 ? null : parsedHelpOrderId;
                         }
-
+                        //
                         var cashDonation = new CashDonation
                         {
                             DonationOrderId = donation.Id,
