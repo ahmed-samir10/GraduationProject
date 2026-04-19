@@ -85,7 +85,7 @@ namespace KonSanad.Services.Services
                             var parsedHelpOrderId = int.Parse(item.ExtraData["HelpOrderId"]);
                             helpOrderId = parsedHelpOrderId == 0 ? null : parsedHelpOrderId;
                         }
-
+                        //
                         var cashDonation = new CashDonation
                         {
                             DonationOrderId = donation.Id,
@@ -93,7 +93,7 @@ namespace KonSanad.Services.Services
                             CampaignId = campaignId,   // ✅ آمن دلوقتي
                             HelpOrderId = helpOrderId, // ✅ مش هيبعت 0
                             CreatedAt = DateTime.Now,
-                            cashDonationStatus = RequestedStatus.Pending
+                            cashDonationStatus = RequestedStatus.Approved
                         };
                         _context.CashDonations.Add(cashDonation);
                         await _context.SaveChangesAsync();
@@ -102,7 +102,7 @@ namespace KonSanad.Services.Services
                         {
                             DonationOrderId = donation.Id,
                             CashDonationId = cashDonation.Id,
-                            Status = RequestedStatus.Pending,
+                            Status = RequestedStatus.Approved,
                             DonorId = userId,
                             ManagerId = 1,
                             CreatedAt = DateTime.Now,
