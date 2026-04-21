@@ -14,8 +14,8 @@ namespace KonSanad.Core.IRepositery
         Task<string> MakeManagerAsync(int volunteerId);
 
         //----------------------------------------------------------------------------------
-        // ✅ زودنا search و status و helpOrderId كـ optional parameters
-        Task<object> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);
+        Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);
+
         //----------------------------------------------------------------------------------
 
         Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(

@@ -186,88 +186,98 @@ namespace KonSanad.Services.Services
         }
 
         //Get HelpOrder 
-        public async Task<object> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId)
+
+        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId)
         {
-            var query = _unitOfWork.Repository<HelpOrder, int>().GetQueryable()
+            var orders = await _unitOfWork.Repository<HelpOrder, int>().GetQueryable()
                 .Include(h => h.Beneficiary)
                 .Include(h => h.HelpOrderItems)
-                .Where(h => !h.IsDeleted);
+                .Where(h => !h.IsDeleted)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            // ✅ لو المدير اختار HelpOrderId معين
-            // بنجيب الـ HelpOrder دا مع كل الـ Items بتاعته في Array
-            // لو مفيش Items بترجع Array فاضية
             if (helpOrderId.HasValue)
             {
-                var helpOrder = await query
-                    .Where(h => h.Id == helpOrderId.Value)
-                    .FirstOrDefaultAsync();
+                var order = orders.FirstOrDefault(h => h.Id == helpOrderId.Value);
 
-                if (helpOrder == null)
-                    return new GetHelpOrderWithItemsDto();
+                if (order == null)
+                    return Enumerable.Empty<GetHelpOrderDto>();
 
-                // ✅ بنجيب الـ Items وبنحطهم في variable علشان نعمل عليهم فيلتر
-                var items = helpOrder.HelpOrderItems.AsQueryable();
+                if (!order.HelpOrderItems.Any())
+                    return new List<GetHelpOrderDto>
+            {
+                new GetHelpOrderDto
+                {
+                    Id = order.Id,
+                    UserName = order.Beneficiary?.FullName ?? string.Empty,
+                    PhoneNumber = order.Beneficiary?.Phone ?? string.Empty,
+                    Address = order.Beneficiary?.Address ?? string.Empty,
+                    HelpOrderStatus = order.HelpOrderStatus,
+                    CreatedAt = order.CreatedAt
+                }
+            };
 
-                // ✅ لو في سيرش بيشتغل على الـ Title بتاع الـ Item بس
+                var items = order.HelpOrderItems.AsQueryable();
+
+                // ✅ سيرش بالـ Title جوا الـ Items بتاعة الـ HelpOrder دا
                 if (!string.IsNullOrWhiteSpace(search))
                     items = items.Where(i => i.Title.Contains(search));
 
-                // ✅ لو في Status بيشتغل على الـ HelpOrderStatus بتاع الـ Item بس
+                // ✅ فيلتر بالـ Status جوا الـ Items بتاعة الـ HelpOrder دا
                 if (status.HasValue)
                     items = items.Where(i => i.HelpOrderStatus == status.Value);
 
-                return new GetHelpOrderWithItemsDto
+                return items.Select(i => new GetHelpOrderDto
                 {
-                    Id = helpOrder.Id,
-                    UserName = helpOrder.Beneficiary?.FullName ?? string.Empty,
-                    PhoneNumber = helpOrder.Beneficiary?.Phone ?? string.Empty,
-                    Address = helpOrder.Beneficiary?.Address ?? string.Empty,
-                    HelpOrderStatus = helpOrder.HelpOrderStatus,
-                    CreatedAt = helpOrder.CreatedAt,
-                    Items = items.Select(i => new HelpOrderItemDetailsDto
-                    {
-                        ItemId = i.Id,
-                        Tilte = i.Title,
-                        Reason = i.reason,
-                        QuantityRequested = i.QuantityRequested,
-                        HelpOrderItemStatus = i.HelpOrderStatus
-                    }).ToList()
-                };
+                    Id = order.Id,
+                    UserName = order.Beneficiary != null ? order.Beneficiary.FullName : string.Empty,
+                    PhoneNumber = order.Beneficiary != null ? order.Beneficiary.Phone : string.Empty,
+                    Address = order.Beneficiary != null ? order.Beneficiary.Address : string.Empty,
+                    HelpOrderStatus = i.HelpOrderStatus,
+                    CreatedAt = order.CreatedAt,
+                    Tilte = i.Title,
+                    Reason = i.reason,
+                    Quantity = i.QuantityRequested
+                }).ToList();
             }
 
-            // ✅ سيرش بخانة واحدة بتدور في UserName و Title و PhoneNumber و Address
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(h =>
+                orders = orders.Where(h =>
                     h.Beneficiary.FullName.Contains(search) ||
                     h.HelpOrderItems.Any(i => i.Title.Contains(search)) ||
                     h.Beneficiary.Phone.Contains(search) ||
-                    h.Beneficiary.Address.Contains(search));
+                    h.Beneficiary.Address.Contains(search)).ToList();
 
-            // ✅ فيلتر بالـ Status
             if (status.HasValue)
-                query = query.Where(h => h.HelpOrderStatus == status.Value);
+                orders = orders.Where(h => h.HelpOrderStatus == status.Value).ToList();
 
-            // نفس الـ Select والـ pagination بتاعك
-            var result = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(h => new GetHelpOrderDto
+            return orders.SelectMany(h => h.HelpOrderItems.Any()
+                ? h.HelpOrderItems.Select(i => new GetHelpOrderDto
                 {
                     Id = h.Id,
                     UserName = h.Beneficiary.FullName,
                     PhoneNumber = h.Beneficiary.Phone,
                     Address = h.Beneficiary.Address,
-                    HelpOrderStatus = h.HelpOrderStatus,
+                    HelpOrderStatus = i.HelpOrderStatus,
                     CreatedAt = h.CreatedAt,
-                    Tilte = h.HelpOrderItems.Select(i => i.Title).FirstOrDefault(),
-                    Reason = h.HelpOrderItems.Select(i => i.reason).FirstOrDefault(),
-                    Quantity = h.HelpOrderItems.Select(i => i.QuantityRequested).FirstOrDefault()
+                    Tilte = i.Title,
+                    Reason = i.reason,
+                    Quantity = i.QuantityRequested
                 })
-                .ToListAsync();
-
-            return result;
+                : new List<GetHelpOrderDto>
+                {
+            new GetHelpOrderDto
+            {
+                Id = h.Id,
+                UserName = h.Beneficiary.FullName,
+                PhoneNumber = h.Beneficiary.Phone,
+                Address = h.Beneficiary.Address,
+                HelpOrderStatus = h.HelpOrderStatus,
+                CreatedAt = h.CreatedAt
+            }
+                }).ToList();
         }
-
         // Get Volunteer in Charity
         public async Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
       string? search = null,          // بيسيرش في كل الحقول
