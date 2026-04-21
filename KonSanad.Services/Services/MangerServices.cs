@@ -185,6 +185,17 @@ namespace KonSanad.Services.Services
             return "تم إسناد المهمة بنجاح";
         }
 
+
+        #region HelpOrder: Ids
+
+        public async Task<IEnumerable<int>> GetHelpOrderIdsAsync()
+        {
+            return await _unitOfWork.Repository<HelpOrder, int>().GetQueryable()
+                .Where(h => !h.IsDeleted)
+                .Select(h => h.Id)
+                .ToListAsync();
+        }
+        #endregion
         //Get HelpOrder 
 
         public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId)

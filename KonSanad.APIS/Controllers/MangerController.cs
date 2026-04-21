@@ -15,6 +15,17 @@ namespace KonSanad.APIS.Controllers
         {
             _mangerServices = mangerServices;
         }
+
+        //----------------------------------------------------------------------------------
+        // Drop List 
+
+        [HttpGet("help-orders/ids")]
+        public async Task<IActionResult> GetHelpOrderIds()
+        {
+            var result = await _mangerServices.GetHelpOrderIdsAsync();
+            return Ok(new { success = true, data = result });
+        }
+
         //---------------------------------------------------------------------------------------
         [HttpGet("help-orders")]
         public async Task<IActionResult> GetHelpOrders(

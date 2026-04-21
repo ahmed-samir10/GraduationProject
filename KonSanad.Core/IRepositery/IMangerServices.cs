@@ -12,6 +12,9 @@ namespace KonSanad.Core.IRepositery
     public interface IMangerServices
     {
         Task<string> MakeManagerAsync(int volunteerId);
+        //----------------------------------------------------------------------------------
+        //HelpOrder: Ids
+        Task<IEnumerable<int>> GetHelpOrderIdsAsync();
 
         //----------------------------------------------------------------------------------
         Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);
