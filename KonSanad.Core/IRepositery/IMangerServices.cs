@@ -60,13 +60,6 @@ namespace KonSanad.Core.IRepositery
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
 
 
-        #region Filter HelpOrderId
-        // الـ 2 Signatures الجديدة
-        Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync();
-            
-
-        // ✅ رجّعنا GetHelpOrderWithItemsDto بدل IEnumerable
-        Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId); 
-        #endregion
+     
     }
 }
