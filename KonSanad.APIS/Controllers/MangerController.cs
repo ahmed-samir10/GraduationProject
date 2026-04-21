@@ -15,15 +15,17 @@ namespace KonSanad.APIS.Controllers
         {
             _mangerServices = mangerServices;
         }
-
         [HttpGet("help-orders")]
-        public async Task<IActionResult> GetHelpOrders(int pageNumber = 1, int pageSize = 8)
+        public async Task<IActionResult> GetHelpOrders(
+            int pageNumber = 1,
+            int pageSize = 8,
+            string? search = null,           // ✅ سيرش في UserName و Title و PhoneNumber و Address
+            RequestedStatus? status = null,  // ✅ فيلتر بالحالة
+            int? helpOrderId = null)         // ✅ فيلتر بالـ HelpOrderId
         {
-            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize);
-
+            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize, search, status, helpOrderId);
             return Ok(new { success = true, data = result });
         }
-
         //---------------------------------------------------------------------------------------
         [HttpGet("AllVolunteer")]
         public async Task<IActionResult> GetVolunteers(
@@ -285,39 +287,5 @@ namespace KonSanad.APIS.Controllers
         }
 
 
-        #region  filter HelpOrderId
-
-        // ============================================================
-        // GET /api/Manger/help-orders/grouped
-        // يجيب كل الـ HelpOrders - كل طلب بالـ Id بتاعه
-        // ============================================================
-        [HttpGet("help-orders/grouped")]
-        public async Task<IActionResult> GetHelpOrdersGrouped()
-        {
-            var result = await _mangerServices.GetHelpOrdersGroupedAsync();
-
-            return Ok(new { success = true, data = result });
-        }
-
-        // ============================================================
-        // GET /api/Manger/help-orders/{helpOrderId}/items
-        // يجيب كل الـ HelpOrderItems بتاع HelpOrder معين
-        // ============================================================
-        [HttpGet("help-orders/{helpOrderId}/items")]
-        public async Task<IActionResult> GetHelpOrderItems(int helpOrderId)
-        {
-            if (helpOrderId <= 0)
-                return Ok(new { success = false, message = "Id غير صحيح" });
-
-            var result = await _mangerServices.GetHelpOrderItemsByOrderIdAsync(helpOrderId);
-
-            // ✅ لو null = الـ HelpOrder مش موجود خالص في الـ DB
-            if (result == null)
-                return Ok(new { success = false, message = "الطلب غير موجود" });
-
-            // ✅ سواء في Items أو لأ، بيرجع الـ HelpOrder دايماً
-            return Ok(new { success = true, data = result });
-        }
-        #endregion
     }
 }
