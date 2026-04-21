@@ -16,14 +16,10 @@ namespace KonSanad.APIS.Controllers
             _mangerServices = mangerServices;
         }
         [HttpGet("help-orders")]
-        public async Task<IActionResult> GetHelpOrders(
-            int pageNumber = 1,
-            int pageSize = 8,
-            string? search = null,           // ✅ سيرش في UserName و Title و PhoneNumber و Address
-            RequestedStatus? status = null,  // ✅ فيلتر بالحالة
-            int? helpOrderId = null)         // ✅ فيلتر بالـ HelpOrderId
+        public async Task<IActionResult> GetHelpOrders(int pageNumber = 1, int pageSize = 8)
         {
-            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize, search, status, helpOrderId);
+            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize);
+
             return Ok(new { success = true, data = result });
         }
         //---------------------------------------------------------------------------------------
