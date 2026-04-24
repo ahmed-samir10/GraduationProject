@@ -369,7 +369,7 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
             mission.HelpOrder.ManagerId = 1;
             mission.HelpOrder.Status = RequestedStatus.Approved;
-            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault().QuantityRequested;
+            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault(i => i.Id == Suply.Id).QuantityRequested;
             mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
 
             // ✅ Update first item لو موجود
