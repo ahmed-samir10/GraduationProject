@@ -12,7 +12,15 @@ namespace KonSanad.Core.IRepositery
     public interface IMangerServices
     {
         Task<string> MakeManagerAsync(int volunteerId);
-            Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize);
+        //----------------------------------------------------------------------------------
+        //HelpOrder: Ids
+        Task<IEnumerable<int>> GetHelpOrderIdsAsync();
+
+        //----------------------------------------------------------------------------------
+        Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);
+
+        //----------------------------------------------------------------------------------
+
         Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
          string? search = null,
          RequestedStatus? status = null,
@@ -60,13 +68,5 @@ namespace KonSanad.Core.IRepositery
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
 
 
-        #region Filter HelpOrderId
-        // الـ 2 Signatures الجديدة
-        Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync();
-            
-
-        // ✅ رجّعنا GetHelpOrderWithItemsDto بدل IEnumerable
-        Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId); 
-        #endregion
     }
 }
