@@ -28,8 +28,8 @@ namespace KonSanad.Core.IRepositery
          int pageSize = 8);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId);
-        Task <string> AcceptOrder(int orderId);
-         Task<string> RejectOrder(int orderId);
+        Task<string> AcceptOrder(int orderId);
+        Task<string> RejectOrder(int orderId);
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(
      int pageNumber,
      int pageSize,
@@ -37,7 +37,7 @@ namespace KonSanad.Core.IRepositery
         Task<string> AcceptVolunteer(int orderId);
         Task<string> RejectVolunteer(int Id, string ReajectReason);
 
-        Task<string> AcceptRequst(int Requsttype , int referenceId);
+        Task<string> AcceptRequst(int Requsttype, int referenceId);
         Task<string> RejectRequst(int Requsttype, int referenceId, string Reason);
 
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
@@ -59,7 +59,7 @@ namespace KonSanad.Core.IRepositery
       RequestedStatus? status = null); // فيلتر بالحالة
 
         Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
-        
+
 
 
 
@@ -67,6 +67,9 @@ namespace KonSanad.Core.IRepositery
 
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
 
-
+        Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+     int pageNumber,
+     int pageSize,
+     string? search = null);
     }
 }

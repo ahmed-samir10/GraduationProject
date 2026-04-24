@@ -1315,6 +1315,42 @@ int referenceId, int type)
         #endregion
 
 
-  
+        #region المستودع
+
+        public async Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+     int pageNumber,
+     int pageSize,
+     string? search = null)
+        {
+            var query = _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .Where(s => !s.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(s =>
+                    s.Name.Contains(search) ||
+                    s.StockQuantity.ToString().Contains(search) ||
+                    s.MinimumLevel.ToString().Contains(search));
+
+            var result = await query
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new GetSupplyDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Unit = s.Unit,
+                    StockQuantity = s.StockQuantity,
+                    MinimumLevel = s.MinimumLevel,
+                    ImageUrl = s.ImageUrl,
+                    UpdatedAt = s.UpdatedAt,
+                    IsLowStock = s.StockQuantity < s.MinimumLevel
+                })
+                .ToListAsync();
+
+            return result;
+        }
+        #endregion
     }
 }
