@@ -66,107 +66,88 @@ namespace KonSanad.Services.Services
             return "Volunteer promoted to Manager successfully";
         }
 
-        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId , DateTime Start , DateTime End)
+        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId, DateTime Start, DateTime End)
         {
             if (Start >= End)
                 return "برجاء التأكد من تواريخ البدء والانتهاء";
-            // 1️⃣ هات الـ HelpOrder
+
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
-      .GetQueryable()
-      .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
-      .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
             if (helpOrder == null)
                 return "الطلب غير موجود";
-            /*   var he = await _unitOfWork.Repository<Mission, int>()
-                  .GetQueryable()
-                  .Include(m => m.HelpOrder)
-                      .ThenInclude(h => h.Beneficiary)
-                  .Include(m => m.HelpOrder)
-                      .ThenInclude(h => h.HelpOrderItems)
-                  .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
-              if (he != null)
-                   return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";*/
 
-            // ✅ أبسط وأصح
+            if (helpOrder.Beneficiary == null)
+                return "المستفيد غير موجود";
+
+            // ✅ تحقق إن المهمة مش اتأسندت قبل كده
             var alreadyAssigned = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
-                .Include(h=> h.Mission)
-                .ThenInclude(m => m.HelpOrder)
-                .AnyAsync(m => m.Mission.HelpOrderId == helpOrderId && m.Mission.HelpOrder.Beneficiary.Id == helpOrder.Beneficiary.Id && m.Mission.HelpOrder.Beneficiary.NationalId == helpOrder.Beneficiary.NationalId);
+                .Include(mv => mv.Mission)
+                .AnyAsync(mv => mv.Mission.HelpOrderId == helpOrderId);
 
             if (alreadyAssigned)
                 return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
-            Mission mission = new Mission { };
 
-            // 2️⃣ Create Mission
+            // ✅ جيب الـ Mission لو موجودة أو اعملها جديدة
+            var mission = await _unitOfWork.Repository<Mission, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
 
-            var Created = await _unitOfWork.Repository<Mission , int> ().GetQueryable().AnyAsync(m => m.HelpOrderId == helpOrderId && m.PhoneNumber == helpOrder.Beneficiary.Phone);
-           if (Created ==null)
+            if (mission == null)
             {
-         mission = new Mission
-            {
-                Title = helpOrder.Beneficiary.FullName,
-                Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
-                Address = helpOrder.Beneficiary.Address,
-                PhoneNumber = helpOrder.Beneficiary.Phone,
-                StartDate = Start,
-                EndDate = End, // حسب اللوجيك بتاعك
-                ManagerId = 1,
-                HelpOrderId = helpOrder.Id,
+                mission = new Mission
+                {
+                    Title = helpOrder.Beneficiary.FullName,
+                    Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
+                    Address = helpOrder.Beneficiary.Address,
+                    PhoneNumber = helpOrder.Beneficiary.Phone,
+                    StartDate = Start,
+                    EndDate = End,
+                    ManagerId = 1,
+                    HelpOrderId = helpOrder.Id,
+                    MissionStatus = MissionStatus.Assigend,
+                    Status = RequestedStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                // CampaignId = helpOrder.CampaignId,
-
-                MissionStatus = Core.Entity.Enums.MissionStatus.Assigend, // Pending مثلا
-
-                // status في الداتا بيز not null لازم يكون ليه قيمة
-                Status = RequestedStatus.Pending,
-
-                CreatedAt = DateTime.UtcNow
-            };
-            await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
-            await _unitOfWork.Complete();
+                await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
+                await _unitOfWork.Complete();
             }
 
-           
- // مهم عشان تاخد Id
+            // ✅ تأكد إن الـ Id اتولد
+            if (mission.Id == 0)
+                return "فشل في إنشاء المهمة";
 
-            // 3️⃣ Create MissionVolunteer
+            // ✅ Create MissionVolunteer
             var missionVolunteer = new MissionVolunteers
             {
                 MissionId = mission.Id,
                 VolunteerId = volunteerId,
-                MissionStatus = Core.Entity.Enums.VolunteerMissionStatus.WaitingForReport, // WaitReport
-
+                MissionStatus = VolunteerMissionStatus.WaitingForReport,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>().AddAsync(missionVolunteer);
-
             await _unitOfWork.Complete();
-            // ✅ أضفنا Status و IsDeleted لأنهم not null في الـ DB
-            // وكان بيفشل بصمت لأن الـ BaseEntity مش بيديهم قيمة default
 
-
-            //----------------------------------------------------------------------------------------
-            // ✅ جيب الـ Beneficiary object كامل قبل الـ Insert
-            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
-                .FirstOrDefaultAsync(b => b.Id == helpOrder.Beneficiary.Id);
+            // ✅ Create VolunteerReport
             var volunteerReport = new VolunteerReport
             {
                 VolunteerId = volunteerId,
-                BenficieryID = helpOrder.Beneficiary.Id,
+               BeneficiaryId = helpOrder.Beneficiary.Id,
                 SupportFile = helpOrder.Beneficiary.SupportFile,
-                Beneficiary = beneficiary, // ✅ ده اللي كان ناقص
-                Status = RequestedStatus.Pending,  // ✅ إضافة جديدة - كان بيـ fail لأنه not null في الـ DB
-                IsDeleted = false,                    // ✅ إضافة جديدة - نفس السبب
+                Status = RequestedStatus.Pending,
+                IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(volunteerReport);
             await _unitOfWork.Complete();
-            //-------------------------------------------------------------------------------------------
 
+            // ✅ Send notification
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
 
@@ -184,7 +165,6 @@ namespace KonSanad.Services.Services
 
             return "تم إسناد المهمة بنجاح";
         }
-
 
         #region HelpOrder: Ids
 
@@ -342,7 +322,7 @@ namespace KonSanad.Services.Services
             if (mission == null)
                 return "المهمة غير موجودة";
             var repo = await _unitOfWork.Repository<VolunteerReport, int>()
-              .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+              .FirstOrDefaultAsync(r => r.BeneficiaryId == mission.HelpOrder.BeneficiaryId);
 
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
@@ -416,7 +396,7 @@ namespace KonSanad.Services.Services
 
             // ✅ جيب الـ report بعد التحقق
             var repo = await _unitOfWork.Repository<VolunteerReport, int>()
-                .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+                .FirstOrDefaultAsync(r => r.BeneficiaryId == mission.HelpOrder.BeneficiaryId);
             var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
 
             var Suply = await _unitOfWork.Repository<Supply, int>()
@@ -1214,7 +1194,7 @@ int referenceId, int type)
                         Unit = item.Unit,
                         StockQuantity = item.Quantity,
                         MinimumLevel = 5,
-                        CategoryId = null,
+                        Category = null,
                         Status = RequestedStatus.Approved,
                         IsDeleted = false,
                         ImageUrl = item.ImageUrl,

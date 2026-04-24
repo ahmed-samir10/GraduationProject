@@ -19,9 +19,8 @@ namespace KonSanad.Repository.Entities
 
         public string? ImageUrl { get; set; }
         // Link to Category
-        public int? CategoryId { get; set; }
-        [ForeignKey(nameof(CategoryId))]
-        public Category? Category { get; set; }
+        public string? Category { get; set; }
+      
 
         // Navigation
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

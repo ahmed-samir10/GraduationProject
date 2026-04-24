@@ -14,11 +14,11 @@
                 .HasDefaultValue(0); 
             builder.Property(s => s.MinimumLevel).IsRequired(false);
 
-            // Relationship with Category
+  /*          // Relationship with Category
             builder.HasOne(s => s.Category)
                 .WithMany(c => c.Supplies)
                 .HasForeignKey(s => s.CategoryId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);*/
 
             // Navigation properties
             builder.HasMany(s => s.OrderItems)

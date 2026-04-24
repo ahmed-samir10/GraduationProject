@@ -22,7 +22,7 @@ namespace KonSanad.Services.Services
         public async Task<IEnumerable<OrderItemDto>> GetAllDonationItemsAsync(int pagenum , int pagesize)
         {
             // Get all OrderItems
-            var orderItems = await _unitOfWork.Repository<OrderItem, int>().GetAllAsync();
+            var orderItems = await _unitOfWork.Repository<Supply, int>().GetAllAsync();
 
             // Fill DTO
             var result = orderItems
@@ -31,10 +31,10 @@ namespace KonSanad.Services.Services
                 .Select(i => new OrderItemDto
                 {
                     Id = i.Id,
-                    CustomSupplyName = i.CustomSupplyName,
-                    Quantity = i.Quantity,
+                    CustomSupplyName = i.Name,
+                    Quantity =(int) i.StockQuantity,
                     Unit = i.Unit,
-                    Category = i.Category,
+                    Category =i.Category,
                     ImageUrl = i.ImageUrl,
                     //DonationOrderId = i.DonationOrderId,
                     //SupplyId = i.SupplyId,
@@ -45,7 +45,7 @@ namespace KonSanad.Services.Services
                  .Skip((pagenum - 1) * pagesize)
                  .Take(pagesize)
                 .ToList();
-            var dtos = _mapper.Map<List<OrderItemDto>>(result);
+            //var dtos = _mapper.Map<List<OrderItemDto>>(result);
             return result;
         }
         public async Task<OrderItemDto?> GetOrderItemByIdAsync(int id)

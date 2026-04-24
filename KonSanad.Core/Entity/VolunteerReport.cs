@@ -13,7 +13,7 @@ namespace KonSanad.Core.Entity
        public int VolunteerId { get; set; }
         public Volunteer Volunteer { get; set; }
         [Column("BeneficiaryId")]
-        public int BenficieryID { get; set; }
+        public int BeneficiaryId { get; set; }
         public Beneficiary Beneficiary { get; set; }
 
         public string? SupportFile { get; set; }
