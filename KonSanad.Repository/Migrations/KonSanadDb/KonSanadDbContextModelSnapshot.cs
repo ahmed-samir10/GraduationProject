@@ -1252,6 +1252,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<int>("ShowinType")
+                        .HasColumnType("int");
+
                     b.Property<int?>("Status")
                         .HasColumnType("int");
 
