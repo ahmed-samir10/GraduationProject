@@ -26,6 +26,7 @@ namespace KonSanad.Core.IRepositery
          RequestedStatus? status = null,
          int pageNumber = 1,
          int pageSize = 8);
+        Task<string> ControlIsVisibility(ControlSupplyDto controlSupply);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId);
         Task <string> AcceptOrder(int orderId);

@@ -1324,7 +1324,15 @@ int referenceId, int type)
 
         #endregion
 
-
+        public async Task<string> ControlIsVisibility(ControlSupplyDto controlSupply)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(controlSupply.SupplyId);
+            if (supply == null)
+                return "المنتج مش موجود يا ايههه";
+            supply.ShowinType = controlSupply.ShowIn;
+            await _unitOfWork.Complete();
+            return "تم الاضافه";
+        }
   
     }
 }
