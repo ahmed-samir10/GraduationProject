@@ -10,10 +10,12 @@ namespace KonSanad.Services.Services
     public class BeneficiarySubmitStrategy : ICartSubmitStrategy
     {
         private readonly KonSanadDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public BeneficiarySubmitStrategy(KonSanadDbContext context)
+        public BeneficiarySubmitStrategy(KonSanadDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<SubmitResultDto> SubmitAsync(int userId, CartResponseDto cart)
@@ -45,7 +47,7 @@ namespace KonSanad.Services.Services
                 CreatedAt = DateTime.Now,
                 HelpOrderId = helpOrder.Id,
                 Title = beneficiary.FullName,
-                Description =" زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
+                Description = " زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
                 Address = beneficiary.Address,
                 PhoneNumber = beneficiary.Phone,
                 StartDate = DateTime.Now,
@@ -57,7 +59,24 @@ namespace KonSanad.Services.Services
 
             _context.Missions.Add(Mission);
             await _context.SaveChangesAsync();
-          
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.HelpRequestSubmitted,
+                Title = "طلب احتياج جديد",
+                Message = $"تم إنشاء طلب احتياج جديد برقم {helpOrder.Id} من أحد المستفيدين.",
+                EntityType = nameof(HelpOrder),
+                EntityId = helpOrder.Id
+            });
+
+            await _notificationService.NotifyRoleAsync("Donor", new NotificationMessageDto
+            {
+                Type = NotificationType.NeededItemAdded,
+                Title = "احتياج جديد",
+                Message = "تمت إضافة احتياج جديد ويمكنك الاطلاع عليه والتبرع له.",
+                EntityType = nameof(HelpOrder),
+                EntityId = helpOrder.Id
+            });
 
             return new SubmitResultDto { Success = true };
         }

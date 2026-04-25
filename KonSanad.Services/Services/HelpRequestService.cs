@@ -1,6 +1,8 @@
 ﻿
 using KonSanad.Core.Entity.Enums;
+using KonSanad.Core.IRepositery;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace KonSanad.Services.Services
 {
@@ -9,13 +11,22 @@ namespace KonSanad.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
+        private readonly INotificationService _notificationService;
+        private readonly IFileService _fileService;  
 
 
-        public HelpRequestService(IUnitOfWork unitOfWork , IMapper  _mapper, UserManager<AppUser> userManager)
+        public HelpRequestService(
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            UserManager<AppUser> userManager,
+            INotificationService notificationService,
+            IFileService fileService)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
             _userManager = userManager;
-
+            _fileService = fileService;
+            _notificationService = notificationService;
         }
 
         /*   public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
@@ -280,6 +291,15 @@ namespace KonSanad.Services.Services
             // احفظ التغييرات
             await _unitOfWork.Complete();
 
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.BeneficiaryCampaignJoinRequested,
+                Title = "طلب انضمام مستفيد",
+                Message = $"المستفيد {beneficiary.FullName} طلب الانضمام إلى الحملة {campaign.Title}.",
+                EntityType = nameof(BeneficiaryCampaign),
+                EntityId = joinRequest.Id
+            });
+
             return "تم إرسال الطلب بنجاح";
         }
 
@@ -411,7 +431,9 @@ namespace KonSanad.Services.Services
                 Email = appUser.Email ?? string.Empty,
                 PhoneNumber = appUser.PhoneNumber ?? string.Empty,
                 Address = beneficiary.Address ?? string.Empty,
-                NationalId = beneficiary.NationalId ?? string.Empty
+                NationalId = beneficiary.NationalId ?? string.Empty,
+                SupportFile = beneficiary.SupportFile ?? "لا يوجد اي اثيات شخصيه",
+
                
             };
 
@@ -442,6 +464,19 @@ namespace KonSanad.Services.Services
 
             if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
                 beneficiary.Address = dto.Address;
+
+
+
+            var fileUrls = string.Empty;
+
+            if (dto.SupportingFiles != null )
+            {
+                
+                    var url = await _fileService.SaveFileAsync(dto.SupportingFiles, "uploads");
+                fileUrls = url;
+                
+            }
+            beneficiary.SupportFile = fileUrls;
 
             // If email is provided, update Identity user email (and optionally beneficiary.Email)
             if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))

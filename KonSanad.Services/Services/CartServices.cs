@@ -21,12 +21,18 @@ namespace KonSanad.Services.Services
         private readonly IDatabase _redis;
         private readonly KonSanadDbContext _context;
         private readonly IFileService _fileService;
+        private readonly INotificationService _notificationService;
 
-        public CartService(IConnectionMultiplexer redis, KonSanadDbContext context , IFileService fileService)
+        public CartService(
+            IConnectionMultiplexer redis,
+            KonSanadDbContext context,
+            IFileService fileService,
+            INotificationService notificationService)
         {
             _redis = redis.GetDatabase();
             _context = context;
             _fileService = fileService;
+            _notificationService = notificationService;
         }
 
         private string GetCartKey(int userId, string role)
@@ -65,20 +71,18 @@ namespace KonSanad.Services.Services
                     return "dto must be AddToCartDto for beneficiary";
 
                 // جلب المنتج من الداتا بيز
-                var product = await _context.OrderItems
+                var product = await _context.Supplies
                     .FirstOrDefaultAsync(p => p.Id == data.ProductId);
                 if(product == null)
                     return " طلب غير موجود";
-                if (data.QuantityRequested > product.Quantity)
-                    return "  كميه غير صحيحه";
+                
                   cart.Items = cart.Items ?? new List<CartItemDto>();
                 var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == product.Id);
 
                 if (existingItem != null)
                 {
                     // المنتج موجود → زود الكمية
-                    if (existingItem.Quantity + data.QuantityRequested > product.Quantity)
-                        return "الكمية المطلوبة أكبر من المتاح";
+                   
 
                     existingItem.Quantity += data.QuantityRequested;
                 }
@@ -89,7 +93,7 @@ namespace KonSanad.Services.Services
                     ProductId = product.Id,
                     Quantity = data.QuantityRequested,
                     imagUrl = product.ImageUrl,
-                    ProductName = product.CustomSupplyName,
+                    ProductName = product.Name,
                     Category = product.Category,
                     Type = "beneficiary",
                     Reason = data.Reason
@@ -353,8 +357,8 @@ namespace KonSanad.Services.Services
 
             ICartSubmitStrategy strategy =
                 role == "beneficiary"
-                ? new BeneficiarySubmitStrategy(_context)
-                : new DonorSubmitStrategy(_context);
+                ? new BeneficiarySubmitStrategy(_context, _notificationService)
+                : new DonorSubmitStrategy(_context, _notificationService);
 
             var result = await strategy.SubmitAsync(userId, cart);
 
