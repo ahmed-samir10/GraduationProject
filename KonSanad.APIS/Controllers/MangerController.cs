@@ -298,6 +298,19 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, message = result });
         }
 
+        //------------------------------------------------------------------------------------------------
 
+        #region المستودع 
+
+        [HttpGet("supplies")]
+        public async Task<IActionResult> GetSupplies(
+     int pageNumber = 1,
+     int pageSize = 8,
+     string? search = null)
+        {
+            var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, search);
+            return Ok(new { success = true, data = result });
+        }
+        #endregion
     }
 }
