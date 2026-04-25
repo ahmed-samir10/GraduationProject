@@ -178,24 +178,41 @@ namespace KonSanad.Services.Services
         #endregion
         //Get HelpOrder 
 
-        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId)
+        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(
+         int pageNumber,
+         int pageSize,
+         string? search,
+         RequestedStatus? status,
+         int? helpOrderId)
         {
-            var orders = await _unitOfWork.Repository<HelpOrder, int>().GetQueryable()
+            var query = _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
                 .Include(h => h.Beneficiary)
                 .Include(h => h.HelpOrderItems)
-                .Where(h => !h.IsDeleted)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                .Where(h => !h.IsDeleted);
 
+            // ✅ لو جاي بـ ID معين
             if (helpOrderId.HasValue)
             {
-                var order = orders.FirstOrDefault(h => h.Id == helpOrderId.Value);
+                var order = await query
+                    .FirstOrDefaultAsync(h => h.Id == helpOrderId.Value);
 
                 if (order == null)
                     return Enumerable.Empty<GetHelpOrderDto>();
 
-                if (!order.HelpOrderItems.Any())
+                var itemsQuery = order.HelpOrderItems.AsQueryable();
+
+                // search على items
+                if (!string.IsNullOrWhiteSpace(search))
+                    itemsQuery = itemsQuery.Where(i => i.Title.Contains(search));
+
+                // filter status على items
+                if (status.HasValue)
+                    itemsQuery = itemsQuery.Where(i => i.HelpOrderStatus == status.Value);
+
+                // لو مفيش items بعد الفلترة
+                if (!itemsQuery.Any())
+                {
                     return new List<GetHelpOrderDto>
             {
                 new GetHelpOrderDto
@@ -208,23 +225,14 @@ namespace KonSanad.Services.Services
                     CreatedAt = order.CreatedAt
                 }
             };
+                }
 
-                var items = order.HelpOrderItems.AsQueryable();
-
-                // ✅ سيرش بالـ Title جوا الـ Items بتاعة الـ HelpOrder دا
-                if (!string.IsNullOrWhiteSpace(search))
-                    items = items.Where(i => i.Title.Contains(search));
-
-                // ✅ فيلتر بالـ Status جوا الـ Items بتاعة الـ HelpOrder دا
-                if (status.HasValue)
-                    items = items.Where(i => i.HelpOrderStatus == status.Value);
-
-                return items.Select(i => new GetHelpOrderDto
+                return itemsQuery.Select(i => new GetHelpOrderDto
                 {
                     Id = order.Id,
-                    UserName = order.Beneficiary != null ? order.Beneficiary.FullName : string.Empty,
-                    PhoneNumber = order.Beneficiary != null ? order.Beneficiary.Phone : string.Empty,
-                    Address = order.Beneficiary != null ? order.Beneficiary.Address : string.Empty,
+                    UserName = order.Beneficiary.FullName?? string.Empty,
+                    PhoneNumber = order.Beneficiary.Phone ?? string.Empty,
+                    Address = order.Beneficiary.Address ?? string.Empty,
                     HelpOrderStatus = i.HelpOrderStatus,
                     CreatedAt = order.CreatedAt,
                     Tilte = i.Title,
@@ -233,43 +241,61 @@ namespace KonSanad.Services.Services
                 }).ToList();
             }
 
+            // ✅ search عام
             if (!string.IsNullOrWhiteSpace(search))
-                orders = orders.Where(h =>
+            {
+                query = query.Where(h =>
                     h.Beneficiary.FullName.Contains(search) ||
-                    h.HelpOrderItems.Any(i => i.Title.Contains(search)) ||
                     h.Beneficiary.Phone.Contains(search) ||
-                    h.Beneficiary.Address.Contains(search)).ToList();
+                    h.Beneficiary.Address.Contains(search) ||
+                    h.HelpOrderItems.Any(i => i.Title.Contains(search)));
+            }
 
+            // ✅ filter status (order أو item)
             if (status.HasValue)
-                orders = orders.Where(h => h.HelpOrderStatus == status.Value).ToList();
+            {
+                query = query.Where(h =>
+                    h.HelpOrderStatus == status.Value ||
+                    h.HelpOrderItems.Any(i => i.HelpOrderStatus == status.Value));
+            }
 
-            return orders.SelectMany(h => h.HelpOrderItems.Any()
-                ? h.HelpOrderItems.Select(i => new GetHelpOrderDto
+            // ✅ pagination بعد كل الفلترة
+            var orders = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // ✅ mapping
+            var result = orders.SelectMany(h =>
+                h.HelpOrderItems != null && h.HelpOrderItems.Any()
+                    ? h.HelpOrderItems.Select(i => new GetHelpOrderDto
+                    {
+                        Id = h.Id,
+                        UserName = h.Beneficiary?.FullName ?? string.Empty,
+                        PhoneNumber = h.Beneficiary?.Phone ?? string.Empty,
+                        Address = h.Beneficiary?.Address ?? string.Empty,
+                        HelpOrderStatus = i.HelpOrderStatus,
+                        CreatedAt = h.CreatedAt,
+                        Tilte = i.Title,
+                        Reason = i.reason,
+                        Quantity = i.QuantityRequested
+                    })
+                    : new List<GetHelpOrderDto>
+                    {
+                new GetHelpOrderDto
                 {
                     Id = h.Id,
-                    UserName = h.Beneficiary.FullName,
-                    PhoneNumber = h.Beneficiary.Phone,
-                    Address = h.Beneficiary.Address,
-                    HelpOrderStatus = i.HelpOrderStatus,
-                    CreatedAt = h.CreatedAt,
-                    Tilte = i.Title,
-                    Reason = i.reason,
-                    Quantity = i.QuantityRequested
-                })
-                : new List<GetHelpOrderDto>
-                {
-            new GetHelpOrderDto
-            {
-                Id = h.Id,
-                UserName = h.Beneficiary.FullName,
-                PhoneNumber = h.Beneficiary.Phone,
-                Address = h.Beneficiary.Address,
-                HelpOrderStatus = h.HelpOrderStatus,
-                CreatedAt = h.CreatedAt
-            }
-                }).ToList();
-        }
-        // Get Volunteer in Charity
+                    UserName = h.Beneficiary?.FullName ?? string.Empty,
+                    PhoneNumber = h.Beneficiary?.Phone ?? string.Empty,
+                    Address = h.Beneficiary?.Address ?? string.Empty,
+                    HelpOrderStatus = h.HelpOrderStatus,
+                    CreatedAt = h.CreatedAt
+                }
+                    }
+            );
+
+            return result.ToList();
+        }  // Get Volunteer in Charity
         public async Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
       string? search = null,          // بيسيرش في كل الحقول
       RequestedStatus? status = null, // الفيلتر بالحالة بس
@@ -380,7 +406,6 @@ namespace KonSanad.Services.Services
                     .ThenInclude(h => h.HelpOrderItems)
                 .FirstOrDefaultAsync(m => m.Id == missionId);
 
-            // ✅ تحقق الأول قبل أي حاجة
             if (mission == null)
                 return "المهمة غير موجودة";
 
@@ -394,16 +419,22 @@ namespace KonSanad.Services.Services
             if (vm == null)
                 return "المهمة التطوعية غير موجودة";
 
-            // ✅ جيب الـ report بعد التحقق
             var repo = await _unitOfWork.Repository<VolunteerReport, int>()
                 .FirstOrDefaultAsync(r => r.BeneficiaryId == mission.HelpOrder.BeneficiaryId);
-            var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
 
-            var Suply = await _unitOfWork.Repository<Supply, int>()
-     .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
-            if (Suply == null)
+            if (repo == null)
+                return "لا يوجد تقرير للمتطوع";
+
+            var supItem = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
+
+            if (supItem == null)
                 return "لا يوجد عناصر في الطلب";
 
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .FirstOrDefaultAsync(s => s.Id == supItem.SupplyId);
+
+            if (supply == null)
+                return "العنصر غير موجود في المخزن";
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
@@ -416,21 +447,19 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
             mission.HelpOrder.ManagerId = 1;
             mission.HelpOrder.Status = RequestedStatus.Approved;
-            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault(i => i.Id == Suply.Id).QuantityRequested;
             mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
 
-            // ✅ Update first item لو موجود
-            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
-            if (item != null)
-            {
-                item.HelpOrderStatus = RequestedStatus.Approved;
-                item.Status = RequestedStatus.Approved;
-                item.UpdatedAt = DateTime.UtcNow;
-            }
+            // ✅ Update stock
+            supply.StockQuantity -= supItem.QuantityRequested;
+
+            // ✅ Update item
+            supItem.HelpOrderStatus = RequestedStatus.Approved;
+            supItem.Status = RequestedStatus.Approved;
+            supItem.UpdatedAt = DateTime.UtcNow;
 
             await _unitOfWork.Complete();
 
-            // ✅ Send notification
+            // ✅ Notification
             if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
             {
                 await _notificationService.NotifyUserAsync(

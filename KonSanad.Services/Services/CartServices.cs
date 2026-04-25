@@ -71,20 +71,18 @@ namespace KonSanad.Services.Services
                     return "dto must be AddToCartDto for beneficiary";
 
                 // جلب المنتج من الداتا بيز
-                var product = await _context.OrderItems
+                var product = await _context.Supplies
                     .FirstOrDefaultAsync(p => p.Id == data.ProductId);
                 if(product == null)
                     return " طلب غير موجود";
-                if (data.QuantityRequested > product.Quantity)
-                    return "  كميه غير صحيحه";
+                
                   cart.Items = cart.Items ?? new List<CartItemDto>();
                 var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == product.Id);
 
                 if (existingItem != null)
                 {
                     // المنتج موجود → زود الكمية
-                    if (existingItem.Quantity + data.QuantityRequested > product.Quantity)
-                        return "الكمية المطلوبة أكبر من المتاح";
+                   
 
                     existingItem.Quantity += data.QuantityRequested;
                 }
@@ -95,7 +93,7 @@ namespace KonSanad.Services.Services
                     ProductId = product.Id,
                     Quantity = data.QuantityRequested,
                     imagUrl = product.ImageUrl,
-                    ProductName = product.CustomSupplyName,
+                    ProductName = product.Name,
                     Category = product.Category,
                     Type = "beneficiary",
                     Reason = data.Reason
