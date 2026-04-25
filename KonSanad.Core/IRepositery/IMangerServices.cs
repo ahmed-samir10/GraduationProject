@@ -15,6 +15,7 @@ namespace KonSanad.Core.IRepositery
         //----------------------------------------------------------------------------------
         //HelpOrder: Ids
         Task<IEnumerable<int>> GetHelpOrderIdsAsync();
+        Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto);
 
         //----------------------------------------------------------------------------------
         Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);

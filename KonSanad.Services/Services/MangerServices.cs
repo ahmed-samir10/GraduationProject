@@ -1361,6 +1361,42 @@ int referenceId, int type)
 
             return result;
         }
+        public async Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(s => s.Id == supplyId && !s.IsDeleted);
+
+            if (supply == null)
+                return "الصنف غير موجود";
+
+
+            if (dto.StockQuantity.HasValue && dto.StockQuantity.Value > 0)
+                supply.StockQuantity = dto.StockQuantity.Value;
+
+            if (dto.MinimumLevel.HasValue && dto.MinimumLevel.Value > 0)
+                supply.MinimumLevel = dto.MinimumLevel.Value;
+
+
+
+            supply.UpdatedAt = DateTime.Now;
+
+            _unitOfWork.Repository<Supply, int>().Update(supply);
+            await _unitOfWork.Complete();
+
+            if (supply.StockQuantity < supply.MinimumLevel)
+            {
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Title = "تنبيه مخزون منخفض",
+                    Message = $"كمية الصنف {supply.Name} أقل من الحد الأدنى.",
+                    EntityType = nameof(Supply),
+                    EntityId = supply.Id
+                });
+            }
+
+            return "تم تعديل الصنف بنجاح";
+        }
         #endregion
     }
 }

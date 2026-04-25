@@ -311,6 +311,24 @@ namespace KonSanad.APIS.Controllers
             var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, search);
             return Ok(new { success = true, data = result });
         }
+
+
+        [HttpPut("Update-supplies/{id}")]
+        public async Task<IActionResult> UpdateSupply(int id, [FromForm] UpdateSupplyDto dto)
+        {
+            if (id <= 0)
+                return Ok(new { success = false, message = "Id غير صحيح" });
+
+            // ✅ لو في صورة جديدة احفظها وحط الـ URL في الـ DTO
+
+
+            var result = await _mangerServices.UpdateSupplyAsync(id, dto);
+
+            if (result != "تم تعديل الصنف بنجاح")
+                return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
         #endregion
     }
 }
