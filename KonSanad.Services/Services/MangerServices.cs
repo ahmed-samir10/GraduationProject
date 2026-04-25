@@ -1223,7 +1223,8 @@ int referenceId, int type)
                         Unit = item.Unit,
                         StockQuantity = item.Quantity,
                         MinimumLevel = 5,
-                        Category = null,
+                        Category = "اخري",
+                        CategoryId = 16,
                         Status = RequestedStatus.Approved,
                         IsDeleted = false,
                         ImageUrl = item.ImageUrl,
@@ -1330,7 +1331,8 @@ int referenceId, int type)
         public async Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
      int pageNumber,
      int pageSize,
-     string? search = null)
+     string? search = null,
+     SupplyCategory? category = null) // ✅ أضف ده
         {
             var query = _unitOfWork.Repository<Supply, int>()
                 .GetQueryable()
@@ -1341,6 +1343,10 @@ int referenceId, int type)
                     s.Name.Contains(search) ||
                     s.StockQuantity.ToString().Contains(search) ||
                     s.MinimumLevel.ToString().Contains(search));
+
+            // ✅ أضف الـ filter ده
+            if (category.HasValue)
+                query = query.Where(s => s.CategoryId == (int)category.Value);
 
             var result = await query
                 .OrderByDescending(s => s.CreatedAt)
@@ -1361,6 +1367,7 @@ int referenceId, int type)
 
             return result;
         }
+        //-----------------------------------------------------------------------------------
         public async Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto)
         {
             var supply = await _unitOfWork.Repository<Supply, int>()
@@ -1397,7 +1404,7 @@ int referenceId, int type)
 
             return "تم تعديل الصنف بنجاح";
         }
-
+        //---------------------------------------------------------------------------------
         public async Task<string> ControlIsVisibility(ControlSupplyDto controlSupply)
         {
             var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(controlSupply.SupplyId);

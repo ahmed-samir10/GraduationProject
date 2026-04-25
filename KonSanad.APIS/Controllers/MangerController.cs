@@ -302,14 +302,14 @@ namespace KonSanad.APIS.Controllers
         //------------------------------------------------------------------------------------------------
 
         #region المستودع 
-
         [HttpGet("supplies")]
         public async Task<IActionResult> GetSupplies(
-     int pageNumber = 1,
-     int pageSize = 8,
-     string? search = null)
+            int pageNumber = 1,
+            int pageSize = 8,
+            string? search = null,
+            SupplyCategory? category = null) // ✅ أضف ده
         {
-            var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, search);
+            var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, search, category);
             return Ok(new { success = true, data = result });
         }
 

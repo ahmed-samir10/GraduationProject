@@ -72,6 +72,7 @@ namespace KonSanad.Core.IRepositery
         Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
      int pageNumber,
      int pageSize,
-     string? search = null);
+     string? search = null,
+     SupplyCategory? category = null); // ✅ أضف ده
     }
 }

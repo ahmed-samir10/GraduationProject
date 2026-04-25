@@ -22,7 +22,8 @@ namespace KonSanad.Repository.Entities
         public string? ImageUrl { get; set; }
         // Link to Category
         public string? Category { get; set; }
-      
+
+        public int? CategoryId { get; set; }
 
         // Navigation
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
