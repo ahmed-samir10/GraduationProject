@@ -1,4 +1,5 @@
-﻿using KonSanad.Core.Entity.Enums;
+﻿using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entity.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -326,6 +327,13 @@ namespace KonSanad.APIS.Controllers
 
             if (result != "تم تعديل الصنف بنجاح")
                 return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+        [HttpPost ("Control_Visibility")]
+        public async Task<IActionResult> Control(ControlSupplyDto dto)
+        {
+            var result = await _mangerServices.ControlIsVisibility(dto);
 
             return Ok(new { success = true, message = result });
         }

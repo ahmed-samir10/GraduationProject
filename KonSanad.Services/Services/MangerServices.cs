@@ -1397,6 +1397,16 @@ int referenceId, int type)
 
             return "تم تعديل الصنف بنجاح";
         }
+
+        public async Task<string> ControlIsVisibility(ControlSupplyDto controlSupply)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(controlSupply.SupplyId);
+            if (supply == null) return "لا يوجد منتج";
+            supply.ShowinType = controlSupply.ShowIn;
+            supply.UpdatedAt = DateTime.Now;
+            await _unitOfWork.Complete();
+            return " نم الاضافه بنجاح";
+        }
         #endregion
     }
 }

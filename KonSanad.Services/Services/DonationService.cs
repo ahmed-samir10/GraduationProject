@@ -26,7 +26,9 @@ namespace KonSanad.Services.Services
 
             // Fill DTO
             var result = orderItems
-                .Where(i => !i.IsDeleted)
+.Where(i => i.ShowinType == Core.Entity.Enums.ShowinType.Both
+         || i.ShowinType == Core.Entity.Enums.ShowinType.beneficiary
+         && !i.IsDeleted)
                 .OrderByDescending(i => i.CreatedAt)
                 .Select(i => new OrderItemDto
                 {
