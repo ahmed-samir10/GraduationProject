@@ -242,7 +242,7 @@ namespace KonSanad.Services.Services
 
             var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
          
-            if (item == null) return "غير موجود";
+          //  if (item == null) return "غير موجود";
             // لو المستخدم متبرع نتحقق من الكمية المتاحة
             if (role == "beneficiary") 
             {

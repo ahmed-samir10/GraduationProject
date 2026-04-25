@@ -34,12 +34,12 @@ namespace KonSanad.APIS.Controllers
         //---------------------------------------------------------------------------------------
 
         [HttpPost("AssignVolunteer")]
-        public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto)
+        public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerRequestDto dto , [FromQuery] DateTime  StartDate, [FromQuery] DateTime EndDate)
         {
             if (dto == null || dto.HelpOrderId <= 0 || dto.VolunteerId <= 0)
                 return Ok(new { success = false, massage = "Invaild Data" });
 
-            var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId);
+            var result = await _mangerServices.AssignVolunteerAsync(dto.HelpOrderId, dto.VolunteerId , StartDate , EndDate) ;
 
             if (result.Contains("not found"))
                 return Ok(new { success = false, massage = "not found" });
