@@ -45,11 +45,12 @@ namespace KonSanad.Core.IRepositery
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
         // في IMangerServices
         Task<IEnumerable<GetVolunteerRequestsDto>> GetAllVolunteerRequestsAsync(
-            int pageNumber,
-            int pageSize,
-            string? search = null,                      // سيرش في كل حقول الـ DTO
-            RefType? requestType = null,                // فيلتر 1: حملة أو مهمة
-            VolunteerMissionStatus? missionStatus = null); // فيلتر 2: حالة الطلب
+    int pageNumber,
+    int pageSize,
+    string? search = null,
+    RefType? requestType = null,
+    VolunteerMissionStatus? missionStatus = null,
+    RequestedStatus? campaignStatus = null); // ✅ أضف ده
         Task<VolunteerRequestDetailDto> GetRequestDetailsAsync(
     int referenceId, int type);
 

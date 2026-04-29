@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.Dtos.ManagerDtos
 {
@@ -17,5 +18,7 @@ namespace KonSanad.Core.Dtos.ManagerDtos
         public string Catgorey { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsLowStock { get; set; }
+
+        public SupplyCategory supplyCategory { get; set; }
     }
 }
