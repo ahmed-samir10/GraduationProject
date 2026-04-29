@@ -382,8 +382,7 @@ namespace KonSanad.Services.Services
             if (supply == null)
                 return "العنصر غير موجود في المخزن";
 
-            if (supply.StockQuantity < item.QuantityRequested)
-                return "الكمية غير كافية في المخزن";
+
 
             // ✅ Update item
             item.Status = RequestedStatus.Approved;
