@@ -15,6 +15,7 @@ namespace KonSanad.Repository.Data.Persistence
         // Actors
         public DbSet<Beneficiary> Beneficiaries { get; set; }
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<VolunteerReport> volunteerReports { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Donor> Donors { get; set; }
 

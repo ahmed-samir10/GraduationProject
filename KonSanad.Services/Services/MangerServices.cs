@@ -1,14 +1,15 @@
-﻿using KonSanad.Core.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entities;
 using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KonSanad.Services.Services
 {
@@ -77,19 +78,33 @@ namespace KonSanad.Services.Services
 
             if (helpOrder == null)
                 return "الطلب غير موجود";
-            var he = await _unitOfWork.Repository<Mission, int>()
-               .GetQueryable()
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.Beneficiary)
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.HelpOrderItems)
-               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
-           if (he != null)
-                return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
+            /*   var he = await _unitOfWork.Repository<Mission, int>()
+                  .GetQueryable()
+                  .Include(m => m.HelpOrder)
+                      .ThenInclude(h => h.Beneficiary)
+                  .Include(m => m.HelpOrder)
+                      .ThenInclude(h => h.HelpOrderItems)
+                  .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
+              if (he != null)
+                   return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";*/
 
+            // ✅ أبسط وأصح
+            var alreadyAssigned = await _unitOfWork.Repository<MissionVolunteers, int>()
+                .GetQueryable()
+                .Include(h=> h.Mission)
+                .ThenInclude(m => m.HelpOrder)
+                .AnyAsync(m => m.Mission.HelpOrderId == helpOrderId && m.Mission.HelpOrder.Beneficiary.Id == helpOrder.Beneficiary.Id && m.Mission.HelpOrder.Beneficiary.NationalId == helpOrder.Beneficiary.NationalId);
+
+            if (alreadyAssigned)
+                return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
+            Mission mission = new Mission { };
 
             // 2️⃣ Create Mission
-            var mission = new Mission
+
+            var Created = await _unitOfWork.Repository<Mission , int> ().GetQueryable().AnyAsync(m => m.HelpOrderId == helpOrderId && m.PhoneNumber == helpOrder.Beneficiary.Phone);
+           if (Created ==null)
+            {
+         mission = new Mission
             {
                 Title = helpOrder.Beneficiary.FullName,
                 Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
@@ -109,9 +124,12 @@ namespace KonSanad.Services.Services
 
                 CreatedAt = DateTime.UtcNow
             };
-
             await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
-            await _unitOfWork.Complete(); // مهم عشان تاخد Id
+            await _unitOfWork.Complete();
+            }
+
+           
+ // مهم عشان تاخد Id
 
             // 3️⃣ Create MissionVolunteer
             var missionVolunteer = new MissionVolunteers
@@ -126,6 +144,28 @@ namespace KonSanad.Services.Services
             await _unitOfWork.Repository<MissionVolunteers, int>().AddAsync(missionVolunteer);
 
             await _unitOfWork.Complete();
+            // ✅ أضفنا Status و IsDeleted لأنهم not null في الـ DB
+            // وكان بيفشل بصمت لأن الـ BaseEntity مش بيديهم قيمة default
+
+
+            //----------------------------------------------------------------------------------------
+            // ✅ جيب الـ Beneficiary object كامل قبل الـ Insert
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.Id == helpOrder.Beneficiary.Id);
+            var volunteerReport = new VolunteerReport
+            {
+                VolunteerId = volunteerId,
+                BenficieryID = helpOrder.Beneficiary.Id,
+                SupportFile = helpOrder.Beneficiary.SupportFile,
+                Beneficiary = beneficiary, // ✅ ده اللي كان ناقص
+                Status = RequestedStatus.Pending,  // ✅ إضافة جديدة - كان بيـ fail لأنه not null في الـ DB
+                IsDeleted = false,                    // ✅ إضافة جديدة - نفس السبب
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(volunteerReport);
+            await _unitOfWork.Complete();
+            //-------------------------------------------------------------------------------------------
 
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
@@ -234,6 +274,9 @@ namespace KonSanad.Services.Services
 
             if (mission == null)
                 return "المهمة غير موجودة";
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+              .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
+
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -250,6 +293,7 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             mission.HelpOrder.Status = RequestedStatus.Rejected; // لو عندك حقل Status في HelpOrder نفسه
             mission.HelpOrder.UpdatedAt = DateTime.Now;
+            repo.SupportFile = vm.ResultMission;
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
 
@@ -289,8 +333,12 @@ namespace KonSanad.Services.Services
                     .ThenInclude(h => h.HelpOrderItems)
                 .FirstOrDefaultAsync(m => m.Id == missionId);
 
+            // ✅ تحقق الأول قبل أي حاجة
             if (mission == null)
                 return "المهمة غير موجودة";
+
+            if (mission.HelpOrder == null)
+                return "لا يوجد طلب مرتبط بهذه المهمة";
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -299,44 +347,55 @@ namespace KonSanad.Services.Services
             if (vm == null)
                 return "المهمة التطوعية غير موجودة";
 
-            // ✅ Update mission
-            mission.MissionStatus = MissionStatus.Completed;
+            // ✅ جيب الـ report بعد التحقق
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+                .FirstOrDefaultAsync(r => r.BenficieryID == mission.HelpOrder.BeneficiaryId);
             var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
 
+            var Suply = await _unitOfWork.Repository<Supply, int>()
+     .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
+            if (Suply == null)
+                return "لا يوجد عناصر في الطلب";
+
+
+            // ✅ Update mission
+            mission.MissionStatus = MissionStatus.Completed;
 
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
-           var Suply = await _unitOfWork.Repository<Supply , int>()
-                .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
-
+            repo.SupportFile = vm.ResultMission;
 
             // ✅ Update help order
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
-            mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
-            mission.HelpOrder.Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrder نفسه
-            mission.HelpOrder.UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث  
+            mission.HelpOrder.ManagerId = 1;
+            mission.HelpOrder.Status = RequestedStatus.Approved;
             Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault().QuantityRequested;
-            // ✅ Update first item (لو موجود)
+            mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
+
+            // ✅ Update first item لو موجود
             var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
             if (item != null)
+            {
                 item.HelpOrderStatus = RequestedStatus.Approved;
+                item.Status = RequestedStatus.Approved;
+                item.UpdatedAt = DateTime.UtcNow;
+            }
 
-            // ✅ Save changes
             await _unitOfWork.Complete();
 
+            // ✅ Send notification
             if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
             {
-                await _notificationService.NotifyUserAsync(mission.HelpOrder.Beneficiary.AppUserId, new NotificationMessageDto
-                {
-                    Type = NotificationType.HelpRequestApproved,
-                    Title = "تمت الموافقة على الطلب",
-                    Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
-                    EntityType = nameof(HelpOrder),
-                    EntityId = mission.HelpOrder.Id
-                });
+                await _notificationService.NotifyUserAsync(
+                    mission.HelpOrder.Beneficiary.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.HelpRequestApproved,
+                        Title = "تمت الموافقة على الطلب",
+                        Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = mission.HelpOrder.Id
+                    });
             }
 
             return "تم قبول الطلب بنجاح";
@@ -347,6 +406,7 @@ namespace KonSanad.Services.Services
 .GetQueryable()
 .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
 .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
                 .Include(m => m.HelpOrder)
@@ -357,7 +417,7 @@ namespace KonSanad.Services.Services
 
 
             if (mission == null)
-                return null;
+                return  null;
 
             var report = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -1116,6 +1176,7 @@ int referenceId, int type)
                     supply.UpdatedAt = DateTime.Now;
                 }
             }
+            
 
             await _unitOfWork.Complete();
 
@@ -1185,6 +1246,78 @@ int referenceId, int type)
 
 
 
+        #endregion
+
+
+        #region filter HelpOrderId
+
+        // ============================================================
+        // Endpoint 1 - كل الـ HelpOrders متجمعة بالـ HelpOrderId
+        // ============================================================
+        public async Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync()
+        {
+            var result = await _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .Include(h => h.HelpOrderItems)
+                .Where(h => !h.IsDeleted)
+                .OrderByDescending(h => h.Id)
+               
+                .Select(h => new GetHelpOrderGroupedDto
+                {
+                    HelpOrderId = h.Id,
+                    UserName = h.Beneficiary.FullName,
+                    PhoneNumber = h.Beneficiary.Phone,
+                    Address = h.Beneficiary.Address,
+                    HelpOrderStatus = h.HelpOrderStatus,
+                    CreatedAt = h.CreatedAt,
+                    TotalItems = h.HelpOrderItems.Count(i => !i.IsDeleted)
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        // ============================================================
+        // Endpoint 2 - كل الـ HelpOrderItems بتاع HelpOrder معين
+        // ============================================================
+        public async Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId)
+        {
+            // ✅ جيب الـ HelpOrder مع الـ Beneficiary والـ Items مع بعض في query واحدة
+            var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .Include(h => h.HelpOrderItems)
+                .Where(h => h.Id == helpOrderId && !h.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            // لو الـ HelpOrder مش موجود خالص
+            if (helpOrder == null)
+                return null;
+
+            var dto = new GetHelpOrderDto
+            {
+                Id = helpOrder.Id,
+                UserName = helpOrder.Beneficiary.FullName,
+                Tilte = helpOrder.HelpOrderItems
+                                   .Select(i => i.Title)
+                                   .FirstOrDefault(),
+                PhoneNumber = helpOrder.Beneficiary.Phone,
+                Address = helpOrder.Beneficiary.Address,
+                HelpOrderStatus = helpOrder.HelpOrderStatus,
+                CreatedAt = helpOrder.CreatedAt,
+
+                Reason = helpOrder.HelpOrderItems
+                                   .Select(i => i.reason)
+                                   .FirstOrDefault(),
+
+                Quantity = helpOrder.HelpOrderItems
+                                   .Select(i => i.QuantityRequested)
+                                   .FirstOrDefault()
+            };
+
+            return dto;
+        }
         #endregion
     }
 }

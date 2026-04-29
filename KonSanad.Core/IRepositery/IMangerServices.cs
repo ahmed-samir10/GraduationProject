@@ -1,10 +1,11 @@
-﻿using KonSanad.Core.Dtos;
-using KonSanad.Core.Entity.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Dtos;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.IRepositery
 {
@@ -58,5 +59,14 @@ namespace KonSanad.Core.IRepositery
 
         Task<string> RejectDonation(int DonationOrderId, string RejectReason);
 
+
+        #region Filter HelpOrderId
+        // الـ 2 Signatures الجديدة
+        Task<IEnumerable<GetHelpOrderGroupedDto>> GetHelpOrdersGroupedAsync();
+            
+
+        // ✅ رجّعنا GetHelpOrderWithItemsDto بدل IEnumerable
+        Task<GetHelpOrderDto?> GetHelpOrderItemsByOrderIdAsync(int helpOrderId); 
+        #endregion
     }
 }
