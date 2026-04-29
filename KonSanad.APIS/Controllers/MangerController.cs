@@ -80,13 +80,13 @@ namespace KonSanad.APIS.Controllers
         //---------------------------------------------------------------------------------------
 
         [HttpPost("accept/{missionId}")]
-        public async Task<IActionResult> AcceptOrder(int missionId)
+        public async Task<IActionResult> AcceptOrder(int missionId, int ItemId)
         {
             if (missionId <= 0)
                
             return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.AcceptOrder(missionId);
+            var result = await _mangerServices.AcceptOrder(missionId , ItemId);
 
             if (result.Contains("not found"))
                return Ok(new { success = false, massage = "not found" });
@@ -101,12 +101,12 @@ namespace KonSanad.APIS.Controllers
 
         // ✅ Reject Order
         [HttpPost("reject/{missionId}")]
-        public async Task<IActionResult> RejectOrder(int missionId)
+        public async Task<IActionResult> RejectOrder(int missionId, int ItemId)
         {
             if (missionId <= 0)
                return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.RejectOrder(missionId);
+            var result = await _mangerServices.RejectOrder(missionId ,ItemId);
 
             if (result.Contains("not found"))
              return Ok(new { success = false, massage = "not found" });
@@ -275,9 +275,9 @@ namespace KonSanad.APIS.Controllers
             return Ok(result);
         }
         [HttpPost("accept-donation/{DonationOrderId}")]
-        public async Task<IActionResult> AcceptDonation(int DonationOrderId)
+        public async Task<IActionResult> AcceptDonation(int DonationOrderId, int ItemId)
         {
-            var result = await _mangerServices.AcceptDonation(DonationOrderId);
+            var result = await _mangerServices.AcceptDonation(DonationOrderId , ItemId);
             if (result != "تم الموافقة على التبرع بنجاح")
                 return BadRequest(new { success = false, message = result });
 
@@ -286,12 +286,12 @@ namespace KonSanad.APIS.Controllers
         //------------------------------------------------------------------------------------------------
 
         [HttpPost("reject-donation/{DonationOrderId}")]
-        public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason)
+        public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason , int ItemId)
         {
             if (string.IsNullOrEmpty(RejectReason))
                 return BadRequest(new { success = false, message = "لازم تكتب سبب الرفض" });
 
-            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason);
+            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason , ItemId);
 
             if (result != "تم رفض التبرع ")
                 return BadRequest(new { success = false, message = result });
@@ -337,6 +337,14 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true, message = result });
         }
+
+        [HttpPost("ViewLowStoskReport")]
+        public async Task<IActionResult> ViewLowStoskReport()
+        {
+            var result = await _mangerServices.GenerateLowStockReportAsync();
+
+            return File(result, "app/Pdf", "LowStock.Pdf");
+        } 
         #endregion
     }
 }

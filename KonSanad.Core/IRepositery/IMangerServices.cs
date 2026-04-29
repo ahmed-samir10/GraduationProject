@@ -74,5 +74,6 @@ namespace KonSanad.Core.IRepositery
      int pageSize,
      string? search = null,
      SupplyCategory? category = null); // ✅ أضف ده
+        Task<byte[]> GenerateLowStockReportAsync();
     }
 }
