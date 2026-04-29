@@ -166,19 +166,23 @@ namespace KonSanad.APIS.Controllers
                 data = result
             });
         }
+        //-------------------------------------------------------------------------------------------------------
+
         [HttpGet("volunteer-requests")]
         public async Task<IActionResult> GetAllVolunteerRequests(
-            int pageNumber = 1,
-            int pageSize = 8,
-            string? search = null,                          // سيرش في كل حقول الـ DTO
-            RefType? requestType = null,                    // فيلتر 1: Campaign=1 or Mission=2
-            VolunteerMissionStatus? missionStatus = null)   // فيلتر 2: حالة الطلب من الـ Enum
+      int pageNumber = 1,
+      int pageSize = 8,
+      string? search = null,
+      RefType? requestType = null,
+      VolunteerMissionStatus? missionStatus = null,
+      RequestedStatus? campaignStatus = null) // ✅ أضف ده
         {
             var result = await _mangerServices.GetAllVolunteerRequestsAsync(
-                pageNumber, pageSize, search, requestType, missionStatus);
+                pageNumber, pageSize, search, requestType, missionStatus, campaignStatus);
 
             return Ok(new { success = true, data = result });
         }
+        //-------------------------------------------------------------------------------------------------------
         [HttpGet("{referenceId}/details")]
         public async Task<IActionResult> GetRequestDetails(
     int referenceId,
