@@ -207,7 +207,7 @@ namespace KonSanad.Services.Services
                     case CreateCustomDonationItemRequestDto custom:
 
                         var data2 = dto as CreateCustomDonationItemRequestDto;
-                        var relativeUrl2 = await _fileService.SaveFileAsync(data2.ImageFile, "uploads");
+                        var relativeUrl2 = await _fileService.SaveFileAsync(data2.ImageFile, "Image");
                         cart.Items = cart.Items ?? new List<CartItemDto>();
                         cart.Items.Add(new CartItemDto
                         {

@@ -23,7 +23,10 @@ namespace KonSanad.Repository.Repository
         {
             return await _context.Set<T>().ToListAsync();
         }
-
+        public async Task<int> CountAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().CountAsync(predicate);
+        }
         public async Task<T> FirstOrDefaultAsync(
        Expression<Func<T, bool>> predicate,
        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)

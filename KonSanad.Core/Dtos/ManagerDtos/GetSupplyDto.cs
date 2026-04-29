@@ -14,6 +14,7 @@ namespace KonSanad.Core.Dtos.ManagerDtos
         public int? StockQuantity { get; set; }
         public int? MinimumLevel { get; set; }
         public string? ImageUrl { get; set; }
+        public string Catgorey { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsLowStock { get; set; }
     }

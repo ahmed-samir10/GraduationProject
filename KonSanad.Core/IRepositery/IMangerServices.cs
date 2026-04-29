@@ -30,8 +30,8 @@ namespace KonSanad.Core.IRepositery
         Task<string> ControlIsVisibility(ControlSupplyDto controlSupply);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId);
-        Task<string> AcceptOrder(int orderId);
-        Task<string> RejectOrder(int orderId);
+        Task<string> AcceptOrder(int orderId , int ItemId);
+        Task<string> RejectOrder(int orderId , int ItemId);
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(
      int pageNumber,
      int pageSize,
@@ -65,9 +65,9 @@ namespace KonSanad.Core.IRepositery
 
 
 
-        Task<string> AcceptDonation(int DonationOrderId);
+        Task<string> AcceptDonation(int DonationOrderId , int ItemId);
 
-        Task<string> RejectDonation(int DonationOrderId, string RejectReason);
+        Task<string> RejectDonation(int DonationOrderId, string RejectReason , int ItemId);
 
         Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
      int pageNumber,
