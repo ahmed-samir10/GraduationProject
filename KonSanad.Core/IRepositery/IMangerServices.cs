@@ -1,26 +1,37 @@
-﻿using KonSanad.Core.Dtos;
-using KonSanad.Core.Entity.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KonSanad.Core.Dtos;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entity.Enums;
 
 namespace KonSanad.Core.IRepositery
 {
     public interface IMangerServices
     {
         Task<string> MakeManagerAsync(int volunteerId);
-            Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize);
+        //----------------------------------------------------------------------------------
+        //HelpOrder: Ids
+        Task<IEnumerable<int>> GetHelpOrderIdsAsync();
+        Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto);
+
+        //----------------------------------------------------------------------------------
+        Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize, string? search, RequestedStatus? status, int? helpOrderId);
+
+        //----------------------------------------------------------------------------------
+
         Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
          string? search = null,
          RequestedStatus? status = null,
          int pageNumber = 1,
          int pageSize = 8);
+        Task<string> ControlIsVisibility(ControlSupplyDto controlSupply);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId);
-        Task <string> AcceptOrder(int orderId);
-         Task<string> RejectOrder(int orderId);
+        Task<string> AcceptOrder(int orderId , int ItemId);
+        Task<string> RejectOrder(int orderId , int ItemId);
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(
      int pageNumber,
      int pageSize,
@@ -28,7 +39,7 @@ namespace KonSanad.Core.IRepositery
         Task<string> AcceptVolunteer(int orderId);
         Task<string> RejectVolunteer(int Id, string ReajectReason);
 
-        Task<string> AcceptRequst(int Requsttype , int referenceId);
+        Task<string> AcceptRequst(int Requsttype, int referenceId);
         Task<string> RejectRequst(int Requsttype, int referenceId, string Reason);
 
         // Get All Volunteer Requests [ Join a campaigns + Start Mission ] 
@@ -50,13 +61,19 @@ namespace KonSanad.Core.IRepositery
       RequestedStatus? status = null); // فيلتر بالحالة
 
         Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId);
-        
 
 
 
-        Task<string> AcceptDonation(int DonationOrderId);
 
-        Task<string> RejectDonation(int DonationOrderId, string RejectReason);
+        Task<string> AcceptDonation(int DonationOrderId , int ItemId);
 
+        Task<string> RejectDonation(int DonationOrderId, string RejectReason , int ItemId);
+
+        Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+     int pageNumber,
+     int pageSize,
+     string? search = null,
+     SupplyCategory? category = null); // ✅ أضف ده
+        Task<byte[]> GenerateLowStockReportAsync();
     }
 }

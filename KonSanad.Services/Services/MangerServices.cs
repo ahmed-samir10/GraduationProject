@@ -1,14 +1,23 @@
-﻿using KonSanad.Core.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
+using System.Threading.Tasks;
+using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entities;
 using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
+
 
 namespace KonSanad.Services.Services
 {
@@ -65,68 +74,88 @@ namespace KonSanad.Services.Services
             return "Volunteer promoted to Manager successfully";
         }
 
-        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId , DateTime Start , DateTime End)
+        public async Task<string> AssignVolunteerAsync(int helpOrderId, int volunteerId, DateTime Start, DateTime End)
         {
             if (Start >= End)
                 return "برجاء التأكد من تواريخ البدء والانتهاء";
-            // 1️⃣ هات الـ HelpOrder
+
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
-      .GetQueryable()
-      .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
-      .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
             if (helpOrder == null)
                 return "الطلب غير موجود";
-            var he = await _unitOfWork.Repository<Mission, int>()
-               .GetQueryable()
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.Beneficiary)
-               .Include(m => m.HelpOrder)
-                   .ThenInclude(h => h.HelpOrderItems)
-               .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId && m.Title == helpOrder.Beneficiary.FullName && m.PhoneNumber == helpOrder.Beneficiary.Phone)     ;
-           if (he != null)
+
+            if (helpOrder.Beneficiary == null)
+                return "المستفيد غير موجود";
+
+            // ✅ تحقق إن المهمة مش اتأسندت قبل كده
+            var alreadyAssigned = await _unitOfWork.Repository<MissionVolunteers, int>()
+                .GetQueryable()
+                .Include(mv => mv.Mission)
+                .AnyAsync(mv => mv.Mission.HelpOrderId == helpOrderId);
+
+            if (alreadyAssigned)
                 return "هذا الطلب تم إسناده بالفعل لمتطوع آخر";
 
+            // ✅ جيب الـ Mission لو موجودة أو اعملها جديدة
+            var mission = await _unitOfWork.Repository<Mission, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrderId);
 
-            // 2️⃣ Create Mission
-            var mission = new Mission
+            if (mission == null)
             {
-                Title = helpOrder.Beneficiary.FullName,
-                Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
-                Address = helpOrder.Beneficiary.Address,
-                PhoneNumber = helpOrder.Beneficiary.Phone,
-                StartDate = Start,
-                EndDate = End, // حسب اللوجيك بتاعك
-                ManagerId = 1,
-                HelpOrderId = helpOrder.Id,
+                mission = new Mission
+                {
+                    Title = helpOrder.Beneficiary.FullName,
+                    Description = "زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
+                    Address = helpOrder.Beneficiary.Address,
+                    PhoneNumber = helpOrder.Beneficiary.Phone,
+                    StartDate = Start,
+                    EndDate = End,
+                    ManagerId = 1,
+                    HelpOrderId = helpOrder.Id,
+                    MissionStatus = MissionStatus.Assigend,
+                    Status = RequestedStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                // CampaignId = helpOrder.CampaignId,
+                await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
+                await _unitOfWork.Complete();
+            }
 
-                MissionStatus = Core.Entity.Enums.MissionStatus.Assigend, // Pending مثلا
+            // ✅ تأكد إن الـ Id اتولد
+            if (mission.Id == 0)
+                return "فشل في إنشاء المهمة";
 
-                // status في الداتا بيز not null لازم يكون ليه قيمة
-                Status = RequestedStatus.Pending,
-
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _unitOfWork.Repository<Mission, int>().AddAsync(mission);
-            await _unitOfWork.Complete(); // مهم عشان تاخد Id
-
-            // 3️⃣ Create MissionVolunteer
+            // ✅ Create MissionVolunteer
             var missionVolunteer = new MissionVolunteers
             {
                 MissionId = mission.Id,
                 VolunteerId = volunteerId,
-                MissionStatus = Core.Entity.Enums.VolunteerMissionStatus.WaitingForReport, // WaitReport
-
+                MissionStatus = VolunteerMissionStatus.WaitingForReport,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.Repository<MissionVolunteers, int>().AddAsync(missionVolunteer);
-
             await _unitOfWork.Complete();
 
+            // ✅ Create VolunteerReport
+            var volunteerReport = new VolunteerReport
+            {
+                VolunteerId = volunteerId,
+                BeneficiaryId = helpOrder.Beneficiary.Id,
+                SupportFile = helpOrder.Beneficiary.SupportFile,
+                Status = RequestedStatus.Pending,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Repository<VolunteerReport, int>().AddAsync(volunteerReport);
+            await _unitOfWork.Complete();
+
+            // ✅ Send notification
             var volunteer = await _unitOfWork.Repository<Volunteer, int>()
                 .FirstOrDefaultAsync(v => v.Id == volunteerId);
 
@@ -145,44 +174,137 @@ namespace KonSanad.Services.Services
             return "تم إسناد المهمة بنجاح";
         }
 
-        //Get HelpOrder 
-        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(int pageNumber, int pageSize)
+        #region HelpOrder: Ids
+
+        public async Task<IEnumerable<int>> GetHelpOrderIdsAsync()
         {
+            return await _unitOfWork.Repository<HelpOrder, int>().GetQueryable()
+                .Where(h => !h.IsDeleted)
+                .Select(h => h.Id)
+                .ToListAsync();
+        }
+        #endregion
+        //Get HelpOrder 
 
-            var query = _unitOfWork.Repository<HelpOrder, int>().GetQueryable();
-
-            var result = await query
+        public async Task<IEnumerable<GetHelpOrderDto>> GetHelpOrderAsync(
+         int pageNumber,
+         int pageSize,
+         string? search,
+         RequestedStatus? status,
+         int? helpOrderId)
+        {
+            var query = _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
                 .Include(h => h.Beneficiary)
                 .Include(h => h.HelpOrderItems)
-                .Where(h => !h.IsDeleted)
-                 .Skip((pageNumber - 1) * pageSize)
-                 .Take(pageSize)
-                .Select(h => new GetHelpOrderDto
+                .Where(h => !h.IsDeleted);
+
+            // ✅ لو جاي بـ ID معين
+            if (helpOrderId.HasValue)
+            {
+                var order = await query
+                    .FirstOrDefaultAsync(h => h.Id == helpOrderId.Value);
+
+                if (order == null)
+                    return Enumerable.Empty<GetHelpOrderDto>();
+
+                var itemsQuery = order.HelpOrderItems.AsQueryable();
+
+                // search على items
+                if (!string.IsNullOrWhiteSpace(search))
+                    itemsQuery = itemsQuery.Where(i => i.Title.Contains(search));
+
+                // filter status على items
+                if (status.HasValue)
+                    itemsQuery = itemsQuery.Where(i => i.HelpOrderStatus == status.Value);
+
+                // لو مفيش items بعد الفلترة
+                if (!itemsQuery.Any())
                 {
-                    Id = h.Id,
-                    UserName = h.Beneficiary.FullName,
-                    Tilte = h.HelpOrderItems
-                                .Select(i => i.Title)
-                                .FirstOrDefault(),
-                    PhoneNumber = h.Beneficiary.Phone,
-                    Address = h.Beneficiary.Address,
-                    HelpOrderStatus = h.HelpOrderStatus,
-                    CreatedAt = h.CreatedAt,
+                    return new List<GetHelpOrderDto>
+            {
+                new GetHelpOrderDto
+                {
+                    Id = order.Id,
 
-                    Reason = h.HelpOrderItems
-                                .Select(i => i.reason)
-                                .FirstOrDefault(),
+                    UserName = order.Beneficiary?.FullName ?? string.Empty,
+                    PhoneNumber = order.Beneficiary?.Phone ?? string.Empty,
+                    Address = order.Beneficiary?.Address ?? string.Empty,
+                    HelpOrderStatus = order.HelpOrderStatus,
+                    CreatedAt = order.CreatedAt
+                }
+            };
+                }
 
-                    Quantity = h.HelpOrderItems
-                                .Select(i => i.QuantityRequested)
-                                .FirstOrDefault()
-                })
+                return itemsQuery.Select(i => new GetHelpOrderDto
+                {
+                    Id = order.Id,
+                    UserName = order.Beneficiary.FullName ?? string.Empty,
+                    PhoneNumber = order.Beneficiary.Phone ?? string.Empty,
+                    Address = order.Beneficiary.Address ?? string.Empty,
+                    HelpOrderStatus = i.HelpOrderStatus,
+                    CreatedAt = order.CreatedAt,
+                    Tilte = i.Title,
+                    Reason = i.reason,
+                    Quantity = i.QuantityRequested
+                }).ToList();
+            }
+
+            // ✅ search عام
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(h =>
+                    h.Beneficiary.FullName.Contains(search) ||
+                    h.Beneficiary.Phone.Contains(search) ||
+                    h.Beneficiary.Address.Contains(search) ||
+                    h.HelpOrderItems.Any(i => i.Title.Contains(search)));
+            }
+
+            // ✅ filter status (order أو item)
+            if (status.HasValue)
+            {
+                query = query.Where(h =>
+                    h.HelpOrderStatus == status.Value ||
+                    h.HelpOrderItems.Any(i => i.HelpOrderStatus == status.Value));
+            }
+
+            // ✅ pagination بعد كل الفلترة
+            var orders = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return result;
-        }
+            // ✅ mapping
+            var result = orders.SelectMany(h =>
+                h.HelpOrderItems != null && h.HelpOrderItems.Any()
+                    ? h.HelpOrderItems.Select(i => new GetHelpOrderDto
+                    {
+                        Id = h.Id,
+                        UserName = h.Beneficiary?.FullName ?? string.Empty,
+                        PhoneNumber = h.Beneficiary?.Phone ?? string.Empty,
+                        Address = h.Beneficiary?.Address ?? string.Empty,
+                        HelpOrderStatus = i.HelpOrderStatus,
+                        CreatedAt = h.CreatedAt,
+                        Tilte = i.Title,
+                        Reason = i.reason,
+                        Quantity = i.QuantityRequested
+                    })
+                    : new List<GetHelpOrderDto>
+                    {
+                new GetHelpOrderDto
+                {
+                    Id = h.Id,
+                    UserName = h.Beneficiary?.FullName ?? string.Empty,
+                    PhoneNumber = h.Beneficiary?.Phone ?? string.Empty,
+                    Address = h.Beneficiary?.Address ?? string.Empty,
+                    HelpOrderStatus = h.HelpOrderStatus,
+                    CreatedAt = h.CreatedAt
+                }
+                    }
+            );
 
-        // Get Volunteer in Charity
+            return result.ToList();
+        }  // Get Volunteer in Charity
         public async Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
       string? search = null,          // بيسيرش في كل الحقول
       RequestedStatus? status = null, // الفيلتر بالحالة بس
@@ -222,7 +344,7 @@ namespace KonSanad.Services.Services
             return result;
         }
 
-        public async Task<string> RejectOrder(int missionId )
+        public async Task<string> RejectOrder(int missionId, int ItemId)
         {
             var mission = await _unitOfWork.Repository<Mission, int>()
                .GetQueryable()
@@ -234,6 +356,9 @@ namespace KonSanad.Services.Services
 
             if (mission == null)
                 return "المهمة غير موجودة";
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+              .FirstOrDefaultAsync(r => r.BeneficiaryId == mission.HelpOrder.BeneficiaryId);
+
 
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
@@ -241,6 +366,7 @@ namespace KonSanad.Services.Services
 
             if (vm == null)
                 return "المهمة التطوعية غير موجودة";
+
 
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
@@ -250,14 +376,15 @@ namespace KonSanad.Services.Services
             mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
             mission.HelpOrder.Status = RequestedStatus.Rejected; // لو عندك حقل Status في HelpOrder نفسه
             mission.HelpOrder.UpdatedAt = DateTime.Now;
+            repo.SupportFile = vm.ResultMission;
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
 
             // ✅ Update help order
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Rejected;
 
-            // ✅ Update first item (لو موجود)
-            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
+            // ✅ Update item (لو موجود)
+            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault(i => i.Id == ItemId);
             if (item != null)
                 item.Status = RequestedStatus.Rejected;
 
@@ -279,7 +406,7 @@ namespace KonSanad.Services.Services
             return "تم رفض الطلب ";
 
         }
-        public async Task<string> AcceptOrder(int missionId)
+        public async Task<string> AcceptOrder(int missionId, int itemId)
         {
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
@@ -292,6 +419,9 @@ namespace KonSanad.Services.Services
             if (mission == null)
                 return "المهمة غير موجودة";
 
+            if (mission.HelpOrder == null)
+                return "لا يوجد طلب مرتبط بهذه المهمة";
+
             var vm = await _unitOfWork.Repository<MissionVolunteers, int>()
                 .GetQueryable()
                 .FirstOrDefaultAsync(mv => mv.MissionId == missionId);
@@ -299,44 +429,59 @@ namespace KonSanad.Services.Services
             if (vm == null)
                 return "المهمة التطوعية غير موجودة";
 
+            var repo = await _unitOfWork.Repository<VolunteerReport, int>()
+                .FirstOrDefaultAsync(r => r.BeneficiaryId == mission.HelpOrder.BeneficiaryId);
+
+            if (repo == null)
+                return "لا يوجد تقرير للمتطوع";
+
+            var supItem = mission.HelpOrder.HelpOrderItems.FirstOrDefault(i => i.Id == itemId);
+
+            if (supItem == null)
+                return "لا يوجد عناصر في الطلب";
+
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .FirstOrDefaultAsync(s => s.Id == supItem.Id);
+
+            if (supply == null)
+                return "العنصر غير موجود في المخزن";
+
             // ✅ Update mission
             mission.MissionStatus = MissionStatus.Completed;
-            var sup = await _unitOfWork.Repository<HelpOrderItem, int>().FirstOrDefaultAsync(i => i.HelpOrderId == mission.HelpOrderId);
-
-
+            supItem.Status = RequestedStatus.Rejected;
             // ✅ Update volunteer mission
             vm.MissionStatus = VolunteerMissionStatus.Completed;
-           var Suply = await _unitOfWork.Repository<Supply , int>()
-                .FirstOrDefaultAsync(s => s.Id == sup.SupplyId);
-
+            repo.SupportFile = vm.ResultMission;
 
             // ✅ Update help order
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().HelpOrderStatus = RequestedStatus.Approved; // لو عايز توافق على أول item
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrderItem نفسه
-            mission.HelpOrder.HelpOrderItems.FirstOrDefault().UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث
             mission.HelpOrder.HelpOrderStatus = RequestedStatus.Approved;
-            mission.HelpOrder.ManagerId = 1; // Assign to manager with ID 1 (or any logic you want)
-            mission.HelpOrder.Status = RequestedStatus.Approved; // لو عندك حقل Status في HelpOrder نفسه
-            mission.HelpOrder.UpdatedAt = DateTime.Now; // لو عايز تحدث وقت التحديث  
-            Suply.StockQuantity = Suply.StockQuantity - mission.HelpOrder.HelpOrderItems.FirstOrDefault().QuantityRequested;
-            // ✅ Update first item (لو موجود)
-            var item = mission.HelpOrder.HelpOrderItems.FirstOrDefault();
-            if (item != null)
-                item.HelpOrderStatus = RequestedStatus.Approved;
+            mission.HelpOrder.ManagerId = 1;
+            mission.HelpOrder.Status = RequestedStatus.Approved;
+            mission.HelpOrder.UpdatedAt = DateTime.UtcNow;
 
-            // ✅ Save changes
+            // ✅ Update stock
+            supply.StockQuantity -= supItem.QuantityRequested;
+
+            // ✅ Update item
+            supItem.HelpOrderStatus = RequestedStatus.Approved;
+            supItem.Status = RequestedStatus.Approved;
+            supItem.UpdatedAt = DateTime.UtcNow;
+
             await _unitOfWork.Complete();
 
+            // ✅ Notification
             if (!string.IsNullOrWhiteSpace(mission.HelpOrder?.Beneficiary?.AppUserId))
             {
-                await _notificationService.NotifyUserAsync(mission.HelpOrder.Beneficiary.AppUserId, new NotificationMessageDto
-                {
-                    Type = NotificationType.HelpRequestApproved,
-                    Title = "تمت الموافقة على الطلب",
-                    Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
-                    EntityType = nameof(HelpOrder),
-                    EntityId = mission.HelpOrder.Id
-                });
+                await _notificationService.NotifyUserAsync(
+                    mission.HelpOrder.Beneficiary.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.HelpRequestApproved,
+                        Title = "تمت الموافقة على الطلب",
+                        Message = $"تمت الموافقة على طلبك رقم {mission.HelpOrder.Id}.",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = mission.HelpOrder.Id
+                    });
             }
 
             return "تم قبول الطلب بنجاح";
@@ -347,6 +492,7 @@ namespace KonSanad.Services.Services
 .GetQueryable()
 .Include(h => h.Beneficiary)  //غيرت ال status ال فجدول المستفيدين فالداتا بيز ل int <== xxx
 .FirstOrDefaultAsync(h => h.Id == helpOrderId);
+
             var mission = await _unitOfWork.Repository<Mission, int>()
                 .GetQueryable()
                 .Include(m => m.HelpOrder)
@@ -439,7 +585,7 @@ namespace KonSanad.Services.Services
             return "تم قبول طلب التطوع بنجاح";
         }
 
-        public async Task<string> RejectVolunteer(int VolId , string Reason)
+        public async Task<string> RejectVolunteer(int VolId, string Reason)
         {
             var volunteer = _unitOfWork.Repository<Volunteer, int>()
                  .GetQueryable()
@@ -519,8 +665,7 @@ namespace KonSanad.Services.Services
                     .Where(mv => !mv.IsDeleted &&
                         (mv.MissionStatus == VolunteerMissionStatus.InReview ||
                          mv.MissionStatus == VolunteerMissionStatus.Rejected ||
-                         mv.MissionStatus == VolunteerMissionStatus.WaitingForReport ||
-                         mv.Mission.MissionStatus == MissionStatus.Assigend))
+                         mv.MissionStatus == VolunteerMissionStatus.WaitingForReport))
                     .Include(mv => mv.Volunteer)
                     .Include(mv => mv.Mission)
                     .Select(mv => new GetVolunteerRequestsDto
@@ -546,9 +691,14 @@ namespace KonSanad.Services.Services
             // لو المدير اختار حالة معينة بيفلتر بيها، لو null بيجيب الكل
             // ============================================================
             if (missionStatus.HasValue)
+            {
                 result = result
-                    .Where(r => r.Status == (int)missionStatus.Value)
+                    .Where(r =>
+                        r.RequestType == RefType.Mission &&
+                        r.Status == (int)missionStatus.Value
+                    )
                     .ToList();
+            }
 
             // ============================================================
             // 4️⃣ السيرش في كل حقول الـ DTO
@@ -561,7 +711,7 @@ namespace KonSanad.Services.Services
                     r.Phone.Contains(search, StringComparison.OrdinalIgnoreCase) || // سيرش في التليفون
                     r.Address.Contains(search, StringComparison.OrdinalIgnoreCase) || // سيرش في العنوان
                     r.Title.Contains(search, StringComparison.OrdinalIgnoreCase)  // سيرش في اسم الحملة أو المهمة
-                                           
+
                 ).ToList();
 
             // ============================================================
@@ -624,7 +774,7 @@ namespace KonSanad.Services.Services
                     return "طلب المهمة غير موجود";
 
                 if (missionRequest.Mission.MissionStatus == MissionStatus.Assigend)
-                {                  
+                {
                     return "تم قبول هذه المهمة بالفعل من قبل متطوع آخر";
                 }
 
@@ -659,7 +809,7 @@ namespace KonSanad.Services.Services
             return "نوع الطلب غير صالح";
         }
 
-        public async Task<string> RejectRequst(int requstType, int referenceId , string Reason)
+        public async Task<string> RejectRequst(int requstType, int referenceId, string Reason)
         {
             // 🔹 Campaign Request
             if (requstType == (int)RefType.Campaign)
@@ -962,7 +1112,7 @@ int referenceId, int type)
                 .Include(cd => cd.DonationOrder)
                     .ThenInclude(d => d.Donor)
                 .Where(cd => !cd.IsDeleted && cd.DonationOrder.Id == DonationOrderId) //هات التبرع اللي: مش محذوف , رقم الطلب بتاعه = الـ id اللي جايلي.
-                .FirstOrDefaultAsync(); 
+                .FirstOrDefaultAsync();
 
             if (cashDonation != null)
             {
@@ -1006,7 +1156,7 @@ int referenceId, int type)
 
                     dto.SupplyName = supply?.Name ?? string.Empty;
                     dto.ImageFile = supply?.ImageUrl ?? string.Empty; //الصور فجدول supply في الداتا بيز بايظه
-       
+
                 }
 
                 return dto;
@@ -1054,7 +1204,7 @@ int referenceId, int type)
         }
         //---------------------------------------------------------------------------------------
 
-        public async Task<string> AcceptDonation(int DonationOrderId)
+        public async Task<string> AcceptDonation(int DonationOrderId, int ItemId)
         {
             var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
                 .GetQueryable()
@@ -1065,10 +1215,10 @@ int referenceId, int type)
 
             var orderItems = await _unitOfWork.Repository<OrderItem, int>()
                 .GetQueryable()
-                .Where(oi => oi.DonationOrderId == DonationOrderId && !oi.IsDeleted)
+                .Where(oi => oi.DonationOrderId == DonationOrderId && oi.Id == ItemId)
                 .ToListAsync();
 
-            if (orderItems == null || !orderItems.Any())
+            if (orderItems == null)
                 return "مفيش items مرتبطة بالتبرع ده";
 
             if (orderItems.Any(oi => oi.orderItemStatus == RequestedStatus.Rejected))
@@ -1087,7 +1237,8 @@ int referenceId, int type)
                         Unit = item.Unit,
                         StockQuantity = item.Quantity,
                         MinimumLevel = 5,
-                        CategoryId = null,
+                        Category = "اخري",
+                        CategoryId = 16,
                         Status = RequestedStatus.Approved,
                         IsDeleted = false,
                         ImageUrl = item.ImageUrl,
@@ -1117,9 +1268,9 @@ int referenceId, int type)
                 }
             }
 
+
             await _unitOfWork.Complete();
 
-            if (!string.IsNullOrWhiteSpace(donationOrder.Donor?.AppUserId))
             {
                 await _notificationService.NotifyUserAsync(donationOrder.Donor.AppUserId, new NotificationMessageDto
                 {
@@ -1134,7 +1285,7 @@ int referenceId, int type)
             return "تم الموافقة على التبرع بنجاح";
         }
         //--------------------------------------------------------------------------------------
-        public async Task<string> RejectDonation(int DonationOrderId, string RejectReason)
+        public async Task<string> RejectDonation(int DonationOrderId, string RejectReason, int ItemId)
         {
             // جيب الـ DonationOrder
             var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
@@ -1149,10 +1300,10 @@ int referenceId, int type)
             // جيب الـ OrderItems المرتبطة بالـ DonationOrder ده
             var orderItems = await _unitOfWork.Repository<OrderItem, int>()
                 .GetQueryable()
-                .Where(oi => oi.DonationOrderId == DonationOrderId && !oi.IsDeleted)
+                .Where(oi => oi.DonationOrderId == DonationOrderId && oi.Id == ItemId)
                 .ToListAsync();
 
-            if (orderItems == null || !orderItems.Any())
+            if (orderItems == null)
                 return "مفيش items مرتبطة بالتبرع ده";
 
             if (orderItems.Any(oi => oi.orderItemStatus == RequestedStatus.Approved))
@@ -1186,5 +1337,153 @@ int referenceId, int type)
 
 
         #endregion
+
+
+        #region المستودع
+
+        public async Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
+     int pageNumber,
+     int pageSize,
+     string? search = null,
+     SupplyCategory? category = null) // ✅ أضف ده
+        {
+            var query = _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .Where(s => !s.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(s =>
+                    s.Name.Contains(search) ||
+                    s.StockQuantity.ToString().Contains(search) ||
+                    s.MinimumLevel.ToString().Contains(search));
+
+            // ✅ أضف الـ filter ده
+            if (category.HasValue)
+                query = query.Where(s => s.CategoryId == (int)category.Value);
+
+            var result = await query
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new GetSupplyDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Unit = s.Unit,
+                    StockQuantity = s.StockQuantity,
+                    MinimumLevel = s.MinimumLevel,
+                    Catgorey = s.Category,
+                    ImageUrl = s.ImageUrl,
+                    UpdatedAt = s.UpdatedAt,
+                    IsLowStock = s.StockQuantity < s.MinimumLevel
+                })
+                .ToListAsync();
+
+            return result;
+        }
+        //-----------------------------------------------------------------------------------
+        public async Task<string> UpdateSupplyAsync(int supplyId, UpdateSupplyDto dto)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .FirstOrDefaultAsync(s => s.Id == supplyId && !s.IsDeleted);
+
+            if (supply == null)
+                return "الصنف غير موجود";
+
+
+            if (dto.StockQuantity.HasValue && dto.StockQuantity.Value > 0)
+                supply.StockQuantity = dto.StockQuantity.Value;
+
+            if (dto.MinimumLevel.HasValue && dto.MinimumLevel.Value > 0)
+                supply.MinimumLevel = dto.MinimumLevel.Value;
+
+
+
+            supply.UpdatedAt = DateTime.Now;
+
+            _unitOfWork.Repository<Supply, int>().Update(supply);
+            await _unitOfWork.Complete();
+
+            if (supply.StockQuantity < supply.MinimumLevel)
+            {
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Title = "تنبيه مخزون منخفض",
+                    Message = $"كمية الصنف {supply.Name} أقل من الحد الأدنى.",
+                    EntityType = nameof(Supply),
+                    EntityId = supply.Id
+                });
+            }
+
+            return "تم تعديل الصنف بنجاح";
+        }
+        //---------------------------------------------------------------------------------
+        public async Task<string> ControlIsVisibility(ControlSupplyDto controlSupply)
+        {
+            var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(controlSupply.SupplyId);
+            if (supply == null) return "لا يوجد منتج";
+            supply.ShowinType = controlSupply.ShowIn;
+            supply.UpdatedAt = DateTime.Now;
+            await _unitOfWork.Complete();
+            return " نم الاضافه بنجاح";
+        }
+
+        public async Task<byte[]> GenerateLowStockReportAsync()
+        {
+            var Products =await _unitOfWork.Repository<Supply, int>()
+                .GetQueryable()
+                .Where(s => s.StockQuantity < s.MinimumLevel)
+                .ToListAsync();
+            return GeneratePdf(Products);
+            
+
+
+            #endregion
+        }
+        private byte[] GeneratePdf(List<Supply> supplies)
+        {
+            return QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(20);
+
+                    page.Header()
+                        .Text("Low Stock Report")
+                        .FontSize(20)
+                        .Bold();
+
+                    page.Content().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Name").Bold();
+                            header.Cell().Text("Quantity").Bold();
+                            header.Cell().Text("Min Quantity").Bold();
+                        });
+
+                        foreach (var supply in supplies)
+                        {
+                            table.Cell().Text(supply.Name);
+                            table.Cell().Text(supply.StockQuantity.ToString());
+                            table.Cell().Text(supply.MinimumLevel.ToString());
+                        }
+                    });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text($"Generated At: {DateTime.Now}");
+                });
+            }).GeneratePdf();
+        }
+
     }
 }

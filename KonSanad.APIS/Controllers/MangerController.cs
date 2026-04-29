@@ -1,4 +1,5 @@
-﻿using KonSanad.Core.Entity.Enums;
+﻿using KonSanad.Core.Dtos.ManagerDtos;
+using KonSanad.Core.Entity.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -16,14 +17,28 @@ namespace KonSanad.APIS.Controllers
             _mangerServices = mangerServices;
         }
 
-        [HttpGet("help-orders")]
-        public async Task<IActionResult> GetHelpOrders(int pageNumber = 1, int pageSize = 8)
-        {
-            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize);
+        //----------------------------------------------------------------------------------
+        // Drop List 
 
+        [HttpGet("help-orders/ids")]
+        public async Task<IActionResult> GetHelpOrderIds()
+        {
+            var result = await _mangerServices.GetHelpOrderIdsAsync();
             return Ok(new { success = true, data = result });
         }
 
+        //---------------------------------------------------------------------------------------
+        [HttpGet("help-orders")]
+        public async Task<IActionResult> GetHelpOrders(
+     int pageNumber = 1,
+     int pageSize = 8,
+     string? search = null,
+     RequestedStatus? status = null,
+     int? helpOrderId = null)
+        {
+            var result = await _mangerServices.GetHelpOrderAsync(pageNumber, pageSize, search, status, helpOrderId);
+            return Ok(new { success = true, data = result });
+        }
         //---------------------------------------------------------------------------------------
         [HttpGet("AllVolunteer")]
         public async Task<IActionResult> GetVolunteers(
@@ -65,13 +80,13 @@ namespace KonSanad.APIS.Controllers
         //---------------------------------------------------------------------------------------
 
         [HttpPost("accept/{missionId}")]
-        public async Task<IActionResult> AcceptOrder(int missionId)
+        public async Task<IActionResult> AcceptOrder(int missionId, int ItemId)
         {
             if (missionId <= 0)
                
             return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.AcceptOrder(missionId);
+            var result = await _mangerServices.AcceptOrder(missionId , ItemId);
 
             if (result.Contains("not found"))
                return Ok(new { success = false, massage = "not found" });
@@ -86,12 +101,12 @@ namespace KonSanad.APIS.Controllers
 
         // ✅ Reject Order
         [HttpPost("reject/{missionId}")]
-        public async Task<IActionResult> RejectOrder(int missionId)
+        public async Task<IActionResult> RejectOrder(int missionId, int ItemId)
         {
             if (missionId <= 0)
                return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.RejectOrder(missionId);
+            var result = await _mangerServices.RejectOrder(missionId ,ItemId);
 
             if (result.Contains("not found"))
              return Ok(new { success = false, massage = "not found" });
@@ -260,9 +275,9 @@ namespace KonSanad.APIS.Controllers
             return Ok(result);
         }
         [HttpPost("accept-donation/{DonationOrderId}")]
-        public async Task<IActionResult> AcceptDonation(int DonationOrderId)
+        public async Task<IActionResult> AcceptDonation(int DonationOrderId, int ItemId)
         {
-            var result = await _mangerServices.AcceptDonation(DonationOrderId);
+            var result = await _mangerServices.AcceptDonation(DonationOrderId , ItemId);
             if (result != "تم الموافقة على التبرع بنجاح")
                 return BadRequest(new { success = false, message = result });
 
@@ -271,17 +286,65 @@ namespace KonSanad.APIS.Controllers
         //------------------------------------------------------------------------------------------------
 
         [HttpPost("reject-donation/{DonationOrderId}")]
-        public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason)
+        public async Task<IActionResult> RejectDonation(int DonationOrderId, [FromQuery] string RejectReason , int ItemId)
         {
             if (string.IsNullOrEmpty(RejectReason))
                 return BadRequest(new { success = false, message = "لازم تكتب سبب الرفض" });
 
-            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason);
+            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason , ItemId);
 
             if (result != "تم رفض التبرع ")
                 return BadRequest(new { success = false, message = result });
 
             return Ok(new { success = true, message = result });
         }
+
+        //------------------------------------------------------------------------------------------------
+
+        #region المستودع 
+        [HttpGet("supplies")]
+        public async Task<IActionResult> GetSupplies(
+            int pageNumber = 1,
+            int pageSize = 8,
+            string? search = null,
+            SupplyCategory? category = null) // ✅ أضف ده
+        {
+            var result = await _mangerServices.GetSuppliesAsync(pageNumber, pageSize, search, category);
+            return Ok(new { success = true, data = result });
+        }
+
+
+        [HttpPut("Update-supplies/{id}")]
+        public async Task<IActionResult> UpdateSupply(int id, [FromForm] UpdateSupplyDto dto)
+        {
+            if (id <= 0)
+                return Ok(new { success = false, message = "Id غير صحيح" });
+
+            // ✅ لو في صورة جديدة احفظها وحط الـ URL في الـ DTO
+
+
+            var result = await _mangerServices.UpdateSupplyAsync(id, dto);
+
+            if (result != "تم تعديل الصنف بنجاح")
+                return Ok(new { success = false, message = result });
+
+            return Ok(new { success = true, message = result });
+        }
+        [HttpPost ("Control_Visibility")]
+        public async Task<IActionResult> Control(ControlSupplyDto dto)
+        {
+            var result = await _mangerServices.ControlIsVisibility(dto);
+
+            return Ok(new { success = true, message = result });
+        }
+
+        [HttpPost("ViewLowStoskReport")]
+        public async Task<IActionResult> ViewLowStoskReport()
+        {
+            var result = await _mangerServices.GenerateLowStockReportAsync();
+
+            return File(result, "app/Pdf", "LowStock.Pdf");
+        } 
+        #endregion
     }
 }

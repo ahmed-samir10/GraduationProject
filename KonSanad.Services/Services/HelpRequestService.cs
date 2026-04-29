@@ -1,6 +1,8 @@
 ﻿
 using KonSanad.Core.Entity.Enums;
+using KonSanad.Core.IRepositery;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace KonSanad.Services.Services
 {
@@ -10,17 +12,20 @@ namespace KonSanad.Services.Services
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
         private readonly INotificationService _notificationService;
+        private readonly IFileService _fileService;  
 
 
         public HelpRequestService(
             IUnitOfWork unitOfWork,
             IMapper mapper,
             UserManager<AppUser> userManager,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IFileService fileService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _userManager = userManager;
+            _fileService = fileService;
             _notificationService = notificationService;
         }
 
@@ -109,43 +114,43 @@ namespace KonSanad.Services.Services
         //Delete item from my request
         public async Task<(bool Success, string Message)> DeleteItemAsync(string userId, int helpOrderItemId)
         {
-            // 1️⃣ هات المستفيد
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
             if (beneficiary == null)
                 return (false, "المستفيد غير موجود");
 
-            // 2️⃣ هات الـ HelpOrderItem
             var item = await _unitOfWork.Repository<HelpOrderItem, int>()
                 .FirstOrDefaultAsync(i => i.Id == helpOrderItemId);
+
             if (item == null)
                 return (false, "العنصر غير موجود");
 
-            // 3️⃣ هات الـ Order المرتبط بالـ item
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
                 .FirstOrDefaultAsync(h => h.Id == item.HelpOrderId);
+
             if (helpOrder == null || helpOrder.BeneficiaryId != beneficiary.Id)
-                return (false, "غير مسموح بحذف هذا العنصر");
+                return (false, "غير مسموح");
 
-            // 4️⃣ احسب عدد المنتجات في الـ HelpOrder
-            var itemCount = await _unitOfWork.Repository<HelpOrderItem, int>()
-                .FindAllAsync(i => i.HelpOrderId == helpOrder.Id);
+            var count = await _unitOfWork.Repository<HelpOrderItem, int>()
+                .CountAsync(i => i.HelpOrderId == helpOrder.Id);
 
-            if (itemCount.Count() ==1)
+            if (count == 1)
             {
-                // لو منتج واحد بس → امسح الـ HelpOrder كله
                 _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
                 _unitOfWork.Repository<HelpOrder, int>().Delete(helpOrder);
-                await _unitOfWork.Complete();
-                return (true, "تم حذف الطلب بالكامل لأنه لم يتبق منتجات");
+            }
+            else
+            {
+                _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
             }
 
-            // 5️⃣ لو في أكتر من منتج → امسح الـ item بس
-            _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
             await _unitOfWork.Complete();
-            return (true, "تم حذف العنصر بنجاح");
-        }
 
+            return (true, count == 1
+                ? "تم حذف الطلب بالكامل"
+                : "تم حذف العنصر بنجاح");
+        }
         //update item in my request (Quantity)
 
         public async Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(int helpOrderItemId, int newQuantity)
@@ -423,7 +428,9 @@ namespace KonSanad.Services.Services
                 Email = appUser.Email ?? string.Empty,
                 PhoneNumber = appUser.PhoneNumber ?? string.Empty,
                 Address = beneficiary.Address ?? string.Empty,
-                NationalId = beneficiary.NationalId ?? string.Empty
+                NationalId = beneficiary.NationalId ?? string.Empty,
+                SupportFile = beneficiary.SupportFile ?? "لا يوجد اي اثيات شخصيه",
+
                
             };
 
@@ -454,6 +461,19 @@ namespace KonSanad.Services.Services
 
             if (!string.IsNullOrWhiteSpace(dto.Address) && !(dto.Address == "string"))
                 beneficiary.Address = dto.Address;
+
+
+
+            var fileUrls = string.Empty;
+
+            if (dto.SupportingFiles != null )
+            {
+                
+                    var url = await _fileService.SaveFileAsync(dto.SupportingFiles, "uploads");
+                fileUrls = url;
+                
+            }
+            beneficiary.SupportFile = fileUrls;
 
             // If email is provided, update Identity user email (and optionally beneficiary.Email)
             if (!string.IsNullOrWhiteSpace(dto.Email) && !(dto.Email == "string"))

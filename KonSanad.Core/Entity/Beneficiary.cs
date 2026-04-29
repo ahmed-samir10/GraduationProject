@@ -18,6 +18,7 @@ namespace KonSanad.Repository.Entities
 
         public string AppUserId { get; set; }
         public AppUser AppUser { get; set; }
+        public string? SupportFile { get; set; }
 
 
         // Naviegation property

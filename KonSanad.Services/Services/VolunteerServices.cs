@@ -142,21 +142,38 @@ namespace KonSanad.Services.Services
                 .FindAllAsync(
                     predicate: vm => vm.VolunteerId == volunteerId,
                     include: q => q.Include(vm => vm.Mission)
+                    
+                    
                 );
+            var reports = await _unitOfWork.Repository<VolunteerReport, int>()
+          .FindAllAsync(predicate: r => r.VolunteerId == volunteerId);
+           
+
 
             if (!missions.Any())
                 throw new ArgumentException("No missions found for this volunteer");
 
-            return missions.Select(vm => new VolunteerMissionDto
+            return missions.Select(vm =>
             {
-                Id = vm.Id,
-                MissionId = vm.MissionId,
-                Name = vm.Mission.Title,
-                MissionStatus = vm.MissionStatus,
-                CreatedAt = vm.CreatedAt,
-                Description = "مطلوب زياره ميدانيه",
-                ResultMission = vm.ResultMission,
-                Notes = vm.Notes
+                // ✅ الـ BeneficiaryId جاي من HelpOrder اللي على الـ Mission
+                var beneficiaryId = vm.Mission.HelpOrder?.BeneficiaryId;
+
+                // ✅ جيب الـ report الخاص بالـ beneficiary ده
+                var report = reports.FirstOrDefault(r => r.BeneficiaryId == beneficiaryId);
+
+                return new VolunteerMissionDto
+                {
+                    Id = vm.Id,
+                    MissionId = vm.MissionId,
+                    Name = vm.Mission.Title,
+                    MissionStatus = vm.MissionStatus,
+                    CreatedAt = vm.CreatedAt,
+                    Description = "مطلوب زياره ميدانيه",
+                    ResultMission = vm.ResultMission,
+                    Notes = vm.Notes,
+                    BeneficiaryId = beneficiaryId,        // ✅
+                    SupportFile = report?.SupportFile      // ✅
+                };
             });
         }
         // ----------------------------------------------------------

@@ -42,12 +42,12 @@ namespace KonSanad.Services.Services
             _context.HelpOrders.Add(helpOrder);
             await _context.SaveChangesAsync();
             var beneficiary = await _context.Beneficiaries.FindAsync(userId);
-       /*     var Mission = new Mission
+            var Mission = new Mission
             {
                 CreatedAt = DateTime.Now,
                 HelpOrderId = helpOrder.Id,
                 Title = beneficiary.FullName,
-                Description =" زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
+                Description = " زيارة ميدانية لمتابعة أحوال الأسر المحتاجة",
                 Address = beneficiary.Address,
                 PhoneNumber = beneficiary.Phone,
                 StartDate = DateTime.Now,
@@ -58,7 +58,7 @@ namespace KonSanad.Services.Services
             };
 
             _context.Missions.Add(Mission);
-            await _context.SaveChangesAsync();*/
+            await _context.SaveChangesAsync();
 
             await _notificationService.NotifyManagersAsync(new NotificationMessageDto
             {

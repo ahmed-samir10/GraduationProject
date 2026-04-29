@@ -112,11 +112,11 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer {token}'",
+        Description = "Enter your JWT token only (without Bearer)",
         
     });
 
@@ -160,6 +160,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     config.Ssl = false;
     return ConnectionMultiplexer.Connect(config);
 });
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
