@@ -86,7 +86,7 @@ namespace KonSanad.APIS.Controllers
                
             return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.AcceptOrder(missionId , ItemId);
+            var result = await _mangerServices.AcceptItem(missionId , ItemId);
 
             if (result.Contains("not found"))
                return Ok(new { success = false, massage = "not found" });
@@ -106,7 +106,7 @@ namespace KonSanad.APIS.Controllers
             if (missionId <= 0)
                return Ok(new { success = false, massage = "برجاء التأكد من البيانات المدخلة" });
 
-            var result = await _mangerServices.RejectOrder(missionId ,ItemId);
+            var result = await _mangerServices.RejectItem(missionId ,ItemId);
 
             if (result.Contains("not found"))
              return Ok(new { success = false, massage = "not found" });
@@ -281,7 +281,7 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("accept-donation/{DonationOrderId}")]
         public async Task<IActionResult> AcceptDonation(int DonationOrderId, int ItemId)
         {
-            var result = await _mangerServices.AcceptDonation(DonationOrderId , ItemId);
+            var result = await _mangerServices.AcceptDonationItem(DonationOrderId , ItemId);
             if (result != "تم الموافقة على التبرع بنجاح")
                 return BadRequest(new { success = false, message = result });
 
@@ -295,7 +295,7 @@ namespace KonSanad.APIS.Controllers
             if (string.IsNullOrEmpty(RejectReason))
                 return BadRequest(new { success = false, message = "لازم تكتب سبب الرفض" });
 
-            var result = await _mangerServices.RejectDonation(DonationOrderId, RejectReason , ItemId);
+            var result = await _mangerServices.RejectDonationItem(DonationOrderId,   ItemId ,RejectReason);
 
             if (result != "تم رفض التبرع ")
                 return BadRequest(new { success = false, message = result });
