@@ -1192,7 +1192,7 @@ int referenceId, int type)
 
             await _unitOfWork.Complete();
 
-            return "تم قبول العنصر";
+            return "تم الموافقة على التبرع بنجاح";
         }
         #endregion
 

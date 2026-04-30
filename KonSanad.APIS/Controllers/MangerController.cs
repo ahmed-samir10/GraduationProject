@@ -282,8 +282,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> AcceptDonation(int id ,int ItemId)
         {
             var result = await _mangerServices.AcceptDonationItem(id , ItemId);
-            if (result != "تم الموافقة على التبرع بنجاح")
-                return BadRequest(new { success = false, message = result });
+          
 
             return Ok(new { success = true, message = result });
         }
@@ -297,8 +296,7 @@ namespace KonSanad.APIS.Controllers
 
             var result = await _mangerServices.RejectDonationItem(id,   ItemId ,RejectReason);
 
-            if (result != "تم رفض التبرع ")
-                return BadRequest(new { success = false, message = result });
+
 
             return Ok(new { success = true, message = result });
         }
