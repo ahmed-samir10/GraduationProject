@@ -29,8 +29,8 @@ namespace KonSanad.Repository.Entities
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; } // Navigation property
 
-       
-        public int? ManagerId { get; set; }
+
+        public int? ManagerId { get; set; } = 12;
         [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; }  // Navigation property
 

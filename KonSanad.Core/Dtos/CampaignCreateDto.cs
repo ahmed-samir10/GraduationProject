@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Http;
 using System;
 
 namespace KonSanad.Core.Dtos
@@ -11,11 +12,12 @@ namespace KonSanad.Core.Dtos
         public DateTime? EndDate { get; set; }
         public decimal? GoalCash { get; set; }
         public int? GoalSupplies { get; set; }
-        public string PictureUrl { get; set; }
+       
         public int? CategoryId { get; set; }
-        public int? ManagerId { get; set; }
+        public int MaxBenificary { get; set; } = 50;
+   
 
         // Optional image path or external url if you support images
-        public string? ImageUrl { get; set; }
+        public IFormFile? ImageUrl { get; set; }
     }
 }

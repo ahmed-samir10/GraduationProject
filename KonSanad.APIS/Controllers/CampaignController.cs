@@ -27,10 +27,10 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(dto);
         }
-
+    
         [Authorize(Roles = "Manager")]
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CampaignCreateDto createDto)
+        public async Task<IActionResult> Create([FromForm] CampaignCreateDto createDto)
         {
             var created = await _service.CreateAsync(createDto);
             return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
@@ -38,7 +38,7 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize(Roles = "Manager")]
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CampaignCreateDto updateDto)
+        public async Task<IActionResult> Update(int id, [FromForm] CampaignCreateDto updateDto)
         {
             var ok = await _service.UpdateAsync(id, updateDto);
             if (!ok)
