@@ -14,5 +14,6 @@ namespace KonSanad.Core.IRepositery
         Task<CampaignDto> CreateAsync(CampaignCreateDto createDto);
         Task<bool> UpdateAsync(int id, CampaignCreateDto updateDto);
         Task<bool> DeleteAsync(int id);
+        Task<List<CampaignBeneficiaryDto>> GetAllCampaignMAngerAsync(int pageNumber, int pageSize);
     }
 }

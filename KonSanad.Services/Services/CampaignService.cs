@@ -143,5 +143,39 @@ namespace KonSanad.Services.Services
             }).ToList();
             return dtos;
         }
+        public async Task<List<CampaignBeneficiaryDto>> GetAllCampaignMAngerAsync(int pageNumber, int pageSize)
+        {
+            var campaigns = await _db.Campaigns
+                .Include(c => c.Category)
+                 .Include(c => c.BeneficiaryCampaigns) //new
+                .Include(c => c.Manager)
+                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
+                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
+                    .ThenInclude(oi => oi.Supply)
+                .Include(c => c.CampaignVolunteers)
+                .Include(c => c.Missions)
+                .Include(c => c.CampaignResults)
+                .AsNoTracking()
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var dtos = campaigns.Select(c => new CampaignBeneficiaryDto
+            {
+                Id = c.Id,
+                Title = c.Title ?? string.Empty,
+                ShortDescription = string.IsNullOrWhiteSpace(c.Description) ? string.Empty :
+                        (c.Description.Length > 180 ? c.Description.Substring(0, 180).Trim() + "…" : c.Description),
+                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
+                Status = CampaignMetrics.CalculateStatus(c),
+                CampaignStatus = (CampaignStatus)CampaignMetrics.DetermineCampaignStatus(c), // هنا enum مباشرة
+                DonorCount = CampaignMetrics.CalculateDonorCount(c),
+                CategoryName = c.Category.Name ?? string.Empty,
+                PictureUrl = c.PictureUrl ?? string.Empty,
+                CountBen = CampaignMetrics.CalculateBeneficiaryCount(c),
+            }).ToList();
+            return dtos;
+        }
     }
+
 }

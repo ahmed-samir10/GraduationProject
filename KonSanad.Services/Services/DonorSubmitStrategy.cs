@@ -23,10 +23,29 @@ namespace KonSanad.Services.Services
         {
             var type = cart.Items.FirstOrDefault()?.Type;
 
+            // دور على CampaignId في أي item في الكارت
+            int? campaignId = null;
+
+            foreach (var item in cart.Items)
+            {
+                if (item.ExtraData != null &&
+                    item.ExtraData.TryGetValue("CampaignId", out var val) &&
+                    int.TryParse(val, out var cid) && cid > 0)
+                {
+                    var exists = await _context.Campaigns.AnyAsync(c => c.Id == cid);
+                    if (exists)
+                    {
+                        campaignId = cid;
+                        break; // لقيناه، وقف
+                    }
+                }
+            }
+
             var donation = new DonationOrder
             {
                 DonorId = userId,
                 DonationCategoryStatus = type,
+                CampaignId = campaignId, // ✅ هيتحط صح دلوقتي
                 CreatedAt = DateTime.Now,
                 ManagerId = 1,
                 OrderDate = DateTime.Now,
@@ -35,8 +54,8 @@ namespace KonSanad.Services.Services
             _context.DonationOrders.Add(donation);
             await _context.SaveChangesAsync();
 
-            // ✅ شيل الـ donation من الـ tracker عشان EF ميتدخلش في الـ relationships
-            _context.Entry(donation).State = EntityState.Detached;
+/*            // ✅ شيل الـ donation من الـ tracker عشان EF ميتدخلش في الـ relationships
+            _context.Entry(donation).State = EntityState.Detached;*/
 
             foreach (var item in cart.Items)
             {
@@ -66,17 +85,7 @@ namespace KonSanad.Services.Services
 
                         if (existingCashDonation != null) break;
 
-                        // ✅ تحقق إن الـ CampaignId موجود فعلاً في الداتا بيز
-                        int? campaignId = null;
-                        if (item.ExtraData.ContainsKey("CampaignId"))
-                        {
-                            var parsedCampaignId = int.Parse(item.ExtraData["CampaignId"]);
-                            var campaignExists = await _context.Campaigns
-                                .AnyAsync(c => c.Id == parsedCampaignId);
-
-                            // ✅ لو موجود خد الـ Id، لو مش موجود خليه null
-                            campaignId = campaignExists ? parsedCampaignId : null;
-                        }
+                     
 
                         // ✅ نفس الفكرة للـ HelpOrderId
                         int? helpOrderId = null;
@@ -97,6 +106,7 @@ namespace KonSanad.Services.Services
                         };
                         _context.CashDonations.Add(cashDonation);
                         await _context.SaveChangesAsync();
+                      
 
                         var receipt = new Receipt
                         {

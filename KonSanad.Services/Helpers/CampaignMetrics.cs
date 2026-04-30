@@ -98,6 +98,7 @@ namespace KonSanad.Services.Helpers
             return "نشطة";
         }
 
+
         #region calculateBeneficiaryCount&STATUS
         public static int CalculateBeneficiaryCount(Campaign c)
         {

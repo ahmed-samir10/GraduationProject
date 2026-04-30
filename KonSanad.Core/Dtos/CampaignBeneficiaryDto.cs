@@ -10,5 +10,6 @@ namespace KonSanad.Core.Dtos
     public class CampaignBeneficiaryDto : CampaignDto
     { 
         public CampaignStatus CampaignStatus { get; set; }
+        public int CountBen { get ; set; }
     }
 }
