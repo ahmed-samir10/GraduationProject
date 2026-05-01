@@ -1055,6 +1055,8 @@ int referenceId, int type)
                     AmountCashDonation = cashDonation.Amount,
                     SupplyId = cashDonation.HelpOrderId.HasValue ? cashDonation.HelpOrderId.Value : 0,
                     Quantity = 0,
+                    
+
                 };
 
                 // If linked to a Campaign → get campaign details
@@ -1114,7 +1116,7 @@ int referenceId, int type)
                     Quantity = orderItem.Quantity,
                     AmountCashDonation = 0,
                     CampaignTitle = null,
-
+                    ItemId = orderItem.Id,
                     // Extra details from OrderItem
                     ImageFile = orderItem.ImageUrl,
                     Unit = orderItem.Unit,

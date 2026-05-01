@@ -112,6 +112,18 @@ namespace KonSanad.Services.Helpers
 
             return beneficiaries;
         }
+        public static int CalculateVolunteerCount(Campaign c)
+        {
+            if (c?.CampaignVolunteers == null)
+                return 0;
+
+            var Vol= c.CampaignVolunteers
+                                 .Select(bc => bc.VolunteerId)
+                                 .Distinct()
+                                 .Count();
+
+            return Vol;
+        }
         public static int DetermineCampaignStatus(Campaign c)
         {
             int beneficiaryCount = CalculateBeneficiaryCount(c);
