@@ -25,7 +25,7 @@ namespace KonSanad.Services.Services
                 .AsNoTracking()
                 .Include(c => c.DonationOrders) // عشان DonorCount
                 .ThenInclude(d => d.CashDonation)
-
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.DonationOrders)
                 .ThenInclude(d => d.OrderItems)
 
@@ -153,8 +153,9 @@ namespace KonSanad.Services.Services
             var entity = await repo.GetByIdAsync(id);
             if (entity == null) return "false";
 
-            repo.Delete(entity);
+            entity.IsDeleted = true;
             await _unitOfWork.Complete();
+            
 
             return "تم الحذف ";
         }
@@ -187,7 +188,7 @@ namespace KonSanad.Services.Services
                 .AsNoTracking()
                  .Include(c => c.DonationOrders) // عشان DonorCount
                 .ThenInclude(d => d.CashDonation)
-
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.DonationOrders)
                 .ThenInclude(d => d.OrderItems)
 
@@ -219,6 +220,7 @@ namespace KonSanad.Services.Services
                 .Include(c => c.Category)
         .Include(c => c.DonationOrders)
             .ThenInclude(d => d.CashDonation)
+            .Where(c => !c.IsDeleted)
 
         .Include(c => c.DonationOrders)
             .ThenInclude(d => d.OrderItems)

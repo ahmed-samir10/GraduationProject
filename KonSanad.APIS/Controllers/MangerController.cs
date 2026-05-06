@@ -67,10 +67,11 @@ namespace KonSanad.APIS.Controllers
         }
         //---------------------------------------------------------------------------------------
 
-        [HttpGet("view-report/{helpOrderId}")]
-        public async Task<IActionResult> ViewReport(int helpOrderId)
+       // [HttpGet("view-report/{helpOrderId}")]
+        [HttpGet("view-report/{helpOrderId}/{itemId}")]
+        public async Task<IActionResult> ViewReport(int helpOrderId , int itemId)
         {
-            var result = await _mangerServices.ViewReport(helpOrderId);
+            var result = await _mangerServices.ViewReport(helpOrderId , itemId);
 
             if (result == null)
                 return Ok(new { success = false, massage = "لم يتم العثور على التقرير" });
@@ -256,10 +257,11 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result });
         }
         //-------------------------------------------------------------------------------------------
-        [HttpGet("Donation-Details/{id}")]
-        public async Task<IActionResult> DonationDetails(int id)
+        [HttpGet("Donation-Details/{id}/{itemId}")]
+    
+        public async Task<IActionResult> DonationDetails(int id , int itemId)
         {
-            var result = await _mangerServices.ViewAllDetailsDonation(id);
+            var result = await _mangerServices.ViewAllDetailsDonation(id , itemId);
 
             if (result == null)
                 return NotFound("Donation not found");
