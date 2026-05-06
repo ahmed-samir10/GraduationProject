@@ -160,6 +160,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     config.Ssl = false;
     return ConnectionMultiplexer.Connect(config);
 });
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();

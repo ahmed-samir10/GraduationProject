@@ -453,9 +453,6 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BeneficiaryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BenficieryID")
                         .HasColumnType("int")
                         .HasColumnName("BeneficiaryId");
 
@@ -489,11 +486,7 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     b.HasIndex("VolunteerId");
 
-                    b.ToTable("volunteerReports", t =>
-                        {
-                            t.Property("BeneficiaryId")
-                                .HasColumnName("BeneficiaryId1");
-                        });
+                    b.ToTable("volunteerReports");
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Beneficiary", b =>
@@ -1230,6 +1223,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
@@ -1258,6 +1254,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<int>("ShowinType")
+                        .HasColumnType("int");
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");
@@ -1750,12 +1749,9 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
             modelBuilder.Entity("KonSanad.Repository.Entities.Supply", b =>
                 {
-                    b.HasOne("KonSanad.Core.Entities.Category", "Category")
+                    b.HasOne("KonSanad.Core.Entities.Category", null)
                         .WithMany("Supplies")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Category");
+                        .HasForeignKey("CategoryId");
                 });
 
             modelBuilder.Entity("KonSanad.Repository.Entities.SupplyMovement", b =>

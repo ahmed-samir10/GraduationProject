@@ -43,7 +43,10 @@ namespace KonSanad.Services.Services
         {
             var supplies = await _unitOfWork.Repository<Supply, int>()
                 .GetQueryable()
-                .Where(s => s.StockQuantity <= s.MinimumLevel)
+                .Where(s => s.StockQuantity <= s.MinimumLevel
+               || s.ShowinType == ShowinType.donor 
+               || s.ShowinType == ShowinType.Both)
+
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

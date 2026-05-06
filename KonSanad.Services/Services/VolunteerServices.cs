@@ -159,7 +159,7 @@ namespace KonSanad.Services.Services
                 var beneficiaryId = vm.Mission.HelpOrder?.BeneficiaryId;
 
                 // ✅ جيب الـ report الخاص بالـ beneficiary ده
-                var report = reports.FirstOrDefault(r => r.BenficieryID == beneficiaryId);
+                var report = reports.FirstOrDefault(r => r.BeneficiaryId == beneficiaryId);
 
                 return new VolunteerMissionDto
                 {

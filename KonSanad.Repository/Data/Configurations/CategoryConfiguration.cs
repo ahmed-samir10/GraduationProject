@@ -11,10 +11,10 @@
             builder.Property(c => c.Description).HasMaxLength(500);
 
             // Relationships
-            builder.HasMany(c => c.Supplies)
+           /* builder.HasMany(c => c.Supplies)
                 .WithOne(s => s.Category)
                 .HasForeignKey(s => s.CategoryId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);*/
 
             builder.HasMany(c => c.Campaigns)
                 .WithOne(camp => camp.Category)

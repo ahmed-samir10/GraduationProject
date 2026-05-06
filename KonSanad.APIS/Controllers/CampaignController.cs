@@ -1,7 +1,9 @@
 using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -28,25 +30,27 @@ namespace KonSanad.APIS.Controllers
             return Ok(dto);
         }
 
+    
+        [HttpGet("GetAllCampiagn")]
+        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var list = await _service.GetAllCampaignMAngerAsync(pageNumber, pageSize);
+            return Ok(new { success = true, data = list });
+        }
         [Authorize(Roles = "Manager")]
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CampaignCreateDto createDto)
+        public async Task<IActionResult> Create([FromForm] CampaignCreateDto createDto)
         {
             var created = await _service.CreateAsync(createDto);
-            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
+           return Ok(new { success = true, Message = created });
         }
 
         [Authorize(Roles = "Manager")]
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CampaignCreateDto updateDto)
+        public async Task<IActionResult> Update(int id, [FromForm] CampaignCreateDto updateDto)
         {
             var ok = await _service.UpdateAsync(id, updateDto);
-            if (!ok)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return Ok(new { success = true, Message = ok });
         }
 
         [Authorize(Roles = "Manager")]
@@ -54,12 +58,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var ok = await _service.DeleteAsync(id);
-            if (!ok)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return Ok(new { success = true, Message = ok });
         }
     }
 }

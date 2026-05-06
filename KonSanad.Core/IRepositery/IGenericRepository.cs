@@ -14,6 +14,7 @@ namespace KonSanad.Core.IRepositery
         Task<IReadOnlyList<T>> GetAllAsync();
         Task<T> GetByIdAsync(int id);
         IQueryable<T> GetQueryable();
+        Task<int> CountAsync(Expression<Func<T, bool>> predicate);
 
         Task<T> FirstAsync(Expression<Func<T, bool>> predicate);
 
