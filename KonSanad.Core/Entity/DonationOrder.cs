@@ -14,21 +14,23 @@ namespace KonSanad.Repository.Entities
     {
         public string DonationCategoryStatus { get; set; } = null!;
         public decimal? CashAmount { get; set; }
-
-        // Donation request status stored as enum (0=Pending,1=Completed,2=Rejected)
-        public RequestedStatus? DonationRequestStatus { get; set; } = Core.Entity.Enums.RequestedStatus.Pending;
-
+        public RequestedStatus? DonationRequestStatus { get; set; } = RequestedStatus.Pending;
         public DateTime? OrderDate { get; set; }
 
+        // Donor
         public int? DonorId { get; set; }
         [ForeignKey(nameof(DonorId))]
         public Donor? Donor { get; set; }
-       public int? HelpOrderId { get; set; }
-        [ForeignKey(nameof(HelpOrderId))]
+
+        // ✅ HelpOrderId بس من غير navigation property
+        public int? HelpOrderId { get; set; }
+
+        // ✅ CampaignId مع الـ ForeignKey صح
         public int? CampaignId { get; set; }
         [ForeignKey(nameof(CampaignId))]
         public Campaign? Campaign { get; set; }
 
+        // Manager
         public int? ManagerId { get; set; }
         [ForeignKey(nameof(ManagerId))]
         public Manager? Manager { get; set; }

@@ -58,9 +58,13 @@ namespace KonSanad.APIS.Helpers
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.CartItems));
             // CreateDto -> Campaign entity (for create/update)
             CreateMap<CampaignCreateDto, Campaign>()
-                .ForMember(d => d.Id, opt => opt.Ignore());
-         
-
+             .ForMember(d => d.Id, opt => opt.Ignore())
+             .ForMember(d => d.PictureUrl, opt => opt.Ignore()) // هنعملها manual
+             .ForMember(d => d.MaxBeneficiaries,
+                 opt => opt.MapFrom(s => s.MaxBenificary))
+             .ForMember(d => d.CategoryId,
+                 opt => opt.MapFrom(s => (int)s.CategoryId));
+            
             // Campaign -> CampaignDto (presentation)
             CreateMap<Campaign, CampaignDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
@@ -73,7 +77,9 @@ namespace KonSanad.APIS.Helpers
                 .ForMember(d => d.DonorCount, opt => opt.MapFrom(s => CampaignMetrics.CalculateDonorCount(s)))
 
                 // resolve PictureUrl via resolver registered in DI (CampaignUrlResolver depends on IConfiguration)
-                .ForMember(d => d.PictureUrl, opt => opt.MapFrom<CampaignUrlResolver>());
+                .ForMember(d => d.PictureUrl, opt => opt.MapFrom<CampaignUrlResolver>())
+            .ForMember(d => d.CreateAt,
+    opt => opt.MapFrom(s => s.CreatedAt));
 
             #region newMap campaign Beneficiary
             // Campaign -> CampaignDto (presentation)

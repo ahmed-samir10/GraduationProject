@@ -18,6 +18,7 @@ namespace KonSanad.Core.Dtos
         public string? ImageFile { get; set; }
         public string? Unit { get; set; }
         public string? SupplyDescription { get; set; }
+     
 
         public string? SupplyStatus { get; set; }
 

@@ -5,47 +5,59 @@ namespace KonSanad.Services.Services
 {
     public class CampaignService : ICampaignService
     {
-        private readonly KonSanadDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
+        private readonly IWebHostEnvironment _env;
 
-        public CampaignService(KonSanadDbContext db, IMapper mapper, INotificationService notificationService)
+        public CampaignService( IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService,   IWebHostEnvironment env)
         {
-            _db = db;
+             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _notificationService = notificationService;
+            _env = env;
         }
         public async Task<List<CampaignDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var campaigns = await _db.Campaigns
-                .Include(c => c.Category)
-                .Include(c => c.Manager)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
-                    .ThenInclude(oi => oi.Supply)
-                .Include(c => c.CampaignVolunteers)
-                .Include(c => c.Missions)
-                .Include(c => c.CampaignResults)
+            // 1️⃣ هات الكامبين + الداتا اللي الحسابات محتاجاها
+            var campaigns = await _unitOfWork.Repository<Campaign, int>()
+                .GetQueryable()
                 .AsNoTracking()
+                .Include(c => c.DonationOrders) // عشان DonorCount
+                .ThenInclude(d => d.CashDonation)
+                .Where(c => !c.IsDeleted)
+                .Include(c => c.DonationOrders)
+                .ThenInclude(d => d.OrderItems)
+
+                .Include(c => c.Category)
+
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            var dtos = _mapper.Map<List<CampaignDto>>(campaigns);
-            return dtos;
+            // 2️⃣ Map يدوي + الحسابات
+            var result = campaigns.Select(c => new CampaignDto
+            {
+                Id = c.Id,
+                Title = c.Title ?? "",
+                ShortDescription = c.Description ?? "",
+                PictureUrl = c.PictureUrl ?? "",
+
+                CategoryName = c.Category?.Name ?? "",
+
+                // 🔥 الحسابات هنا
+                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
+                Status = CampaignMetrics.CalculateStatus(c),
+                DonorCount = CampaignMetrics.CalculateDonorCount(c)
+
+            }).ToList();
+
+            return result;
         }
-
-
         public async Task<CampaignDto?> GetByIdAsync(int id)
         {
-            var campaign = await _db.Campaigns
-                .Include(c => c.Category)
-                .Include(c => c.Manager)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
-                .Include(c => c.CampaignVolunteers)
-                .Include(c => c.Missions)
-                .Include(c => c.CampaignResults)
+            var campaign = await _unitOfWork.Repository<Campaign, int>()
+              .GetQueryable()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -57,73 +69,130 @@ namespace KonSanad.Services.Services
 
 
 
-        public async Task<CampaignDto> CreateAsync(CampaignCreateDto createDto)
+        public async Task<string> CreateAsync(CampaignCreateDto createDto)
         {
-            var entity = _mapper.Map<Campaign>(createDto);
-            _db.Campaigns.Add(entity);
-            await _db.SaveChangesAsync();
+            if (createDto == null)
+                throw new ArgumentNullException(nameof(createDto));
 
-            var notification = new NotificationMessageDto
+            // 1️⃣ Map
+            var campaign = _mapper.Map<Campaign>(createDto);
+
+            // 2️⃣ Handle Image Upload
+            if (createDto.ImageUrl != null && createDto.ImageUrl.Length > 0)
             {
-                Type = NotificationType.CampaignCreated,
-                Title = "حملة جديدة",
-                Message = $"تمت إضافة حملة جديدة باسم {entity.Title}.",
-                EntityType = nameof(Campaign),
-                EntityId = entity.Id
-            };
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "Image");
 
-            await _notificationService.NotifyRoleAsync("Donor", notification);
-            await _notificationService.NotifyRoleAsync("Beneficiary", new NotificationMessageDto
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = Guid.NewGuid().ToString() +
+                               Path.GetExtension(createDto.ImageUrl.FileName);
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await createDto.ImageUrl.CopyToAsync(stream);
+
+                campaign.PictureUrl = "Image/" + fileName;
+            }
+            else
             {
-                Type = notification.Type,
-                Title = notification.Title,
-                Message = notification.Message,
-                EntityType = notification.EntityType,
-                EntityId = notification.EntityId
-            });
+                // default image (important عشان تمنع error)
+                campaign.PictureUrl = "Image/default.png";
+            }
 
-            // reload with includes for mapping presentation fields
-            return await GetByIdAsync(entity.Id) ?? _mapper.Map<CampaignDto>(entity);
+            // 3️⃣ Business Validation
+            if (campaign.StartDate > campaign.EndDate)
+                throw new Exception("StartDate must be before EndDate");
+            campaign.GoalCash = createDto.GoalCash;
+            campaign.GoalSupplies = createDto.GoalSupplies;
+            campaign.MaxBeneficiaries = createDto.MaxBenificary;
+
+
+            // 4️⃣ Add
+            await _unitOfWork.Repository<Campaign, int>().AddAsync(campaign);
+
+            // 5️⃣ Save
+            await _unitOfWork.Complete();
+
+            return " تم انشاء الحمله بنجاح";
         }
 
-        public async Task<bool> UpdateAsync(int id, CampaignCreateDto updateDto)
+        public async Task<string> UpdateAsync(int id, CampaignCreateDto updateDto)
         {
-            var entity = await _db.Campaigns.FirstOrDefaultAsync(c => c.Id == id);
-            if (entity == null) return false;
+            var repo = _unitOfWork.Repository<Campaign, int>();
 
-            // Map allowed fields from DTO to entity (do not overwrite collections)
-            _mapper.Map(updateDto, entity);
+            var entity = await repo.GetByIdAsync(id);
+            if (entity == null) return "خطا في التعديل";
 
-            _db.Campaigns.Update(entity);
-            await _db.SaveChangesAsync();
-            return true;
+            entity.Title = updateDto.Title;
+            entity.Description = updateDto.Description;
+            entity.GoalCash = updateDto.GoalCash;
+            entity.GoalSupplies = updateDto.GoalSupplies;
+            entity.CategoryId = (int)updateDto.CategoryId;
+            entity.MaxBeneficiaries = updateDto.MaxBenificary;
+
+            if (updateDto.ImageUrl != null)
+            {
+                entity.PictureUrl = await SaveImageAsync(updateDto.ImageUrl);
+            }
+
+            repo.Update(entity);
+            await _unitOfWork.Complete();
+
+            return "تم التعديل بنجاح";
         }
 
-        public async Task<bool> DeleteAsync(int id)
+
+
+        // ========================= DELETE =========================
+        public async Task<string> DeleteAsync(int id)
         {
-            var entity = await _db.Campaigns.FirstOrDefaultAsync(c => c.Id == id);
-            if (entity == null) return false;
+            var repo = _unitOfWork.Repository<Campaign, int>();
 
-            _db.Campaigns.Remove(entity);
-            await _db.SaveChangesAsync();
-            return true;
+            var entity = await repo.GetByIdAsync(id);
+            if (entity == null) return "false";
+
+            entity.IsDeleted = true;
+            await _unitOfWork.Complete();
+            
+
+            return "تم الحذف ";
         }
 
-       
+        // ========================= IMAGE HANDLER =========================
+        private async Task<string> SaveImageAsync(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return "Image/default.png";
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "Image");
+
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            return "Image/" + fileName;
+        }
+
 
         public async Task<List<CampaignBeneficiaryDto>> GetAllCampaignBeneficiaryAsync(int pageNumber, int pageSize)
         {
-            var campaigns = await _db.Campaigns
-                .Include(c => c.Category)
-                 .Include(c => c.BeneficiaryCampaigns) //new
-                .Include(c => c.Manager)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.CashDonation)
-                .Include(c => c.DonationOrders).ThenInclude(d => d.OrderItems)
-                    .ThenInclude(oi => oi.Supply)
-                .Include(c => c.CampaignVolunteers)
-                .Include(c => c.Missions)
-                .Include(c => c.CampaignResults)
+            var campaigns = await _unitOfWork.Repository<Campaign,int>()
+               .GetQueryable()
                 .AsNoTracking()
+                 .Include(c => c.DonationOrders) // عشان DonorCount
+                .ThenInclude(d => d.CashDonation)
+                .Where(c => !c.IsDeleted)
+                .Include(c => c.DonationOrders)
+                .ThenInclude(d => d.OrderItems)
+
+                .Include(c => c.Category)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -143,8 +212,46 @@ namespace KonSanad.Services.Services
             }).ToList();
             return dtos;
         }
-  
+        public async Task<List<CampaignMangerDto>> GetAllCampaignMAngerAsync(int pageNumber, int pageSize)
+        {
+            var campaigns =   await _unitOfWork.Repository<Campaign, int>()
+               .GetQueryable()
+                .AsNoTracking()
+                .Include(c => c.Category)
+        .Include(c => c.DonationOrders)
+            .ThenInclude(d => d.CashDonation)
+            .Where(c => !c.IsDeleted)
 
+        .Include(c => c.DonationOrders)
+            .ThenInclude(d => d.OrderItems)
 
+        .Include(c => c.BeneficiaryCampaigns)
+        .Include(c => c.CampaignVolunteers)
+
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+            var dtos = campaigns.Select(c => new CampaignMangerDto
+            {
+                Id = c.Id,
+               startDate =(DateTime) c.StartDate,
+               endDate=(DateTime)c.EndDate,
+                
+                Title = c.Title ?? string.Empty,
+                ShortDescription = string.IsNullOrWhiteSpace(c.Description) ? string.Empty :
+                        (c.Description.Length > 180 ? c.Description.Substring(0, 180).Trim() + "…" : c.Description),
+                ProgressPercentage = CampaignMetrics.CalculateProgress(c),
+                Status = CampaignMetrics.CalculateStatus(c),
+                CampaignStatus = (CampaignStatus)CampaignMetrics.DetermineCampaignStatus(c), // هنا enum مباشرة
+                DonorCount = CampaignMetrics.CalculateDonorCount(c),
+                CategoryName = c.Category.Name ?? string.Empty,
+                PictureUrl = c.PictureUrl ?? string.Empty,
+                CountBen = CampaignMetrics.CalculateBeneficiaryCount(c) ,
+                CountVolunteer = CampaignMetrics.CalculateVolunteerCount(c),
+            }).ToList();
+            return dtos;
+        }
     }
+
 }

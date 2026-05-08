@@ -14,6 +14,6 @@ namespace KonSanad.Core.Dtos
         public string VolunteerName { get; set; }
         public string Notes { get; set; }
         public string FileUrl { get; set; }
-
+        public int itemId { get; set; }
     }
 }

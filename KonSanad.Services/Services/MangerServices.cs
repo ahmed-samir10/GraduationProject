@@ -414,7 +414,7 @@ namespace KonSanad.Services.Services
 
             order.UpdatedAt = DateTime.UtcNow;
         }
-        public async Task<ViewReportDto> ViewReport(int helpOrderId)
+        public async Task<ViewReportDto> ViewReport(int helpOrderId , int itemId)
         {
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
 .GetQueryable()
@@ -445,9 +445,10 @@ namespace KonSanad.Services.Services
                                 .Select(i => i.Title)
                                 .FirstOrDefault(),
                     missionId = mission.Id,
-
+                    itemId = itemId,
                     VolunteerName = vm.Volunteer.FullName,
                     Notes = vm.Notes,
+
                     FileUrl = vm.ResultMission
                 })
                 .FirstOrDefaultAsync();
@@ -1032,7 +1033,7 @@ int referenceId, int type)
 
 
         //---------------------------------------------------------------------------------------
-        public async Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId)
+        public async Task<GetAllDonationDetailsDto> ViewAllDetailsDonation(int DonationOrderId , int itemid )
         {
             // ======= Try Cash Donation first =======
             var cashDonation = await _unitOfWork.Repository<CashDonation, int>()
@@ -1055,6 +1056,8 @@ int referenceId, int type)
                     AmountCashDonation = cashDonation.Amount,
                     SupplyId = cashDonation.HelpOrderId.HasValue ? cashDonation.HelpOrderId.Value : 0,
                     Quantity = 0,
+                    
+
                 };
 
                 // If linked to a Campaign → get campaign details
@@ -1092,11 +1095,13 @@ int referenceId, int type)
 
             // ======= Try Item Donation =======
             var orderItem = await _unitOfWork.Repository<OrderItem, int>()
-                .GetQueryable()
-                .Include(oi => oi.DonationOrder)
-                    .ThenInclude(d => d.Donor)
-                .Where(oi => !oi.IsDeleted && oi.DonationOrder.Id == DonationOrderId)
-                .FirstOrDefaultAsync();
+     .GetQueryable()
+     .Include(oi => oi.DonationOrder)
+         .ThenInclude(d => d.Donor)
+     .Where(oi => !oi.IsDeleted
+         && oi.DonationOrderId == DonationOrderId
+         && oi.Id == itemid)
+     .FirstOrDefaultAsync();
 
             if (orderItem != null)
             {
@@ -1114,7 +1119,7 @@ int referenceId, int type)
                     Quantity = orderItem.Quantity,
                     AmountCashDonation = 0,
                     CampaignTitle = null,
-
+                    ItemId = orderItem.Id,
                     // Extra details from OrderItem
                     ImageFile = orderItem.ImageUrl,
                     Unit = orderItem.Unit,
