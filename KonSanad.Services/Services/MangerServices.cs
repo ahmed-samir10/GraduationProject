@@ -278,6 +278,7 @@ namespace KonSanad.Services.Services
             items.Select(i => new GetHelpOrderDto
             {
                 Id = order.Id,
+               
                 ItemId = i.Id,
                 UserName = order.Beneficiary.FullName ?? string.Empty,
                 PhoneNumber = order.Beneficiary.Phone ?? string.Empty,

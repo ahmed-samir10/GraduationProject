@@ -105,7 +105,7 @@ namespace KonSanad.Services.Services
             if (campaign.StartDate > campaign.EndDate)
                 throw new Exception("StartDate must be before EndDate");
             campaign.GoalCash = createDto.GoalCash;
-            campaign.GoalSupplies = createDto.GoalSupplies;
+           // campaign.GoalSupplies = createDto.GoalSupplies;
             campaign.MaxBeneficiaries = createDto.MaxBenificary;
 
 
@@ -128,7 +128,7 @@ namespace KonSanad.Services.Services
             entity.Title = updateDto.Title;
             entity.Description = updateDto.Description;
             entity.GoalCash = updateDto.GoalCash;
-            entity.GoalSupplies = updateDto.GoalSupplies;
+           // entity.GoalSupplies = updateDto.GoalSupplies;
             entity.CategoryId = (int)updateDto.CategoryId;
             entity.MaxBeneficiaries = updateDto.MaxBenificary;
 

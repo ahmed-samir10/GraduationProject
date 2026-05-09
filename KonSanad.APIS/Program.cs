@@ -6,6 +6,7 @@ using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Data.Identity.ctx;
 using KonSanad.Repository.Data.Persistence;
 using KonSanad.Repository.Repository;
+using KonSanad.Services.BackgroundJobs;
 using KonSanad.Services.Realtime;
 using KonSanad.Services.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -65,6 +66,7 @@ builder.Services.AddScoped<IMangerServices, MangerServices>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
+builder.Services.AddHostedService<CampaignNotificationJob>();
 
 // Register DI for resolvers and AutoMapper (place before AddAutoMapper call)
 builder.Services.AddTransient<CampaignUrlResolver>();
