@@ -212,8 +212,92 @@ namespace KonSanad.Services.BackgroundJobs
                             campaign.IsVolunteersCompletedNotificationSent = true;
                         }
                     }
+                    // =====================================================
+                    // 6) المهمة قربت تنتهي
+                    // =====================================================
+
+                    var nearDeadlineMissions = await context.Missions
+     .Include(m => m.VolunteerMissions)
+         .ThenInclude(vm => vm.Volunteer)
+     .Where(m =>
+         !m.IsDeleted &&
+         !m.IsNearDeadlineNotificationSent &&
+         m.EndDate.HasValue &&
+         m.EndDate.Value.Date <= today.AddDays(1) &&
+         m.EndDate.Value.Date > today)
+     .ToListAsync(stoppingToken);
+
+                    foreach (var mission in nearDeadlineMissions)
+                    {
+                        var volunteers = mission.VolunteerMissions
+                            .Select(vm => vm.Volunteer)
+                            .Where(v => v != null && !string.IsNullOrEmpty(v.AppUserId))
+                            .ToList();
+
+                        foreach (var volunteer in volunteers)
+                        {
+                            await notificationService.NotifyUserAsync(
+                                volunteer.AppUserId!,
+                                new NotificationMessageDto
+                                {
+                                    Title = "المهمة قربت تنتهي",
+                                    Message = $"المهمة {mission.Title} هتنتهي بكرة",
+                                    EntityId = mission.Id,
+                                    EntityType = nameof(Mission),
+                                    CreatedAtUtc = DateTime.UtcNow
+                                });
+                        }
+
+                        mission.IsNearDeadlineNotificationSent = true;
+                    }
+
+
+
+
 
                     // =====================================================
+                    // 7) المهمة انتهت
+                    // =====================================================
+
+
+
+
+                    var endedMissions = await context.Missions
+    .Include(m => m.VolunteerMissions)
+        .ThenInclude(vm => vm.Volunteer)
+    .Where(m =>
+        !m.IsDeleted &&
+        !m.IsDeadlinePassedNotificationSent &&
+        m.EndDate.HasValue &&
+        m.EndDate.Value.Date <= today)
+    .ToListAsync(stoppingToken);
+
+                    foreach (var mission in endedMissions)
+                    {
+                        var volunteers = mission.VolunteerMissions
+                            .Select(vm => vm.Volunteer)
+                            .Where(v => v != null && !string.IsNullOrEmpty(v.AppUserId))
+                            .ToList();
+
+                        foreach (var volunteer in volunteers)
+                        {
+                            await notificationService.NotifyUserAsync(
+                                volunteer.AppUserId!,
+                                new NotificationMessageDto
+                                {
+                                    Title = "انتهاء المهمة",
+                                    Message = $"المهمة {mission.Title} انتهت",
+                                    EntityId = mission.Id,
+                                    EntityType = nameof(Mission),
+                                    CreatedAtUtc = DateTime.UtcNow
+                                });
+                        }
+
+                        mission.IsDeadlinePassedNotificationSent = true;
+                    }
+                    // =====================================================
+
+
                     // Save Changes
                     // =====================================================
 
@@ -231,6 +315,7 @@ namespace KonSanad.Services.BackgroundJobs
 
                     await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
                 }
+
             }
         }
     }

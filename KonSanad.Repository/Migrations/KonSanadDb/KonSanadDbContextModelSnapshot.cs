@@ -1059,7 +1059,13 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int?>("HelpOrderId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeadlinePassedNotificationSent")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNearDeadlineNotificationSent")
                         .HasColumnType("bit");
 
                     b.Property<int?>("ManagerId")
