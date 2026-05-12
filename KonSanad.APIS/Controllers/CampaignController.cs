@@ -30,12 +30,19 @@ namespace KonSanad.APIS.Controllers
             return Ok(dto);
         }
 
+
+        [HttpGet("GetAllCampiagn")]
+        public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var list = await _service.GetAllCampaignMAngerAsync(pageNumber, pageSize);
+            return Ok(new { success = true, data = list });
+        }
         [Authorize(Roles = "Manager")]
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] CampaignCreateDto createDto)
         {
             var created = await _service.CreateAsync(createDto);
-           return Ok(new { success = true, Message = created });
+            return Ok(new { success = true, Message = created });
         }
 
         [Authorize(Roles = "Manager")]
