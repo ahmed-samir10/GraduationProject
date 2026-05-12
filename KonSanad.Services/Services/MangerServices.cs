@@ -506,7 +506,7 @@ namespace KonSanad.Services.Services
                 {
                     Type = NotificationType.VolunteerRegistrationApproved,
                     Title = "تم قبول طلب التطوع",
-                    Message = " تم قبول طلب التطوع الخاص بك من المدير يمكنك الذهاب الي مقر الجميعه لمتابعه مهمات الحمله من 11 صباحا الي 8 مساء",
+                    Message = " تم قبول طلب التطوع الخاص بك من المدير",
                     EntityType = nameof(Volunteer),
                     EntityId = volunteer.Id
                 });
@@ -694,7 +694,8 @@ namespace KonSanad.Services.Services
                     {
                         Type = NotificationType.VolunteerCampaignJoinApproved,
                         Title = "تم قبول طلبك",
-                        Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
+                     //   Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
+                        Message = $" تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title} يمكنك الذهاب الي مقر الجميعه لمتابعه مهمات الحمله من 11 صباحا الي 8 مساء",
                         EntityType = nameof(CampaignVolunteer),
                         EntityId = campaignRequest.Id
                     });
