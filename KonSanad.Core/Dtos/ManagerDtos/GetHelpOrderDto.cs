@@ -10,6 +10,7 @@ namespace KonSanad.Core.Dtos.ManagerDtos
     public class GetHelpOrderDto
     {
         public int Id { get; set; }
+     
         public int ItemId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string Tilte { get; set; } = string.Empty;

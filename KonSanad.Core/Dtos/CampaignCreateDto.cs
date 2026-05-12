@@ -13,7 +13,7 @@ namespace KonSanad.Core.Dtos
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal? GoalCash { get; set; }
-        public int? GoalSupplies { get; set; }
+       
 
         public CampaignCategory CategoryId { get; set; }
         public int MaxBenificary { get; set; } = 50;

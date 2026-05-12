@@ -589,7 +589,22 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int?>("GoalSupplies")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsBeneficiariesCompletedNotificationSent")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEndDateNotificationSent")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsGoalReachedNotificationSent")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNearEndDateNotificationSent")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVolunteersCompletedNotificationSent")
                         .HasColumnType("bit");
 
                     b.Property<int?>("ManagerId")
@@ -1044,7 +1059,13 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<int?>("HelpOrderId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeadlinePassedNotificationSent")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNearDeadlineNotificationSent")
                         .HasColumnType("bit");
 
                     b.Property<int?>("ManagerId")

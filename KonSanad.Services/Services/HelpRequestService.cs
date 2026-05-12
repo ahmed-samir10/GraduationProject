@@ -1,6 +1,8 @@
 ﻿
+using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -147,6 +149,15 @@ namespace KonSanad.Services.Services
 
             await _unitOfWork.Complete();
 
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionRequestSubmitted,
+                Title = " تم حذف عنصر من الطلب",
+                Message = $" تم حذف عنصر من الطلب رقم {helpOrder.Id}.",
+                EntityType = nameof(HelpOrderItem),
+                EntityId = item.Id
+            });
+
             return (true, count == 1
                 ? "تم حذف الطلب بالكامل"
                 : "تم حذف العنصر بنجاح");
@@ -169,6 +180,14 @@ namespace KonSanad.Services.Services
 
             // 4️⃣ احفظ التغييرات
             await _unitOfWork.Complete();
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionRequestSubmitted,
+                    Title = " تم تحديث عنصر من الطلب",
+                    Message = $" تم تحديث عنصر من الطلب رقم {helpOrderItem.HelpOrderId}.",
+                    EntityType = nameof(HelpOrderItem),
+                    EntityId = helpOrderItem.Id
+                });
 
             // 5️⃣ رجع النتيجة
             return (true, "تم التحديث بنجاح", helpOrderItem);

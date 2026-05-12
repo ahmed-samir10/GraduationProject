@@ -45,6 +45,15 @@ namespace KonSanad.Repository.Entities
 
 
         public ICollection<BeneficiaryCampaign> BeneficiaryCampaigns { get; set; }
+        public bool IsNearEndDateNotificationSent { get; set; }
+
+        public bool IsEndDateNotificationSent { get; set; }
+
+        public bool IsGoalReachedNotificationSent { get; set; }
+
+        public bool IsBeneficiariesCompletedNotificationSent { get; set; }
+
+        public bool IsVolunteersCompletedNotificationSent { get; set; }
 
     }
 }

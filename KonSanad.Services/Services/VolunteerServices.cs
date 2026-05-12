@@ -1,4 +1,5 @@
 ﻿using KonSanad.Core.Entities;
+using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -525,6 +526,15 @@ namespace KonSanad.Services.Services
             vmRepo.Update(volunteerMission);
             await _unitOfWork.Complete();
 
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionRequestSubmitted,
+                Title = "تم تعديل نتيجة المهمة",
+                Message = $" تم تعديل في نتيجه المهمه رقم {missionId}.",
+                EntityType = nameof(MissionVolunteers),
+                EntityId = volunteerMission.Id
+            });
+
             return "تم تحديث التقرير بنجاح";
         }
 
@@ -549,6 +559,15 @@ namespace KonSanad.Services.Services
             vmRepo.Delete(volunteerMission);
 
             var rows = await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionRequestSubmitted,
+                Title = " حذف نتيجة المهمة",
+                Message = $" تم حذف في نتيجه المهمه رقم {missionId}.",
+                EntityType = nameof(MissionVolunteers),
+                EntityId = volunteerMission.Id
+            });
 
             return $" تم الحذف ";
         }
@@ -578,6 +597,14 @@ namespace KonSanad.Services.Services
 
             _unitOfWork.Repository<MissionVolunteers, int>().Update(missionVolunteer);
             await _unitOfWork.Complete();
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionRequestSubmitted,
+                    Title = "تم رفض مهمة",
+                    Message = $" تم رفض المهمة رقم {missionId} للمتطوع {volunteerId}.",
+                    EntityType = nameof(MissionVolunteers),
+                    EntityId = missionVolunteer.Id
+                });
 
             return "تم رفض المهمة بنجاح";
         }

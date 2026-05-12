@@ -17,7 +17,9 @@ namespace KonSanad.Repository.Entities
         public string? PhoneNumber { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public bool IsNearDeadlineNotificationSent { get; set; }
 
+        public bool IsDeadlinePassedNotificationSent { get; set; }
 
         // Manager
 

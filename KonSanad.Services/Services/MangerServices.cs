@@ -279,6 +279,7 @@ int? helpOrderId)
             items.Select(i => new GetHelpOrderDto
             {
                 Id = order.Id,
+               
                 ItemId = i.Id,
                 UserName = order.Beneficiary.FullName ?? string.Empty,
                 PhoneNumber = order.Beneficiary.Phone ?? string.Empty,
@@ -509,7 +510,7 @@ int? helpOrderId)
                 {
                     Type = NotificationType.VolunteerRegistrationApproved,
                     Title = "تم قبول طلب التطوع",
-                    Message = "تم قبول طلب التطوع الخاص بك من المدير.",
+                    Message = " تم قبول طلب التطوع الخاص بك من المدير",
                     EntityType = nameof(Volunteer),
                     EntityId = volunteer.Id
                 });
@@ -697,7 +698,8 @@ int? helpOrderId)
                     {
                         Type = NotificationType.VolunteerCampaignJoinApproved,
                         Title = "تم قبول طلبك",
-                        Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
+                     //   Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
+                        Message = $" تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title} يمكنك الذهاب الي مقر الجميعه لمتابعه مهمات الحمله من 11 صباحا الي 8 مساء",
                         EntityType = nameof(CampaignVolunteer),
                         EntityId = campaignRequest.Id
                     });

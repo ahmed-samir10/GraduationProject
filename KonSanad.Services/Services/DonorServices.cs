@@ -1,4 +1,7 @@
-﻿using KonSanad.Core.Entity.Enums;
+﻿using KonSanad.Core.Entity;
+using KonSanad.Core.Entity.Enums;
+using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace KonSanad.Services.Services
@@ -9,16 +12,18 @@ namespace KonSanad.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
+        private readonly INotificationService _notificationService;
 
         public DonorServices(
          
             IUnitOfWork unitOfWork,
-            IMapper mapper, UserManager<AppUser> userManager)
+            IMapper mapper, UserManager<AppUser> userManager, INotificationService notificationService)
         {
          
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _userManager = userManager;
+            _notificationService = notificationService;
 
         }
 
@@ -302,6 +307,15 @@ namespace KonSanad.Services.Services
 
             await _unitOfWork.Complete();
 
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+                Type = NotificationType.MissionRequestSubmitted,
+                Title = "تم تعديل الكمية",
+                Message = $" تم تعديل الكمية في الطلب رقم {orderItemId}.",
+                EntityType = nameof(OrderItem),
+                EntityId = item.Id
+            });
+
             return (true, "تم تعديل الكمية بنجاح");
         }
         // -------------------------------------------------------------------
@@ -347,6 +361,14 @@ namespace KonSanad.Services.Services
             }
 
             await _unitOfWork.Complete();
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionRequestSubmitted,
+                    Title = "تم حذف منتج",
+                    Message = $" تم حذف منتج من الطلب رقم {donationOrder.Id}.",
+                    EntityType = nameof(OrderItem),
+                    EntityId = item.Id
+                });
 
             return (true, "تم الحذف بنجاح");
         }
@@ -378,6 +400,14 @@ namespace KonSanad.Services.Services
             }
 
             await _unitOfWork.Complete();
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionRequestSubmitted,
+                    Title = "تم حذف تبرع نقدي",
+                    Message = $" تم حذف تبرع نقدي من الطلب رقم {cashDonation.DonationOrderId}.",
+                    EntityType = nameof(CashDonation),
+                    EntityId = cashDonation.Id
+                });
 
             return true;
         }
@@ -395,6 +425,14 @@ namespace KonSanad.Services.Services
             repo.Update(cashDonation);
 
             await _unitOfWork.Complete();
+                await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                {
+                    Type = NotificationType.MissionRequestSubmitted,
+                    Title = "تم تعديل مبلغ تبرع نقدي",
+                    Message = $" تم تعديل مبلغ تبرع نقدي في الطلب رقم {cashDonation.DonationOrderId}.",
+                    EntityType = nameof(CashDonation),
+                    EntityId = cashDonation.Id
+                });
 
             return true;
         }
