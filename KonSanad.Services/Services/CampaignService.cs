@@ -1,5 +1,7 @@
 ﻿
 using KonSanad.Core.Entity.Enums;
+using KonSanad.Core.IRepositery;
+using KonSanad.Repository.Entities;
 
 namespace KonSanad.Services.Services
 {
@@ -115,6 +117,60 @@ namespace KonSanad.Services.Services
             // 5️⃣ Save
             await _unitOfWork.Complete();
 
+            var volunteers = await _unitOfWork.Repository<Volunteer , int>()
+                .GetAllAsync();
+
+            foreach (var volunteer in volunteers)
+            {
+                await _notificationService.NotifyUserAsync(
+                    volunteer.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم انشاء حمله جديده",
+                        Message = $" تم انشاء حمله جديده برقم {campaign.Id}  بامكانك الانضمام لها",
+                        EntityId = campaign.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+            }
+
+            var Ben = await _unitOfWork.Repository<Beneficiary, int>()
+                .GetAllAsync();
+
+            foreach (var b in Ben)
+            {
+                await _notificationService.NotifyUserAsync(
+                    b.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم انشاء حمله جديده",
+                        Message = $" تم انشاء حمله جديده برقم {campaign.Id}  بامكانك الانضمام لها",
+                        EntityId = campaign.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+                
+                   });
+            }
+            var donor = await _unitOfWork.Repository<Donor, int>()
+           .GetAllAsync();
+
+            foreach (var d in donor)
+            {
+                await _notificationService.NotifyUserAsync(
+                    d.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم انشاء حمله جديده",
+                        Message = $" تم انشاء حمله جديده برقم {campaign.Id}  بامكانك التبرع لها",
+                        EntityId = campaign.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+            }
+
+
+
+
             return " تم انشاء الحمله بنجاح";
         }
 
@@ -139,6 +195,56 @@ namespace KonSanad.Services.Services
 
             repo.Update(entity);
             await _unitOfWork.Complete();
+            var volunteers = await _unitOfWork.Repository<Volunteer, int>()
+           .GetAllAsync();
+
+            foreach (var volunteer in volunteers)
+            {
+                await _notificationService.NotifyUserAsync(
+                    volunteer.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم تعديل حمله جديده",
+                        Message = $" تم نعديل حمله برقم {entity.Id}  بامكانك الاطلاع عليها",
+                        EntityId = entity.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+            }
+
+            var Ben = await _unitOfWork.Repository<Beneficiary, int>()
+                .GetAllAsync();
+
+            foreach (var b in Ben)
+            {
+                await _notificationService.NotifyUserAsync(
+                    b.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم تعديل حمله جديده",
+                        Message = $" تم نعديل حمله برقم {entity.Id}  بامكانك الاطلاع عليها",
+                        EntityId = entity.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+
+                    });
+            }
+            var donor = await _unitOfWork.Repository<Donor, int>()
+           .GetAllAsync();
+
+            foreach (var d in donor)
+            {
+                await _notificationService.NotifyUserAsync(
+                    d.AppUserId!,
+                    new NotificationMessageDto
+                    {
+                        Title = " تم تعديل حمله جديده",
+                        Message = $" تم نعديل حمله برقم {entity.Id}  بامكانك الاطلاع عليها",
+                        EntityId = entity.Id,
+                        EntityType = nameof(Campaign),
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+            }
 
             return "تم التعديل بنجاح";
         }
