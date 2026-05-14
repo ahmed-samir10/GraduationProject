@@ -77,7 +77,14 @@ namespace KonSanad.Services.Services
                 EntityType = nameof(HelpOrder),
                 EntityId = helpOrder.Id
             });
-
+            await _notificationService.NotifyRoleAsync("Volunteer", new NotificationMessageDto
+            {
+                Type = NotificationType.NeededItemAdded,
+                Title = "مهمه جديد",
+                Message = "تمت إضافة مهمه جديد ويمكنك الاطلاع عليه والتطوع اليها.",
+                EntityType = nameof(HelpOrder),
+                EntityId = helpOrder.Id
+            });
             return new SubmitResultDto { Success = true };
         }
     }
