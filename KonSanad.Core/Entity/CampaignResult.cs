@@ -13,10 +13,20 @@ namespace KonSanad.Repository.Entities
         public Campaign? Campaign { get; set; }
 
 
-        public DateTime? ReportDate { get; set; }
+     
         public decimal? TotalCashCollected { get; set; }
-        public int? TotalItemsCount { get; set; }
+        public int DonorCount { get; set; }
+        public int BeneficiaryCount { get; set; }
+        public int VolunteerCount { get; set; }
 
-      
+
+
+
+
+
+
+
+
+
     }
 }

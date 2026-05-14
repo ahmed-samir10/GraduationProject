@@ -197,92 +197,84 @@ namespace KonSanad.Services.Services
 
         #endregion
 
-     /*   public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
-        {
-            if (request == null) throw new ArgumentNullException(nameof(request));
+        /*   public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
+           {
+               if (request == null) throw new ArgumentNullException(nameof(request));
 
-            var imageUrl = await SaveImageAsync(request.ImageFile);
+               var imageUrl = await SaveImageAsync(request.ImageFile);
 
-            var helpOrder = new HelpOrder
-            {
-                BeneficiaryId = id,
-                Title = request.ProductName,
-                Description = request.ProductDescription,
-                Status = "Requested",
-                IsDeleted = false
-            };
+               var helpOrder = new HelpOrder
+               {
+                   BeneficiaryId = id,
+                   Title = request.ProductName,
+                   Description = request.ProductDescription,
+                   Status = "Requested",
+                   IsDeleted = false
+               };
 
-            await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
-            await _unitOfWork.Complete();
+               await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
+               await _unitOfWork.Complete();
 
-            var supply = new Supply
-            {
-                Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
-                Description = string.IsNullOrWhiteSpace(request.Reason) ? "Requested via HelpOrder (new product)" : request.Reason,
-                Unit = "pcs",
-                Title ="غذائي",
-                StockQuantity = 0
-            };
+               var supply = new Supply
+               {
+                   Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
+                   Description = string.IsNullOrWhiteSpace(request.Reason) ? "Requested via HelpOrder (new product)" : request.Reason,
+                   Unit = "pcs",
+                   Title ="غذائي",
+                   StockQuantity = 0
+               };
 
-            await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
-            await _unitOfWork.Complete();
+               await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
+               await _unitOfWork.Complete();
 
-            var helpItem = new HelpOrderItem
-            {
-                HelpOrderId = helpOrder.Id,
-                SupplyId = supply.Id,
-                QuantityRequested = 1,
-                reason = request.Reason,
-                ImageUrl = imageUrl  // ← الصورة اللي اتخزنت
-            };
+               var helpItem = new HelpOrderItem
+               {
+                   HelpOrderId = helpOrder.Id,
+                   SupplyId = supply.Id,
+                   QuantityRequested = 1,
+                   reason = request.Reason,
+                   ImageUrl = imageUrl  // ← الصورة اللي اتخزنت
+               };
 
-            await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
-            await _unitOfWork.Complete();
+               await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
+               await _unitOfWork.Complete();
 
-            return new HelpRequestResponseDto
-            {
-                HelpOrderId = helpOrder.Id,
-                Message = "New product request submitted successfully."
-            };
-        }
+               return new HelpRequestResponseDto
+               {
+                   HelpOrderId = helpOrder.Id,
+                   Message = "New product request submitted successfully."
+               };
+           }
 
 
-*/
+   */
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
-
-
             // تحقق لو المستفيد موجود
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>().GetByIdAsync(userid);
             if (beneficiary == null)
                 return "المستفيد غير موجود";
 
-            // تحقق لو الحملة موجودة
-            // var campaign = await _unitOfWork.Repository<Campaign, int>().GetByIdAsync(request.CampaignId);
-
             var campaign = await _unitOfWork.Repository<Campaign, int>()
-    .FirstOrDefaultAsync(
-        c => c.Id == request.CampaignId,
-        include: q => q.Include(c => c.BeneficiaryCampaigns)
-    );
+                .FirstOrDefaultAsync(
+                    c => c.Id == request.CampaignId,
+                    include: q => q.Include(c => c.BeneficiaryCampaigns)
+                );
+
             if (campaign == null)
                 return "الحملة غير موجودة";
 
-            /////////////////////////////////////////////////
             if (CampaignMetrics.DetermineCampaignStatus(campaign) == 2)
-            {
                 return "الحملة غير نشطة حالياً ولا يمكن الانضمام لها";
-            }
 
             // تحقق لو المستفيد قدم طلب قبل كده لنفس الحملة
             var existingRequest = await _unitOfWork.Repository<BeneficiaryCampaign, int>()
                 .FirstOrDefaultAsync(bc => bc.BeneficiaryId == userid
                                            && bc.CampaignId == request.CampaignId);
 
-           
-
             if (existingRequest != null)
                 return "تم تقديم طلب لهذه الحملة بالفعل";
+
             var cairoZone = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
             var cairoNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, cairoZone);
 
@@ -292,19 +284,11 @@ namespace KonSanad.Services.Services
                 CampaignId = request.CampaignId,
                 RequestedAt = cairoNow,
                 CreatedAt = cairoNow,
-               // Status = " قيد الانتظار",
-               Reason = request.Reason,
-               campaignRequestStatus = RequestedStatus.Pending,
+                Reason = request.Reason,
+                campaignRequestStatus = RequestedStatus.Pending,
             };
 
-            // joinRequest.Status = "Pending";
-
-
             await _unitOfWork.Repository<BeneficiaryCampaign, int>().AddAsync(joinRequest);
-
-           
-
-            // احفظ التغييرات
             await _unitOfWork.Complete();
 
             await _notificationService.NotifyManagersAsync(new NotificationMessageDto
@@ -315,6 +299,38 @@ namespace KonSanad.Services.Services
                 EntityType = nameof(BeneficiaryCampaign),
                 EntityId = joinRequest.Id
             });
+
+            // CampaignResult - BeneficiaryCount
+            if (request.CampaignId > 0)
+            {
+                var campaignResult = await _unitOfWork.Repository<CampaignResult, int>()
+                    .FirstOrDefaultAsync(cr => cr.CampaignId == request.CampaignId);
+
+                if (campaignResult == null)
+                {
+                    campaignResult = new CampaignResult
+                    {
+                        CampaignId = request.CampaignId,
+                        TotalCashCollected = 0,
+                        DonorCount = 0,
+                        BeneficiaryCount = 1,
+                        VolunteerCount = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        Status = RequestedStatus.Pending,
+                        IsDeleted = false
+                    };
+                    await _unitOfWork.Repository<CampaignResult, int>().AddAsync(campaignResult);
+                }
+                else
+                {
+                    campaignResult.BeneficiaryCount += 1;
+                    campaignResult.UpdatedAt = DateTime.Now;
+                    _unitOfWork.Repository<CampaignResult, int>().Update(campaignResult);
+                }
+
+                await _unitOfWork.Complete();
+            }
 
             return "تم إرسال الطلب بنجاح";
         }

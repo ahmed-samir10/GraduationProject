@@ -149,6 +149,38 @@ namespace KonSanad.Services.Services
                                     });
                                 }
                             }
+
+                            // CampaignResult Logic
+                            var campaignResult = await _context.CampaignResults
+                                .FirstOrDefaultAsync(cr => cr.CampaignId == campaignId.Value);
+
+                            if (campaignResult == null)
+                            {
+                                // اعمل record جديد
+                                campaignResult = new CampaignResult
+                                {
+                                    CampaignId = campaignId.Value,
+                                    TotalCashCollected = cashDonation.Amount,
+                                    DonorCount = 1,
+                                    BeneficiaryCount = 0,
+                                    VolunteerCount = 0,
+                                    CreatedAt = DateTime.UtcNow,
+                                    UpdatedAt = DateTime.UtcNow,
+                                    Status = RequestedStatus.Pending,
+                                    IsDeleted = false
+                                };
+                                await _context.CampaignResults.AddAsync(campaignResult);
+                            }
+                            else
+                            {
+                                // زود على الموجود
+                                campaignResult.TotalCashCollected += cashDonation.Amount;
+                                campaignResult.DonorCount += 1;
+                                campaignResult.UpdatedAt = DateTime.Now;
+                                _context.CampaignResults.Update(campaignResult);
+                            }
+
+                            await _context.SaveChangesAsync();
                         }
                         break;
 

@@ -652,17 +652,20 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BeneficiaryCount")
+                        .HasColumnType("int");
+
                     b.Property<int>("CampaignId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DonorCount")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ReportDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -676,11 +679,11 @@ namespace KonSanad.Repository.Migrations.KonSanadDb
                     b.Property<decimal?>("TotalCashCollected")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("TotalItemsCount")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("VolunteerCount")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

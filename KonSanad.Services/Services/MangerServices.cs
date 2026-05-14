@@ -698,11 +698,42 @@ int? helpOrderId)
                     {
                         Type = NotificationType.VolunteerCampaignJoinApproved,
                         Title = "تم قبول طلبك",
-                     //   Message = $"تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title}.",
                         Message = $" تم قبول طلب انضمامك إلى الحملة {campaignRequest.Campaign?.Title} يمكنك الذهاب الي مقر الجميعه لمتابعه مهمات الحمله من 11 صباحا الي 8 مساء",
                         EntityType = nameof(CampaignVolunteer),
                         EntityId = campaignRequest.Id
                     });
+                }
+
+                // CampaignResult - VolunteerCount
+                if (campaignRequest.CampaignId > 0)
+                {
+                    var campaignResult = await _unitOfWork.Repository<CampaignResult,int>()
+                        .FirstOrDefaultAsync(cr => cr.CampaignId == campaignRequest.CampaignId);
+
+                    if (campaignResult == null)
+                    {
+                        campaignResult = new CampaignResult
+                        {
+                            CampaignId = campaignRequest.CampaignId,
+                            TotalCashCollected = 0,
+                            DonorCount = 0,
+                            BeneficiaryCount = 0,
+                            VolunteerCount = 1,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            Status = RequestedStatus.Pending,
+                            IsDeleted = false
+                        };
+                        await _unitOfWork.Repository<CampaignResult, int>().AddAsync(campaignResult);
+                    }
+                    else
+                    {
+                        campaignResult.VolunteerCount += 1;
+                        campaignResult.UpdatedAt = DateTime.UtcNow;
+                        _unitOfWork.Repository<CampaignResult, int>().Update(campaignResult);
+                    }
+
+                    await _unitOfWork.Complete();
                 }
 
                 return "تم قبول طلب الحملة بنجاح";
