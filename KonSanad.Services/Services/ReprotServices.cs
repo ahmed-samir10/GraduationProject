@@ -240,6 +240,7 @@ namespace KonSanad.Services.Services
         {
             var campaigns = await _unitOfWork.Repository<Campaign, int>()
                 .GetQueryable()
+
                 .Where(x => x.CampaignStatus == Core.Entity.Enums.CampaignStatus.NotCompleted)
                 .ToListAsync();
 
@@ -273,6 +274,7 @@ namespace KonSanad.Services.Services
         {
             var requests = await _unitOfWork.Repository<HelpOrder, int>()
                 .GetQueryable()
+                .Include(x => x.Beneficiary)
                 .Where(x => x.HelpOrderStatus == Core.Entity.Enums.RequestedStatus.Pending)
                 .ToListAsync();
 
@@ -287,6 +289,7 @@ namespace KonSanad.Services.Services
         {
             var requests = await _unitOfWork.Repository<HelpOrder, int>()
                 .GetQueryable()
+                .Include(x => x.Beneficiary)
                 .Where(x => x.HelpOrderStatus == Core.Entity.Enums.RequestedStatus.Approved)
                 .ToListAsync();
 
@@ -443,8 +446,8 @@ namespace KonSanad.Services.Services
 
                         foreach (var r in requests)
                         {
-                            table.Cell().Text(r.Beneficiary.FullName);
-                       
+                            table.Cell().Text(r?.Beneficiary?.FullName ?? "N/A");
+
                             table.Cell().Text(r.HelpOrderStatus);
                         }
                     });

@@ -31,14 +31,14 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> DonorsLastMonth()
         {
             var result = await _reportService.GetDonorsLastMonthAsync();
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
         [HttpGet("donors/top")]
         public async Task<IActionResult> TopDonors([FromQuery] int top = 10)
         {
             var result = await _reportService.GetTopDonorsAsync(top);
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
         [HttpGet("donors/between-dates")]
@@ -47,7 +47,7 @@ namespace KonSanad.APIS.Controllers
             [FromQuery] DateTime to)
         {
             var result = await _reportService.GetDonationsBetweenDatesAsync(from, to);
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
         #endregion
@@ -58,14 +58,14 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> ActiveCampaigns()
         {
             var result = await _reportService.GetActiveCampaignsAsync();
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
         [HttpGet("campaigns/expired")]
         public async Task<IActionResult> ExpiredCampaigns()
         {
             var result = await _reportService.GetExpiredCampaignsAsync();
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
        
@@ -78,29 +78,19 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> PendingRequests()
         {
             var result = await _reportService.GetPendingRequestsAsync();
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
         [HttpGet("requests/completed")]
         public async Task<IActionResult> CompletedRequests()
         {
             var result = await _reportService.GetCompletedRequestsAsync();
-            return Ok(result);
+            return File(result, "application/pdf", "donors-report.pdf");
         }
 
 
         #endregion
 
-        #region 📤 Export Reports
-
-        [HttpGet("export/donors/pdf")]
-        public async Task<IActionResult> ExportDonorsPdf()
-        {
-            var file = await _reportService.ExportDonorsPdfAsync();
-            return File(file, "application/pdf", "donors-report.pdf");
-        }
-
-
-        #endregion
+       
     }
 }
