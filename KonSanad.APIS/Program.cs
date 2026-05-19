@@ -62,6 +62,7 @@ builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IVolunteerService,VolunteerService>();
+builder.Services.AddScoped<IReportService, ReportService>();    
 builder.Services.AddScoped<IMangerServices, MangerServices>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
