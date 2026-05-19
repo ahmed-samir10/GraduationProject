@@ -61,6 +61,14 @@ namespace KonSanad.APIS.Controllers
             return File(result, "application/pdf", "donors-report.pdf");
         }
 
+        [HttpGet("campaigns/not-active")]
+        public async Task<IActionResult> NotActiveCampaigns()
+        {
+            var result = await _reportService.GetNotActiveCampaignsAsyn();
+            return File(result, "application/pdf", "donors-report.pdf");
+        }
+
+
         [HttpGet("campaigns/expired")]
         public async Task<IActionResult> ExpiredCampaigns()
         {

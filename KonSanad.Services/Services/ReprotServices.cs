@@ -255,17 +255,27 @@ namespace KonSanad.Services.Services
         {
             var campaigns = await _unitOfWork.Repository<Campaign, int>()
                 .GetQueryable()
+              .Where(x => x.CampaignStatus == Core.Entity.Enums.CampaignStatus.Completed)
+                .ToListAsync();
+
+            return GenerateCampaignsPdf("Expired Campaigns", campaigns);
+        }
+        public async Task<byte[]> GetNotActiveCampaignsAsyn()
+        {
+            var campaigns = await _unitOfWork.Repository<Campaign, int>()
+                .GetQueryable()
                 .Where(x => x.EndDate < DateTime.Now)
                 .ToListAsync();
 
             return GenerateCampaignsPdf("Expired Campaigns", campaigns);
         }
 
+
         // =========================================================
         // 📈 Campaign Performance PDF
         // =========================================================
 
-    
+
         // =========================================================
         // 🆘 Pending Requests PDF
         // =========================================================
