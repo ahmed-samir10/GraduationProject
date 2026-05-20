@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KonSanad.APIS.Controllers
@@ -20,7 +21,7 @@ namespace KonSanad.APIS.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var result = await _reportService.GetDashboardAsync();
-            return Ok(result);
+            return Ok(new { success = true, data = result });
         }
 
         #endregion

@@ -180,6 +180,7 @@ namespace KonSanad.Services.Services
             var donors = await _unitOfWork
                 .Repository<DonationOrder, int>()
                 .GetQueryable()
+                .Include(x => x.CashDonation)
                 .Include(x => x.Donor)
                 .GroupBy(x => new
                 {
@@ -193,11 +194,13 @@ namespace KonSanad.Services.Services
                     Email = g.Key.Email,
 
                     // غيرها لو عندك Amount
-                    Total = 0,
+                    Total =(decimal) g.Sum(x => x.CashAmount),
 
                     Count = g.Count()
                 })
-                .OrderByDescending(x => x.Count)
+                 .OrderByDescending(x => x.Total)   // 🔥 الترتيب الصح
+        .ThenByDescending(x => x.Count)
+        .Take(top)
                 .Take(top)
                 .ToListAsync();
 
