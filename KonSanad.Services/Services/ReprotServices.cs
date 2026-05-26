@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using KonSanad.Core.Entity.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System;
 using System.Collections.Generic;
@@ -143,6 +146,7 @@ namespace KonSanad.Services.Services
                 .Repository<DonationOrder, int>()
                 .GetQueryable()
                 .Include(x => x.Donor)
+                  .Include(x => x.CashDonation)
                 .Where(x => x.CreatedAt >= lastMonth)
                 .GroupBy(x => new
                 {
@@ -156,7 +160,13 @@ namespace KonSanad.Services.Services
                     Email = g.Key.Email,
 
                     // غيرها لو عندك Amount حقيقي
-                    Total = 0,
+                    Total = g.Sum(x =>
+                  x.CashDonation != null
+                      ? x.CashDonation.Amount
+                      : 0),
+
+                    // عدد عمليات التبرع
+
 
                     Count = g.Count()
                 })
@@ -194,7 +204,7 @@ namespace KonSanad.Services.Services
                     Email = g.Key.Email,
 
                     // غيرها لو عندك Amount
-                    Total =(decimal) g.Sum(x => x.CashAmount),
+                    Total =g.Sum(x => x.CashDonation != null ? x.CashDonation.Amount : 0),
 
                     Count = g.Count()
                 })
@@ -218,6 +228,8 @@ namespace KonSanad.Services.Services
             var donors = await _unitOfWork.Repository<DonationOrder, int>()
                 .GetQueryable()
                 .Where(x => x.CreatedAt >= from && x.CreatedAt <= to)
+                .Include(x => x.CashDonation)
+                .Include(x => x.Donor)
                 .GroupBy(x => new
                 {
                     x.Donor.FullName,
@@ -227,7 +239,9 @@ namespace KonSanad.Services.Services
                 {
                     Name = g.Key.FullName,
                     Email = g.Key.Email,
-                   Total= 0,
+                    // غيرها لو عندك Amount
+                    Total = g.Sum(x => x.CashDonation != null ? x.CashDonation.Amount : 0),
+
                     Count = g.Count()
                 })
                 .ToListAsync();
@@ -239,41 +253,74 @@ namespace KonSanad.Services.Services
         // 🏕 Active Campaigns PDF
         // =========================================================
 
+        // ✅ Active Campaigns
+        // =========================================================
+
         public async Task<byte[]> GetActiveCampaignsAsync()
         {
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
+            var campaigns = await _unitOfWork.Repository<CashDonation, int>()
                 .GetQueryable()
-
-                .Where(x => x.CampaignStatus == Core.Entity.Enums.CampaignStatus.NotCompleted)
-                .ToListAsync();
+                .Include(cd => cd.Campaign)
+    .Where(cd => cd.CampaignId != null)
+    .GroupBy(cd => cd.CampaignId)
+    .Select(g => new CampaignReportDto
+    {
+        Title = g.First().Campaign!.Title,
+        GoalCash = g.First().Campaign!.GoalCash ?? 0,
+        CurrentCash = g.Sum(x => x.Amount),
+        Date = g.First().Campaign!.CreatedAt
+    })
+    .ToListAsync();
 
             return GenerateCampaignsPdf("Active Campaigns", campaigns);
         }
 
         // =========================================================
-        // 🏕 Expired Campaigns PDF
+        // ⛔ Completed Campaigns
+        // =========================================================
+     public async Task<byte[]> GetCompletedCampaignsAsync()
+        {
+
+            var campaigns = await _unitOfWork.Repository<CashDonation, int>()
+                .GetQueryable()
+                .Include(cd => cd.Campaign)
+    .Where(cd => cd.CampaignId != null && cd.Campaign.CampaignStatus == CampaignStatus.Completed)
+    .GroupBy(cd => cd.CampaignId)
+    .Select(g => new CampaignReportDto
+    {
+        Title = g.First().Campaign!.Title,
+        GoalCash = g.First().Campaign!.GoalCash ?? 0,
+        CurrentCash = g.Sum(x => x.Amount),
+        Date = g.First().Campaign!.CreatedAt
+    })
+    .ToListAsync();
+
+            return GenerateCampaignsPdf("Completed Campaigns", campaigns);
+        }
+
+        // =========================================================
+        // ⏰ Expired Campaigns
         // =========================================================
 
         public async Task<byte[]> GetExpiredCampaignsAsync()
         {
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
+
+            var campaigns = await _unitOfWork.Repository<CashDonation, int>()
                 .GetQueryable()
-              .Where(x => x.CampaignStatus == Core.Entity.Enums.CampaignStatus.Completed)
-                .ToListAsync();
+                .Include(cd => cd.Campaign)
+    .Where(x => x.Campaign.EndDate < DateTime.Now)
+    .GroupBy(cd => cd.CampaignId)
+    .Select(g => new CampaignReportDto
+    {
+        Title = g.First().Campaign!.Title,
+        GoalCash = g.First().Campaign!.GoalCash ?? 0,
+        CurrentCash = g.Sum(x => x.Amount),
+        Date = g.First().Campaign!.CreatedAt
+    })
+    .ToListAsync();
 
             return GenerateCampaignsPdf("Expired Campaigns", campaigns);
         }
-        public async Task<byte[]> GetNotActiveCampaignsAsyn()
-        {
-            var campaigns = await _unitOfWork.Repository<Campaign, int>()
-                .GetQueryable()
-                .Where(x => x.EndDate < DateTime.Now)
-                .ToListAsync();
-
-            return GenerateCampaignsPdf("Expired Campaigns", campaigns);
-        }
-
-
         // =========================================================
         // 📈 Campaign Performance PDF
         // =========================================================
@@ -285,13 +332,23 @@ namespace KonSanad.Services.Services
 
         public async Task<byte[]> GetPendingRequestsAsync()
         {
-            var requests = await _unitOfWork.Repository<HelpOrder, int>()
+            var requests = await _unitOfWork
+                .Repository<HelpOrder, int>()
                 .GetQueryable()
+
                 .Include(x => x.Beneficiary)
-                .Where(x => x.HelpOrderStatus == Core.Entity.Enums.RequestedStatus.Pending)
+
+                .Where(x =>
+                    x.HelpOrderStatus ==
+                    Core.Entity.Enums.RequestedStatus.Pending)
+
+                .OrderByDescending(x => x.CreatedAt)
+
                 .ToListAsync();
 
-            return GenerateRequestsPdf("Pending Requests", requests);
+            return GenerateRequestsPdf(
+                "Pending Requests",
+                requests);
         }
 
         // =========================================================
@@ -317,7 +374,6 @@ namespace KonSanad.Services.Services
         // =====================================================
         // 🔥 Generate Donors PDF
         // =====================================================
-
         private byte[] GenerateDonorsPdf(
             string title,
             List<DonorReportItem> donors)
@@ -328,20 +384,21 @@ namespace KonSanad.Services.Services
                 {
                     page.Margin(20);
 
-                    // =================================================
+                    // =========================================
                     // Header
-                    // =================================================
+                    // =========================================
 
                     page.Header()
                         .Text(title)
                         .FontSize(22)
-                        .Bold();
+                        .Bold()
+                        .FontColor(Colors.Blue.Darken2);
 
-                    // =================================================
-                    // Table
-                    // =================================================
+                    // =========================================
+                    // Content
+                    // =========================================
 
-                    page.Content().Table(table =>
+                    page.Content().PaddingVertical(10).Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
@@ -351,44 +408,81 @@ namespace KonSanad.Services.Services
                             columns.RelativeColumn(2);
                         });
 
-                        // =============================================
-                        // Header Row
-                        // =============================================
+                        // =====================================
+                        // Header
+                        // =====================================
 
                         table.Header(header =>
                         {
-                            header.Cell().Text("Name").Bold();
+                            header.Cell().Element(CellStyle)
+                                .Background(Colors.Grey.Lighten2)
+                                .Text("Name").Bold();
 
-                            header.Cell().Text("Email").Bold();
+                            header.Cell().Element(CellStyle)
+                                .Background(Colors.Grey.Lighten2)
+                                .Text("Email").Bold();
 
-                            header.Cell().Text("Total").Bold();
+                            header.Cell().Element(CellStyle)
+                                .Background(Colors.Grey.Lighten2)
+                                .AlignRight()
+                                .Text("Total").Bold();
 
-                            header.Cell().Text("Count").Bold();
+                            header.Cell().Element(CellStyle)
+                                .Background(Colors.Grey.Lighten2)
+                                .AlignCenter()
+                                .Text("Count").Bold();
                         });
 
-                        // =============================================
-                        // Data
-                        // =============================================
+                        // =====================================
+                        // Rows
+                        // =====================================
 
                         foreach (var d in donors)
                         {
-                            table.Cell()
-                                .Text(d.Name ?? "");
+                            table.Cell().Element(CellStyle)
+                                .Text(d.Name ?? "-");
 
-                            table.Cell()
-                                .Text(d.Email ?? "");
+                            table.Cell().Element(CellStyle)
+                                .Text(d.Email ?? "-");
 
-                            table.Cell()
-                                .Text($"{d.Total} EGP");
+                            table.Cell().Element(CellStyle)
+                                .AlignRight()
+                                .Text($"{d.Total:N2} EGP");
 
-                            table.Cell()
+                            table.Cell().Element(CellStyle)
+                                .AlignCenter()
                                 .Text(d.Count.ToString());
                         }
                     });
+
+                    // =========================================
+                    // Footer
+                    // =========================================
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(x =>
+                        {
+                            x.Span("Generated At: ");
+                            x.Span(DateTime.Now.ToString("yyyy-MM-dd hh:mm tt"));
+                        });
+
                 });
             }).GeneratePdf();
         }
-        private byte[] GenerateCampaignsPdf(string title, List<Campaign> campaigns)
+
+        private IContainer CellStyle(IContainer container)
+        {
+            return container
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2)
+                .PaddingVertical(8)
+                .PaddingHorizontal(5);
+        }
+
+        private byte[] GenerateCampaignsPdf(
+     string title,
+     List<CampaignReportDto> campaigns)
         {
             return Document.Create(container =>
             {
@@ -396,39 +490,122 @@ namespace KonSanad.Services.Services
                 {
                     page.Margin(20);
 
-                    page.Header()
-                        .Text(title)
-                        .FontSize(22)
-                        .Bold();
-
-                    page.Content().Table(table =>
+                    // =====================================
+                    // Header
+                    // =====================================
+                    page.Header().Column(column =>
                     {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                        });
+                        column.Item()
+                            .Text(title)
+                            .FontSize(24)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2);
 
-                        table.Header(header =>
-                        {
-                            header.Cell().Text("Title");
-                            header.Cell().Text("Goal");
-                            header.Cell().Text("Current");
-                        });
-
-                        foreach (var c in campaigns)
-                        {
-                            table.Cell().Text(c.Title);
-                            table.Cell().Text(c.GoalCash.ToString());
-                            
-                        }
+                        column.Item()
+                            .Text($"Generated At: {DateTime.Now:yyyy-MM-dd hh:mm tt}")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken1);
                     });
+
+                    // =====================================
+                    // Content
+                    // =====================================
+                    page.Content()
+                        .PaddingTop(15)
+                        .Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                            });
+
+                            // HEADER
+                            table.Header(header =>
+                            {
+                                header.Cell()
+                                    .Element(CampaignHeaderStyle)
+                                    .Text("Title");
+
+                                header.Cell()
+                                    .Element(CampaignHeaderStyle)
+                                    .AlignCenter()
+                                    .Text("Goal");
+
+                                header.Cell()
+                                    .Element(CampaignHeaderStyle)
+                                    .AlignCenter()
+                                    .Text("Current");
+                            });
+
+                            // ROWS
+                            int index = 0;
+
+                            foreach (var c in campaigns)
+                            {
+                                var background = index % 2 == 0
+                                    ? Colors.White
+                                    : Colors.Grey.Lighten4;
+
+                                table.Cell()
+                                    .Element(x =>
+                                        CampaignCellStyle(x)
+                                        .Background(background))
+                                    .Text(c.Title ?? "N/A");
+
+                                table.Cell()
+                                    .Element(x =>
+                                        CampaignCellStyle(x)
+                                        .Background(background))
+                                    .AlignCenter()
+                                    .Text($"{c.GoalCash:N2} EGP");
+
+                                table.Cell()
+                                    .Element(x =>
+                                        CampaignCellStyle(x)
+                                        .Background(background))
+                                    .AlignCenter()
+                                    .Text($"{c.CurrentCash:N2} EGP");
+
+                                index++;
+                            }
+                        });
+
+                    // =====================================
+                    // Footer
+                    // =====================================
+                    page.Footer()
+                        .AlignCenter()
+                        .Text("KonSanad System Reports");
                 });
             }).GeneratePdf();
         }
+        // =========================================================
+        // 🎨 Styles
+        // =========================================================
 
-        private byte[] GenerateRequestsPdf(string title, List<HelpOrder> requests)
+        private IContainer CampaignHeaderStyle(IContainer container)
+        {
+            return container
+                .Background(Colors.Grey.Lighten2)
+                .Padding(8)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Medium)
+                .DefaultTextStyle(x => x.Bold());
+        }
+
+        private IContainer CampaignCellStyle(IContainer container)
+        {
+            return container
+                .Padding(8)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten2);
+        }
+
+        private byte[] GenerateRequestsPdf(
+         string title,
+         List<HelpOrder> requests)
         {
             return Document.Create(container =>
             {
@@ -436,38 +613,104 @@ namespace KonSanad.Services.Services
                 {
                     page.Margin(20);
 
-                    page.Header()
-                        .Text(title)
-                        .FontSize(22)
-                        .Bold();
+                    // =====================================
+                    // Header
+                    // =====================================
 
-                    page.Content().Table(table =>
+                    page.Header().Column(column =>
+                    {
+                        column.Item()
+                            .Text(title)
+                            .FontSize(24)
+                            .Bold()
+                            .FontColor(Colors.Red.Darken2);
+
+                        column.Item()
+                            .Text($"Generated At: {DateTime.Now:yyyy-MM-dd hh:mm tt}")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken1);
+                    });
+
+                    // =====================================
+                    // Table
+                    // =====================================
+
+                    page.Content().PaddingTop(15).Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
+                            columns.RelativeColumn(4);
+                            columns.RelativeColumn(2);
                         });
+
+                        // =================================
+                        // Header
+                        // =================================
 
                         table.Header(header =>
                         {
-                            header.Cell().Text("User");
-                         
-                            header.Cell().Text("Status");
+                            header.Cell()
+                                .Element(HeaderCellStyle)
+                                .Text("User");
+
+                            header.Cell()
+                                .Element(HeaderCellStyle)
+                                .AlignCenter()
+                                .Text("Status");
                         });
+
+                        // =================================
+                        // Rows
+                        // =================================
+
+                        int index = 0;
 
                         foreach (var r in requests)
                         {
-                            table.Cell().Text(r?.Beneficiary?.FullName ?? "N/A");
+                            var background = index % 2 == 0
+                                ? Colors.White
+                                : Colors.Grey.Lighten4;
 
-                            table.Cell().Text(r.HelpOrderStatus);
+                            table.Cell()
+                                .Element(c =>
+                                    CellStyle(c).Background(background))
+                                .Text(r?.Beneficiary?.FullName ?? "N/A");
+
+                            table.Cell()
+                                .Element(c =>
+                                    CellStyle(c).Background(background))
+                                .AlignCenter()
+                                .Text(r.HelpOrderStatus.ToString());
+
+                            index++;
                         }
                     });
+
+                    // =====================================
+                    // Footer
+                    // =====================================
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(x =>
+                        {
+                            x.Span("KonSanad System Reports");
+                        });
                 });
             }).GeneratePdf();
         }
 
+        private IContainer HeaderCellStyle(IContainer container)
+        {
+            return container
+                .Background(Colors.Grey.Lighten2)
+                .Padding(8)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Medium)
+                .DefaultTextStyle(x => x.Bold());
+        }
+
+       
         // =========================================================
         // ❌ Excel not needed now
         // =========================================================

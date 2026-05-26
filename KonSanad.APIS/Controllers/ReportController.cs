@@ -65,7 +65,7 @@ namespace KonSanad.APIS.Controllers
         [HttpGet("campaigns/not-active")]
         public async Task<IActionResult> NotActiveCampaigns()
         {
-            var result = await _reportService.GetNotActiveCampaignsAsyn();
+            var result = await _reportService.GetCompletedCampaignsAsync();
             return File(result, "application/pdf", "donors-report.pdf");
         }
 

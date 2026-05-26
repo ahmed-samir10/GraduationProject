@@ -23,7 +23,7 @@ namespace KonSanad.Core.IRepositery
 
         // Campaign Reports
         Task<byte[]> GetActiveCampaignsAsync();
-        Task<byte[]> GetNotActiveCampaignsAsyn();
+        Task<byte[]> GetCompletedCampaignsAsync();
 
         Task<byte[]> GetExpiredCampaignsAsync();
 
