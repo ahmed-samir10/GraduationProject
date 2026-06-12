@@ -374,112 +374,297 @@ namespace KonSanad.Services.Services
         // =====================================================
         // 🔥 Generate Donors PDF
         // =====================================================
+        /*   private byte[] GenerateDonorsPdf(
+               string title,
+               List<DonorReportItem> donors)
+           {
+               return Document.Create(container =>
+               {
+                   container.Page(page =>
+                   {
+                       page.Margin(20);
+
+                       // =========================================
+                       // Header
+                       // =========================================
+
+                       page.Header()
+                           .Text(title)
+                           .FontSize(22)
+                           .Bold()
+                           .FontColor(Colors.Blue.Darken2);
+
+                       // =========================================
+                       // Content
+                       // =========================================
+
+                       page.Content().PaddingVertical(10).Table(table =>
+                       {
+                           table.ColumnsDefinition(columns =>
+                           {
+                               columns.RelativeColumn(3);
+                               columns.RelativeColumn(4);
+                               columns.RelativeColumn(2);
+                               columns.RelativeColumn(2);
+                           });
+
+                           // =====================================
+                           // Header
+                           // =====================================
+
+                           table.Header(header =>
+                           {
+                               header.Cell().Element(CellStyle)
+                                   .Background(Colors.Grey.Lighten2)
+                                   .Text("Name").Bold();
+
+                               header.Cell().Element(CellStyle)
+                                   .Background(Colors.Grey.Lighten2)
+                                   .Text("Email").Bold();
+
+                               header.Cell().Element(CellStyle)
+                                   .Background(Colors.Grey.Lighten2)
+                                   .AlignRight()
+                                   .Text("Total").Bold();
+
+                               header.Cell().Element(CellStyle)
+                                   .Background(Colors.Grey.Lighten2)
+                                   .AlignCenter()
+                                   .Text("Count").Bold();
+                           });
+
+                           // =====================================
+                           // Rows
+                           // =====================================
+
+                           foreach (var d in donors)
+                           {
+                               table.Cell().Element(CellStyle)
+                                   .Text(d.Name ?? "-");
+
+                               table.Cell().Element(CellStyle)
+                                   .Text(d.Email ?? "-");
+
+                               table.Cell().Element(CellStyle)
+                                   .AlignRight()
+                                   .Text($"{d.Total:N2} EGP");
+
+                               table.Cell().Element(CellStyle)
+                                   .AlignCenter()
+                                   .Text(d.Count.ToString());
+                           }
+                       });
+
+                       // =========================================
+                       // Footer
+                       // =========================================
+
+                       page.Footer()
+                           .AlignCenter()
+                           .Text(x =>
+                           {
+                               x.Span("Generated At: ");
+                               x.Span(DateTime.Now.ToString("yyyy-MM-dd hh:mm tt"));
+                           });
+
+                   });
+               }).GeneratePdf();
+           }
+
+           private IContainer CellStyle(IContainer container)
+           {
+               return container
+                   .BorderBottom(1)
+                   .BorderColor(Colors.Grey.Lighten2)
+                   .PaddingVertical(8)
+                   .PaddingHorizontal(5);
+           }
+   */
         private byte[] GenerateDonorsPdf(
-            string title,
-            List<DonorReportItem> donors)
+       string title,
+       List<DonorReportItem> donors)
         {
             return Document.Create(container =>
             {
                 container.Page(page =>
                 {
+                    page.Size(PageSizes.A4);
                     page.Margin(20);
 
+                    // لو عندك خط Cairo
+                    // page.DefaultTextStyle(x => x.FontFamily("Cairo"));
+
                     // =========================================
-                    // Header
+                    // HEADER
                     // =========================================
 
                     page.Header()
-                        .Text(title)
-                        .FontSize(22)
-                        .Bold()
-                        .FontColor(Colors.Blue.Darken2);
-
-                    // =========================================
-                    // Content
-                    // =========================================
-
-                    page.Content().PaddingVertical(10).Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
+                        .PaddingBottom(15)
+                        .Column(col =>
                         {
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(4);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(2);
+                            col.Item()
+                                .AlignCenter()
+                                .Text("كن سند")
+                                .FontSize(30)
+                                .Bold()
+                                .FontColor("#0F9D8A");
+
+                            col.Item()
+                                .AlignCenter()
+                                .Text(title)
+                                .FontSize(18)
+                                .Bold()
+                                .FontColor("#F4A300");
+
+                            col.Item()
+                                .PaddingTop(10)
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
                         });
 
-                        // =====================================
-                        // Header
-                        // =====================================
+                    // =========================================
+                    // CONTENT
+                    // =========================================
 
-                        table.Header(header =>
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(col =>
                         {
-                            header.Cell().Element(CellStyle)
-                                .Background(Colors.Grey.Lighten2)
-                                .Text("Name").Bold();
+                            // معلومات سريعة
 
-                            header.Cell().Element(CellStyle)
-                                .Background(Colors.Grey.Lighten2)
-                                .Text("Email").Bold();
+                            col.Item()
+                                .Background("#F8FAFC")
+                                .Border(1)
+                                .BorderColor("#E5E7EB")
+                                .Padding(10)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"عدد المتبرعين: {donors.Count}");
 
-                            header.Cell().Element(CellStyle)
-                                .Background(Colors.Grey.Lighten2)
-                                .AlignRight()
-                                .Text("Total").Bold();
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"إجمالي التبرعات: {donors.Sum(x => x.Total):N0} جنيه");
+                                });
 
-                            header.Cell().Element(CellStyle)
-                                .Background(Colors.Grey.Lighten2)
-                                .AlignCenter()
-                                .Text("Count").Bold();
+                            col.Item().PaddingTop(15);
+
+                            // =====================================
+                            // TABLE
+                            // =====================================
+
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(4);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                // Header
+
+                                table.Header(header =>
+                                {
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .Text("اسم المتبرع")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .Text("البريد الإلكتروني")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("إجمالي التبرعات")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("عدد التبرعات")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+                                });
+
+                                // Rows
+
+                                for (int i = 0; i < donors.Count; i++)
+                                {
+                                    var d = donors[i];
+
+                                    var bgColor ="#F8FAFC";
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .Text(d.Name ?? "-");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .Text(d.Email ?? "-");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text($"{d.Total:N2} جنيه");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text(d.Count.ToString());
+                                }
+                            });
                         });
 
-                        // =====================================
-                        // Rows
-                        // =====================================
-
-                        foreach (var d in donors)
-                        {
-                            table.Cell().Element(CellStyle)
-                                .Text(d.Name ?? "-");
-
-                            table.Cell().Element(CellStyle)
-                                .Text(d.Email ?? "-");
-
-                            table.Cell().Element(CellStyle)
-                                .AlignRight()
-                                .Text($"{d.Total:N2} EGP");
-
-                            table.Cell().Element(CellStyle)
-                                .AlignCenter()
-                                .Text(d.Count.ToString());
-                        }
-                    });
-
                     // =========================================
-                    // Footer
+                    // FOOTER
                     // =========================================
 
                     page.Footer()
-                        .AlignCenter()
-                        .Text(x =>
+                        .Column(col =>
                         {
-                            x.Span("Generated At: ");
-                            x.Span(DateTime.Now.ToString("yyyy-MM-dd hh:mm tt"));
-                        });
+                            col.Item()
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
 
+                            col.Item()
+                                .PaddingTop(5)
+                                .AlignCenter()
+                                .Text(text =>
+                                {
+                                    text.Span("تاريخ الإنشاء: ");
+                                    text.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                                });
+                        });
                 });
-            }).GeneratePdf();
+            })
+            .GeneratePdf();
         }
 
-        private IContainer CellStyle(IContainer container)
+        private static IContainer CellStyle(IContainer container)
         {
             return container
                 .BorderBottom(1)
-                .BorderColor(Colors.Grey.Lighten2)
+                .BorderColor("#E5E7EB")
                 .PaddingVertical(8)
                 .PaddingHorizontal(5);
         }
-
         private byte[] GenerateCampaignsPdf(
      string title,
      List<CampaignReportDto> campaigns)
@@ -488,219 +673,313 @@ namespace KonSanad.Services.Services
             {
                 container.Page(page =>
                 {
+                    page.Size(PageSizes.A4);
                     page.Margin(20);
 
-                    // =====================================
-                    // Header
-                    // =====================================
-                    page.Header().Column(column =>
-                    {
-                        column.Item()
-                            .Text(title)
-                            .FontSize(24)
-                            .Bold()
-                            .FontColor(Colors.Green.Darken2);
+                    // =========================================
+                    // HEADER
+                    // =========================================
 
-                        column.Item()
-                            .Text($"Generated At: {DateTime.Now:yyyy-MM-dd hh:mm tt}")
-                            .FontSize(10)
-                            .FontColor(Colors.Grey.Darken1);
-                    });
-
-                    // =====================================
-                    // Content
-                    // =====================================
-                    page.Content()
-                        .PaddingTop(15)
-                        .Table(table =>
+                    page.Header()
+                        .PaddingBottom(15)
+                        .Column(col =>
                         {
-                            table.ColumnsDefinition(columns =>
-                            {
-                                columns.RelativeColumn(4);
-                                columns.RelativeColumn(2);
-                                columns.RelativeColumn(2);
-                            });
+                            col.Item()
+                                .AlignCenter()
+                                .Text("كن سند")
+                                .FontSize(30)
+                                .Bold()
+                                .FontColor("#0F9D8A");
 
-                            // HEADER
-                            table.Header(header =>
-                            {
-                                header.Cell()
-                                    .Element(CampaignHeaderStyle)
-                                    .Text("Title");
+                            col.Item()
+                                .AlignCenter()
+                                .Text(title)
+                                .FontSize(18)
+                                .Bold()
+                                .FontColor("#F4A300");
 
-                                header.Cell()
-                                    .Element(CampaignHeaderStyle)
-                                    .AlignCenter()
-                                    .Text("Goal");
-
-                                header.Cell()
-                                    .Element(CampaignHeaderStyle)
-                                    .AlignCenter()
-                                    .Text("Current");
-                            });
-
-                            // ROWS
-                            int index = 0;
-
-                            foreach (var c in campaigns)
-                            {
-                                var background = index % 2 == 0
-                                    ? Colors.White
-                                    : Colors.Grey.Lighten4;
-
-                                table.Cell()
-                                    .Element(x =>
-                                        CampaignCellStyle(x)
-                                        .Background(background))
-                                    .Text(c.Title ?? "N/A");
-
-                                table.Cell()
-                                    .Element(x =>
-                                        CampaignCellStyle(x)
-                                        .Background(background))
-                                    .AlignCenter()
-                                    .Text($"{c.GoalCash:N2} EGP");
-
-                                table.Cell()
-                                    .Element(x =>
-                                        CampaignCellStyle(x)
-                                        .Background(background))
-                                    .AlignCenter()
-                                    .Text($"{c.CurrentCash:N2} EGP");
-
-                                index++;
-                            }
+                            col.Item()
+                                .PaddingTop(10)
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
                         });
 
-                    // =====================================
-                    // Footer
-                    // =====================================
+                    // =========================================
+                    // CONTENT
+                    // =========================================
+
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(col =>
+                        {
+                            // Summary
+
+                            col.Item()
+                                .Background("#F8FAFC")
+                                .Border(1)
+                                .BorderColor("#E5E7EB")
+                                .Padding(10)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"عدد الحملات: {campaigns.Count}");
+
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"إجمالي الهدف: {campaigns.Sum(x => x.GoalCash):N0} جنيه");
+                                });
+
+                            col.Item().PaddingTop(15);
+
+                            // Table
+
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(4);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .Text("اسم الحملة")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("الهدف")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("المبلغ الحالي")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+                                });
+
+                                for (int i = 0; i < campaigns.Count; i++)
+                                {
+                                    var c = campaigns[i];
+
+                                    var bgColor = "#F8FAFC";
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .Text(c.Title ?? "-");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text($"{c.GoalCash:N2} جنيه");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text($"{c.CurrentCash:N2} جنيه");
+                                }
+                            });
+                        });
+
+                    // =========================================
+                    // FOOTER
+                    // =========================================
+
                     page.Footer()
-                        .AlignCenter()
-                        .Text("KonSanad System Reports");
+                        .Column(col =>
+                        {
+                            col.Item()
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
+
+                            col.Item()
+                                .PaddingTop(5)
+                                .AlignCenter()
+                                .Text(text =>
+                                {
+                                    text.Span("تاريخ الإنشاء: ");
+                                    text.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                                });
+                        });
                 });
-            }).GeneratePdf();
+            })
+            .GeneratePdf();
         }
         // =========================================================
         // 🎨 Styles
         // =========================================================
 
-        private IContainer CampaignHeaderStyle(IContainer container)
-        {
+       // private IContainer CampaignHeaderStyle(IContainer container)
+   /*     {
             return container
                 .Background(Colors.Grey.Lighten2)
                 .Padding(8)
                 .BorderBottom(1)
                 .BorderColor(Colors.Grey.Medium)
                 .DefaultTextStyle(x => x.Bold());
-        }
+        }*/
 
-        private IContainer CampaignCellStyle(IContainer container)
+/*        private IContainer CampaignCellStyle(IContainer container)
         {
             return container
                 .Padding(8)
                 .BorderBottom(1)
                 .BorderColor(Colors.Grey.Lighten2);
-        }
-
+        }*/
         private byte[] GenerateRequestsPdf(
-         string title,
-         List<HelpOrder> requests)
+            string title,
+            List<HelpOrder> requests)
         {
             return Document.Create(container =>
             {
                 container.Page(page =>
                 {
+                    page.Size(PageSizes.A4);
                     page.Margin(20);
 
-                    // =====================================
-                    // Header
-                    // =====================================
+                    // =========================================
+                    // HEADER
+                    // =========================================
 
-                    page.Header().Column(column =>
-                    {
-                        column.Item()
-                            .Text(title)
-                            .FontSize(24)
-                            .Bold()
-                            .FontColor(Colors.Red.Darken2);
-
-                        column.Item()
-                            .Text($"Generated At: {DateTime.Now:yyyy-MM-dd hh:mm tt}")
-                            .FontSize(10)
-                            .FontColor(Colors.Grey.Darken1);
-                    });
-
-                    // =====================================
-                    // Table
-                    // =====================================
-
-                    page.Content().PaddingTop(15).Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
+                    page.Header()
+                        .PaddingBottom(15)
+                        .Column(col =>
                         {
-                            columns.RelativeColumn(4);
-                            columns.RelativeColumn(2);
+                            col.Item()
+                                .AlignCenter()
+                                .Text("كن سند")
+                                .FontSize(30)
+                                .Bold()
+                                .FontColor("#0F9D8A");
+
+                            col.Item()
+                                .AlignCenter()
+                                .Text(title)
+                                .FontSize(18)
+                                .Bold()
+                                .FontColor("#F4A300");
+
+                            col.Item()
+                                .PaddingTop(10)
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
                         });
 
-                        // =================================
-                        // Header
-                        // =================================
+                    // =========================================
+                    // CONTENT
+                    // =========================================
 
-                        table.Header(header =>
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(col =>
                         {
-                            header.Cell()
-                                .Element(HeaderCellStyle)
-                                .Text("User");
+                            // Summary
 
-                            header.Cell()
-                                .Element(HeaderCellStyle)
-                                .AlignCenter()
-                                .Text("Status");
+                            col.Item()
+                                .Background("#F8FAFC")
+                                .Border(1)
+                                .BorderColor("#E5E7EB")
+                                .Padding(10)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"عدد الطلبات: {requests.Count}");
+
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"طلبات مكتملة: {requests.Count(x => x.HelpOrderStatus.ToString() == "Completed")}");
+                                });
+
+                            col.Item().PaddingTop(15);
+
+                            // Table
+
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(4);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .Text("اسم المستفيد")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("الحالة")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+                                });
+
+                                for (int i = 0; i < requests.Count; i++)
+                                {
+                                    var r = requests[i];
+
+                                    var bgColor = "#F8FAFC";
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .Text(r?.Beneficiary?.FullName ?? "-");
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text(r.HelpOrderStatus.ToString());
+                                }
+                            });
                         });
 
-                        // =================================
-                        // Rows
-                        // =================================
-
-                        int index = 0;
-
-                        foreach (var r in requests)
-                        {
-                            var background = index % 2 == 0
-                                ? Colors.White
-                                : Colors.Grey.Lighten4;
-
-                            table.Cell()
-                                .Element(c =>
-                                    CellStyle(c).Background(background))
-                                .Text(r?.Beneficiary?.FullName ?? "N/A");
-
-                            table.Cell()
-                                .Element(c =>
-                                    CellStyle(c).Background(background))
-                                .AlignCenter()
-                                .Text(r.HelpOrderStatus.ToString());
-
-                            index++;
-                        }
-                    });
-
-                    // =====================================
-                    // Footer
-                    // =====================================
+                    // =========================================
+                    // FOOTER
+                    // =========================================
 
                     page.Footer()
-                        .AlignCenter()
-                        .Text(x =>
+                        .Column(col =>
                         {
-                            x.Span("KonSanad System Reports");
+                            col.Item()
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
+
+                            col.Item()
+                                .PaddingTop(5)
+                                .AlignCenter()
+                                .Text(text =>
+                                {
+                                    text.Span("تاريخ الإنشاء: ");
+                                    text.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                                });
                         });
                 });
-            }).GeneratePdf();
+            })
+            .GeneratePdf();
         }
-
-        private IContainer HeaderCellStyle(IContainer container)
+ /*       private IContainer HeaderCellStyle(IContainer container)
         {
             return container
                 .Background(Colors.Grey.Lighten2)
@@ -710,7 +989,7 @@ namespace KonSanad.Services.Services
                 .DefaultTextStyle(x => x.Bold());
         }
 
-       
+       */
         // =========================================================
         // ❌ Excel not needed now
         // =========================================================
