@@ -2,6 +2,7 @@
 using KonSanad.Core.Dtos;
 using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -92,7 +93,7 @@ namespace KonSanad.APIS.Controllers
         // POST: api/Volunteer/ReportSubmitted
         [HttpPost("ReportSubmitted")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> ReportSubmitted([FromForm] DTOs.ReportSubmittedDto dto)
+        public async Task<IActionResult> ReportSubmitted([FromForm] ReportSubmittedDto dto)
         {
             
                 // Basic validation of the incoming data 
