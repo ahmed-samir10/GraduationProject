@@ -35,6 +35,7 @@ namespace KonSanad.APIS.Controllers
             return File(result, "application/pdf", "donors-report.pdf");
         }
 
+
         [HttpGet("donors/top")]
         public async Task<IActionResult> TopDonors([FromQuery] int top = 10)
         {
@@ -49,6 +50,41 @@ namespace KonSanad.APIS.Controllers
         {
             var result = await _reportService.GetDonationsBetweenDatesAsync(from, to);
             return File(result, "application/pdf", "donors-report.pdf");
+        }
+
+        [HttpGet("GetAllBeneficiary")]
+        public async Task<IActionResult> GetAllBenficiary()
+        {
+            var result = await _reportService.GetAllBeneficiariesAsync();
+            return File(result, "application/pdf", "AllBeneficiary-report.pdf");
+        }
+        [HttpGet("top-beneficiaries")]
+        public async Task<IActionResult> GetTopBeneficiaries([FromQuery] int top = 10)
+        {
+            var pdf = await _reportService.GetTopBeneficiariesAsync(top);
+
+            return File( pdf,
+                "application/pdf",
+                "TopBeneficiaries-report.pdf");
+        }
+
+                [HttpGet("GetAllVolunteers")]
+        public async Task<IActionResult> GetAllVolunteers()
+        {
+            var result = await _reportService.GetAllVolunteerAsync();
+            return File(result, "application/pdf", "AllVolunteers-report.pdf");
+        }
+        [HttpGet("top-fastest-volunteers")]
+        public async Task<IActionResult> GetTopFastestVolunteers(
+    [FromQuery] int top = 10)
+        {
+            var pdf = await _reportService
+                .GetTopFastestVolunteersAsync(top);
+
+            return File(
+                pdf,
+                "application/pdf",
+                $"TopFastestVolunteers-{DateTime.Now:yyyyMMddHHmmss}.pdf");
         }
 
         #endregion
@@ -99,6 +135,8 @@ namespace KonSanad.APIS.Controllers
 
 
         #endregion
+
+
 
        
     }

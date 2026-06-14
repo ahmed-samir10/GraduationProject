@@ -139,6 +139,10 @@ namespace KonSanad.Services.Services
                                 var previousTotal = totalAmount - cashDonation.Amount;
                                 if (previousTotal < campaign.GoalCash && totalAmount >= campaign.GoalCash)
                                 {
+                                    campaign.CampaignStatus = CampaignStatus.Completed;
+                                    _context.Campaigns.Update(campaign);
+                                    await _context.SaveChangesAsync();
+
                                     await _notificationService.NotifyManagersAsync(new NotificationMessageDto
                                     {
                                         Type = NotificationType.CampaignGoalReached,

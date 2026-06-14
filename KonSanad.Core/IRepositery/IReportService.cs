@@ -27,7 +27,11 @@ namespace KonSanad.Core.IRepositery
 
         Task<byte[]> GetExpiredCampaignsAsync();
 
+        Task<byte[]> GetAllBeneficiariesAsync();
+        Task<byte[]> GetTopBeneficiariesAsync(int top = 10);
 
+        Task<byte[]> GetAllVolunteerAsync();
+        Task<byte[]> GetTopFastestVolunteersAsync(int top = 10);
 
         // Help Requests Reports
         Task<byte[]> GetPendingRequestsAsync();
