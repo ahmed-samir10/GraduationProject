@@ -99,20 +99,7 @@ namespace KonSanad.APIS.Controllers
             return Ok(await BuildUserResponseAsync(user));
         }
 
-        //[Authorize]
-        //[HttpGet("current")]
-        //public async Task<ActionResult<UserDto>> GetCurrentUser()
-        //{
-        //    var email = User.FindFirstValue(ClaimTypes.Email);
-        //    var user = await _userManager.FindByEmailAsync(email);
-        //    return Ok(await BuildUserResponseAsync(user));
-        //}
 
-        //[HttpGet("emailexists")]
-        //public async Task<ActionResult<bool>> CheckEmailExists([FromQuery] string email)
-        //    => await _userManager.FindByEmailAsync(email) != null;
-
-        // دالة مساعدة عشان نرجع نفس الشكل في Login و Register و CurrentUser
         private async Task<UserDto> BuildUserResponseAsync(AppUser user)
         {
             var roles = await _userManager.GetRolesAsync(user);
