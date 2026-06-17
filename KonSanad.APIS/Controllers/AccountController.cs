@@ -2,6 +2,7 @@
 
 using KonSanad.Core.Dtos;
 using KonSanad.Core.Dtos.KonSanad.APIS.DTOs;
+using KonSanad.Core.Dtos.ManagerDtos;
 using KonSanad.Core.Entities; // ← هنا Donor و Beneficiary و Volunteer
 using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
@@ -183,6 +184,96 @@ namespace KonSanad.APIS.Controllers
             }
 
             await _unitOfWork.Complete();
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound(new { error = "User not found" });
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    user.Id,
+                    user.FullName,
+                    user.Email,
+                    user.Phone,
+                    user.Address,
+                    user.NationalId
+                }
+            });
+        }
+        [Authorize(Roles = "Manager")]
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile(
+    [FromBody] UpdateAdminProfileDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(new { error = "User id not found in token" });
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound(new { error = "User not found" });
+            if (!string.IsNullOrWhiteSpace(dto.FullName) &&
+                dto.FullName.Trim().ToLower() != "string")
+            {
+                user.FullName = dto.FullName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Phone) &&
+                dto.Phone.Trim().ToLower() != "string")
+            {
+                user.Phone = dto.Phone;
+                user.PhoneNumber = dto.Phone;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Address) &&
+                dto.Address.Trim().ToLower() != "string")
+            {
+                user.Address = dto.Address;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.NationalId) &&
+                dto.NationalId.Trim().ToLower() != "string")
+            {
+                user.NationalId = dto.NationalId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Email) &&
+                dto.Email.Trim().ToLower() != "string")
+            {
+                var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+
+                if (existingUser != null && existingUser.Id != user.Id)
+                    return BadRequest(new { message = "Email already exists" });
+
+                user.Email = dto.Email;
+                user.UserName = dto.Email;
+            }
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok(new
+            {
+                success = true,
+                message = "تم التعديل بنجاح"
+            });
         }
     }
 }
