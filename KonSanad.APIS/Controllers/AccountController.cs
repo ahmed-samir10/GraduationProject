@@ -186,7 +186,10 @@ namespace KonSanad.APIS.Controllers
             await _unitOfWork.Complete();
         }
 
+       
         [Authorize(Roles = "Manager")]
+
+
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
