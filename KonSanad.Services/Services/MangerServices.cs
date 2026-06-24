@@ -6,6 +6,8 @@ using KonSanad.Repository.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -1424,46 +1426,173 @@ int referenceId, int type)
         }
         private byte[] GeneratePdf(List<Supply> supplies)
         {
-            return QuestPDF.Fluent.Document.Create(container =>
+            return Document.Create(container =>
             {
                 container.Page(page =>
                 {
+                    page.Size(PageSizes.A4);
                     page.Margin(20);
 
+                    // ===========================
+                    // Header
+                    // ===========================
                     page.Header()
-                        .Text("Low Stock Report")
-                        .FontSize(20)
-                        .Bold();
-
-                    page.Content().Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
+                        .PaddingBottom(15)
+                        .Column(col =>
                         {
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
+                            col.Item()
+                                .AlignCenter()
+                                .Text("Kon Sanad")
+                                .FontSize(30)
+                                .Bold()
+                                .FontColor("#0F9D8A");
+
+                            col.Item()
+                                .AlignCenter()
+                                .Text("Low Stock Report")
+                                .FontSize(18)
+                                .Bold()
+                                .FontColor("#F4A300");
+
+                            col.Item()
+                                .PaddingTop(10)
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
                         });
 
-                        table.Header(header =>
+                    // ===========================
+                    // Content
+                    // ===========================
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(col =>
                         {
-                            header.Cell().Text("Name").Bold();
-                            header.Cell().Text("Quantity").Bold();
-                            header.Cell().Text("Min Quantity").Bold();
+                            // Summary
+                            col.Item()
+                                .Background("#F8FAFC")
+                                .Border(1)
+                                .BorderColor("#E5E7EB")
+                                .Padding(10)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"Low Stock Items: {supplies.Count}");
+
+                                    row.RelativeItem()
+                                        .AlignCenter()
+                                        .Text($"Total Quantity: {supplies.Sum(x => x.StockQuantity)}");
+                                });
+
+                            col.Item().PaddingTop(15);
+
+                            // =======================
+                            // Table
+                            // =======================
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(4);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .Text("Supply Name")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("Current Stock")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("Minimum Level")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+
+                                    header.Cell()
+                                        .Element(CellStyle)
+                                        .Background("#0F9D8A")
+                                        .AlignCenter()
+                                        .Text("Shortage")
+                                        .FontColor(Colors.White)
+                                        .Bold();
+                                });
+
+                                foreach (var item in supplies)
+                                {
+                                    var bgColor = "#F8FAFC";
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .Text(item.Name);
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text(item.StockQuantity.ToString());
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text(item.MinimumLevel.ToString());
+
+                                    table.Cell()
+                                        .Element(CellStyle)
+                                        .Background(bgColor)
+                                        .AlignCenter()
+                                        .Text((item.MinimumLevel - item.StockQuantity).ToString());
+                                }
+                            });
                         });
 
-                        foreach (var supply in supplies)
-                        {
-                            table.Cell().Text(supply.Name);
-                            table.Cell().Text(supply.StockQuantity.ToString());
-                            table.Cell().Text(supply.MinimumLevel.ToString());
-                        }
-                    });
-
+                    // ===========================
+                    // Footer
+                    // ===========================
                     page.Footer()
-                        .AlignCenter()
-                        .Text($"Generated At: {DateTime.Now}");
+                        .Column(col =>
+                        {
+                            col.Item()
+                                .LineHorizontal(1)
+                                .LineColor("#E5E7EB");
+
+                            col.Item()
+                                .PaddingTop(5)
+                                .AlignCenter()
+                                .Text(text =>
+                                {
+                                    text.Span("Generated At: ");
+                                    text.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                                });
+                        });
                 });
-            }).GeneratePdf();
+            })
+            .GeneratePdf();
+        }
+
+        private static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .Border(1)
+                .BorderColor("#E5E7EB")
+                .Padding(8);
         }
     }
 }
