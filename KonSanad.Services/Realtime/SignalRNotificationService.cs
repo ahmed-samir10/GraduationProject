@@ -1,6 +1,7 @@
 ﻿using KonSanad.Core.Dtos;
 using KonSanad.Core.IRepositery;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using System.Text.Json;
 
@@ -159,7 +160,41 @@ namespace KonSanad.Services.Realtime
                 await UpdateIsReadAsync(GetRoleKey(role), notificationId);
             }
         }
+        public async Task MarkAllAsReadAsync(string appUserId, IEnumerable<string> roles)
+        {
+            // Notifications الخاصة باليوزر
+            await MarkAllByKeyAsReadAsync(GetUserKey(appUserId));
 
+            // Notifications الخاصة بالـ Roles
+            foreach (var role in roles.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                await MarkAllByKeyAsReadAsync(GetRoleKey(role));
+            }
+        }
+
+        private async Task MarkAllByKeyAsReadAsync(string key)
+        {
+            var values = await _redis.ListRangeAsync(key, 0, MaxNotificationsPerChannel - 1);
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (!values[i].HasValue)
+                    continue;
+
+                var notification =
+                    JsonSerializer.Deserialize<NotificationMessageDto>(values[i]!);
+
+                if (notification == null || notification.isRead)
+                    continue;
+
+                notification.isRead = true;
+
+                await _redis.ListSetByIndexAsync(
+                    key,
+                    i,
+                    JsonSerializer.Serialize(notification));
+            }
+        }
         private async Task UpdateIsReadAsync(string key, string notificationId)
         {
             var values = await _redis.ListRangeAsync(key, 0, MaxNotificationsPerChannel - 1);

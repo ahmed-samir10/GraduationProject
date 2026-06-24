@@ -159,13 +159,13 @@ namespace KonSanad.APIS.Controllers
             return Ok(new { success = true, data = result, pageNumber, pageSize });
         }
         [Authorize]
-        [HttpDelete("Delete_Item")]
-        public async Task<IActionResult> DeleteRequest(int itemid)
+        [HttpDelete("delete-my-request/{orderItemId}")]
+        public async Task<IActionResult> DeleteMyRequest(int orderItemId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var result = await _helpRequestService
-                .DeleteHelpRequestAsync(itemid, userId);
+                .DeleteItemAsync( userId , orderItemId);
 
             return Ok(new
             {
@@ -173,16 +173,15 @@ namespace KonSanad.APIS.Controllers
                 message = result
             });
         }
+
         [Authorize]
-        [HttpPut("Update_Item")]
-        public async Task<IActionResult> UpdateRequest(
-    int itemId,
-    int newQuantity)
+        [HttpPut("update-MyRequst")]
+        public async Task<IActionResult> UpdateHelpOrderQuantityAsync(int helpOrderItemId, int newQuantity)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var result = await _helpRequestService
-                .UpdateHelpRequestAsync(itemId, userId, newQuantity);
+                .UpdateHelpRequestAsync(helpOrderItemId, userId, newQuantity);
 
             return Ok(new
             {
@@ -191,7 +190,7 @@ namespace KonSanad.APIS.Controllers
             });
         }
 
-
+        
         [Authorize]
         [HttpGet("GetProfile")]
         public async Task<IActionResult> GetProfile()

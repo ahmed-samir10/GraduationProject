@@ -160,5 +160,31 @@ namespace KonSanad.APIS.Controllers
 
             return Ok(new { success = true });
         }
+        [Authorize]
+        [HttpPost("mark-all-as-read")]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "User id not found in token"
+                });
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(r => r.Value)
+                .Where(r => !string.IsNullOrWhiteSpace(r))
+                .ToList();
+
+            await _notificationService.MarkAllAsReadAsync(userId, roles);
+
+            return Ok(new
+            {
+                success = true,
+                message = "All notifications marked as read"
+            });
+        }
     }
 }

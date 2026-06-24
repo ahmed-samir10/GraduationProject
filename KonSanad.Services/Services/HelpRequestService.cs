@@ -31,115 +31,42 @@ namespace KonSanad.Services.Services
             _fileService = fileService;
             _notificationService = notificationService;
         }
-
-        /*   public async Task<HelpRequestResponseDto> RequestExistingProductAsync(int id, ExistingProductRequestDto request)
-           {
-
-               if (request == null) throw new System.ArgumentNullException(nameof(request));
-
-               // find the order item
-               var orderItem = await _unitOfWork.Repository<OrderItem, int>().GetByIdAsync(request.OrderItemId);
-               if (orderItem == null) return new HelpRequestResponseDto { HelpOrderId = 0, Message = "Order item not found." };
-
-               // verify this order item belongs to a donation (donor) and is not already assigned to a beneficiary
-               var donationOrder = await _unitOfWork.Repository<DonationOrder, int>().GetByIdAsync(orderItem.DonationOrderId);
-               if (donationOrder == null) return new HelpRequestResponseDto { HelpOrderId = 0, Message = "Order item does not belong to a donation order." };
-
-               if (!donationOrder.DonorId.HasValue)
-                   return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donation has no donor and cannot be requested." };
-
-               // ensure donation is not already assigned to any beneficiary (via Receipts)
-               var receipts = await _unitOfWork.Repository<Receipt, int>().GetAllAsync();
-               var assigned = receipts.Any(r => r.DonationOrderId == donationOrder.Id && r.BeneficiaryId.HasValue);
-               if (assigned)
-                   return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donated order is already assigned to a beneficiary." };
-
-               // optional: prevent requesting items that belong to campaigns (uncomment if desired)
-               // if (donationOrder.CampaignId.HasValue)
-               //     return new HelpRequestResponseDto { HelpOrderId = 0, Message = "This donation belongs to a campaign and cannot be requested here." };
-
-               // create HelpOrder with reason and reference to order item
-               var helpOrder = new HelpOrder
-               {
-                   BeneficiaryId = id,
-                   Description = (string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? string.Empty : $" {orderItem.CustomSupplyName}"),
-                   Status = "قيد الانتظار ",
-                   IsDeleted = false
-               };
-
-               await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
-               await _unitOfWork.Complete();
-
-               // ensure we have a Supply record to reference in HelpOrderItem
-               int supplyId;
-               if (orderItem.SupplyId.HasValue)
-               {
-                   supplyId = orderItem.SupplyId.Value;
-               }
-               else
-               {
-                   // create a catalog-style Supply for this donated custom item so HelpOrderItem can reference it
-                   var supply = new Supply
-                   {
-                       Name = string.IsNullOrWhiteSpace(orderItem.CustomSupplyName) ? "Donated Custom Item" : orderItem.CustomSupplyName,
-                       Description = $"Donated item from DonationOrder {donationOrder.Id}",
-                       Unit = string.IsNullOrWhiteSpace(orderItem.Unit) ? "pcs" : orderItem.Unit,
-                       StockQuantity = 0
-                   };
-
-                   await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
-                   await _unitOfWork.Complete();
-
-                   supplyId = supply.Id;
-               }
-
-               // create HelpOrderItem using quantity from the donated order item
-               var helpItem = new HelpOrderItem
-               {
-                   HelpOrderId = helpOrder.Id,
-                   SupplyId = supplyId,
-                   QuantityRequested = orderItem.Quantity,
-                   ImageUrl = null
-               };
-
-               await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
-               await _unitOfWork.Complete();
-
-               return new HelpRequestResponseDto
-               {
-                   HelpOrderId = helpOrder.Id,
-                   Message = "Request submitted successfully."
-               };
-           }
-   */
+        
         #region Update & Delete item
 
         //Delete item from my request
-        public async Task<(bool Success, string Message)> DeleteItemAsync(string userId, int helpOrderItemId)
+        public async Task<string > DeleteItemAsync(string userId, int helpOrderItemId)
         {
             var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
                 .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
             if (beneficiary == null)
-                return (false, "المستفيد غير موجود");
+                return ( "المستفيد غير موجود");
 
             var item = await _unitOfWork.Repository<HelpOrderItem, int>()
                 .FirstOrDefaultAsync(i => i.Id == helpOrderItemId);
 
             if (item == null)
-                return (false, "العنصر غير موجود");
+                return ( "العنصر غير موجود");
 
             var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
                 .FirstOrDefaultAsync(h => h.Id == item.HelpOrderId);
 
             if (helpOrder == null || helpOrder.BeneficiaryId != beneficiary.Id)
-                return (false, "غير مسموح");
+                return ( "غير مسموح");
 
             var count = await _unitOfWork.Repository<HelpOrderItem, int>()
                 .CountAsync(i => i.HelpOrderId == helpOrder.Id);
 
             if (count == 1)
             {
+                var mission = await _unitOfWork.Repository<Mission, int>()
+    .FirstOrDefaultAsync(m => m.HelpOrderId == helpOrder.Id);
+
+                if (mission != null)
+                {
+                    _unitOfWork.Repository<Mission, int>().Delete(mission);
+                }
                 _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
                 _unitOfWork.Repository<HelpOrder, int>().Delete(helpOrder);
             }
@@ -159,13 +86,13 @@ namespace KonSanad.Services.Services
                 EntityId = item.Id
             });
 
-            return (true, count == 1
+            return ( count == 1
                 ? "تم حذف الطلب بالكامل"
                 : "تم حذف العنصر بنجاح");
         }
         //update item in my request (Quantity)
 
-        public async Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(int helpOrderItemId, int newQuantity)
+        public async Task<string > UpdateHelpOrderQuantityAsync(int helpOrderItemId, int newQuantity)
         {
             // 1️⃣ هات الـ HelpOrderItem
             var helpOrderItem = await _unitOfWork.Repository<HelpOrderItem, int>()
@@ -173,7 +100,7 @@ namespace KonSanad.Services.Services
 
             // 2️⃣ تأكد إن الـ HelpOrderItem موجود
             if (helpOrderItem is null)
-                return (false, "HelpOrderItem مش موجود", null);
+                return ( "HelpOrderItem مش موجود");
 
             // 3️⃣ حدث الكمية
             helpOrderItem.QuantityRequested = newQuantity;
@@ -191,64 +118,13 @@ namespace KonSanad.Services.Services
                 });
 
             // 5️⃣ رجع النتيجة
-            return (true, "تم التحديث بنجاح", helpOrderItem);
+            return ("تم التحديث بنجاح");
         }
 
 
 
         #endregion
 
-        /*   public async Task<HelpRequestResponseDto> RequestNewProductAsync(int id, NewProductRequestDto request)
-           {
-               if (request == null) throw new ArgumentNullException(nameof(request));
-
-               var imageUrl = await SaveImageAsync(request.ImageFile);
-
-               var helpOrder = new HelpOrder
-               {
-                   BeneficiaryId = id,
-                   Title = request.ProductName,
-                   Description = request.ProductDescription,
-                   Status = "Requested",
-                   IsDeleted = false
-               };
-
-               await _unitOfWork.Repository<HelpOrder, int>().AddAsync(helpOrder);
-               await _unitOfWork.Complete();
-
-               var supply = new Supply
-               {
-                   Name = string.IsNullOrWhiteSpace(request.ProductName) ? "Custom Requested Product" : request.ProductName,
-                   Description = string.IsNullOrWhiteSpace(request.Reason) ? "Requested via HelpOrder (new product)" : request.Reason,
-                   Unit = "pcs",
-                   Title ="غذائي",
-                   StockQuantity = 0
-               };
-
-               await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
-               await _unitOfWork.Complete();
-
-               var helpItem = new HelpOrderItem
-               {
-                   HelpOrderId = helpOrder.Id,
-                   SupplyId = supply.Id,
-                   QuantityRequested = 1,
-                   reason = request.Reason,
-                   ImageUrl = imageUrl  // ← الصورة اللي اتخزنت
-               };
-
-               await _unitOfWork.Repository<HelpOrderItem, int>().AddAsync(helpItem);
-               await _unitOfWork.Complete();
-
-               return new HelpRequestResponseDto
-               {
-                   HelpOrderId = helpOrder.Id,
-                   Message = "New product request submitted successfully."
-               };
-           }
-
-
-   */
         public async Task<string> JoinCampaignAsync(int userid, JoinCampaignRequestDto request)
         {
             // تحقق لو المستفيد موجود
@@ -447,12 +323,15 @@ namespace KonSanad.Services.Services
                 return "المستفيد غير موجود";
 
             var item = await _unitOfWork.Repository<HelpOrderItem, int>()
-                .GetQueryable()
+      .GetQueryable()
+      .Include(x => x.HelpOrder)
+          .ThenInclude(h => h.HelpOrderItems)
+      .FirstOrDefaultAsync(x =>
+          x.Id == itemid &&
+          x.HelpOrder.BeneficiaryId == beneficiary.Id);
 
-                .FirstOrDefaultAsync(h =>
-                    h.Id == itemid &&
-                    h.HelpOrder.BeneficiaryId == beneficiary.Id);
-
+            if (item == null)
+                return "المنتج غير موجود";
 
             var helpOrder = item.HelpOrder;
             var helpOrderId = helpOrder.Id;
