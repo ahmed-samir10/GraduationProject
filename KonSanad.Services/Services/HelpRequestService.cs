@@ -3,6 +3,7 @@ using KonSanad.Core.Entity;
 using KonSanad.Core.Entity.Enums;
 using KonSanad.Core.IRepositery;
 using KonSanad.Repository.Entities;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -437,7 +438,99 @@ namespace KonSanad.Services.Services
 
             return result;
         }
+        public async Task<string> DeleteHelpRequestAsync(int itemid, string userId)
+        {
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
 
+            if (beneficiary == null)
+                return "المستفيد غير موجود";
+
+            var item = await _unitOfWork.Repository<HelpOrderItem, int>()
+                .GetQueryable()
+
+                .FirstOrDefaultAsync(h =>
+                    h.Id == itemid &&
+                    h.HelpOrder.BeneficiaryId == beneficiary.Id);
+
+
+            var helpOrder = item.HelpOrder;
+            var helpOrderId = helpOrder.Id;
+
+            // لو ده آخر منتج في الطلب
+            if (helpOrder.HelpOrderItems.Count == 1)
+            {
+                _unitOfWork.Repository<HelpOrder, int>().Delete(helpOrder);
+
+                await _unitOfWork.Complete();
+
+                await _notificationService.NotifyManagersAsync(
+                    new NotificationMessageDto
+                    {
+                        Title = "حذف طلب مساعدة",
+                        Message = $"تم حذف طلب المساعدة رقم {helpOrderId}",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = helpOrderId
+                    });
+
+                return "تم حذف الطلب بالكامل";
+            }
+
+            // لو فيه منتجات تانية
+            _unitOfWork.Repository<HelpOrderItem, int>().Delete(item);
+
+            await _unitOfWork.Complete();
+
+            await _notificationService.NotifyManagersAsync(
+                new NotificationMessageDto
+                {
+                    Title = "حذف عنصر من الطلب",
+                    Message = $"تم حذف المنتج {item.Title} من الطلب رقم {helpOrderId}",
+                    EntityType = nameof(HelpOrder),
+                    EntityId = helpOrderId
+                });
+
+            return "تم حذف الطلب بنجاح";
+        }
+        public async Task<string> UpdateHelpRequestAsync(
+    int itemId,
+    string userId,
+    int amount)
+        {
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+                .FirstOrDefaultAsync(b => b.AppUserId == userId);
+
+            if (beneficiary == null)
+                return "المستفيد غير موجود";
+
+            var item = await _unitOfWork.Repository<HelpOrderItem, int>()
+                .GetQueryable()
+                .Include(i => i.HelpOrder)
+                .FirstOrDefaultAsync(i =>
+                    i.Id == itemId &&
+                    i.HelpOrder.BeneficiaryId == beneficiary.Id);
+
+            if (item == null)
+                return "العنصر غير موجود";
+
+            var helporderid = item.HelpOrderId;
+
+            item.QuantityRequested = amount;
+        
+            item.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Complete();
+            await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+            {
+               // Type = NotificationType.BeneficiaryCampaignJoinRequested,
+                Title = " تعديل في  كميه طلب ",
+                Message = $" تعديل في  كميه طلب  رقم {helporderid}",
+                EntityType = nameof(BeneficiaryCampaign),
+                EntityId = item.Id
+            });
+
+            return "تم تعديل الطلب بنجاح";
+        }
 
 
         public async Task<GetProfileDto> GetProfileAsync(string userId)

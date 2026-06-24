@@ -158,7 +158,38 @@ namespace KonSanad.APIS.Controllers
             // Return paginated shape similar to GetAllCampaign
             return Ok(new { success = true, data = result, pageNumber, pageSize });
         }
+        [Authorize]
+        [HttpDelete("Delete_Item")]
+        public async Task<IActionResult> DeleteRequest(int itemid)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            var result = await _helpRequestService
+                .DeleteHelpRequestAsync(itemid, userId);
+
+            return Ok(new
+            {
+                success = true,
+                message = result
+            });
+        }
+        [Authorize]
+        [HttpPut("Update_Item")]
+        public async Task<IActionResult> UpdateRequest(
+    int itemId,
+    int newQuantity)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var result = await _helpRequestService
+                .UpdateHelpRequestAsync(itemId, userId, newQuantity);
+
+            return Ok(new
+            {
+                success = true,
+                message = result
+            });
+        }
 
 
         [Authorize]

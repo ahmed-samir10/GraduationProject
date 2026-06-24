@@ -127,7 +127,7 @@ namespace KonSanad.Services.BackgroundJobs
                                     {
                                         Title = "تم اكتمال الهدف المالي",
                                         Message = $"تم الوصول للهدف المالي للحملة {campaign.Title}",
-                                       // Type = "Campaign",
+                                       //Type = "Campaign",
                                         EntityId = campaign.Id,
                                         EntityType = nameof(Campaign),
                                         CreatedAtUtc = DateTime.UtcNow

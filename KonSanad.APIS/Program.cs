@@ -43,21 +43,15 @@ builder.Services.AddDbContext<AppIdentityDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
 });
+
+//service DI registration
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonorServices, DonorServices>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
-//volunteer service DI registration
 builder.Services.AddScoped<IVolunteerService, VolunteerService>();
-
-
-// Register VolunteerServices
-builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,         KonSanad.Services.Services.VolunteerService>();
-
-// register FileService implementation from Services project
+builder.Services.AddScoped<KonSanad.Core.IRepositery.IVolunteerService,  KonSanad.Services.Services.VolunteerService>();
 builder.Services.AddScoped<KonSanad.Core.IRepositery.IFileService, KonSanad.Services.Services.FileService>();
-
-// register DI
 builder.Services.AddScoped<IHelpRequestService, HelpRequestService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
@@ -94,18 +88,6 @@ builder.Services.AddIdentityCore<AppUser>(options =>
        .AddSignInManager<SignInManager<AppUser>>()
        .AddUserManager<UserManager<AppUser>>();
 
-var testConn = builder.Configuration.GetConnectionString("IdentityConnection");
-Console.WriteLine("========================================");
-Console.WriteLine($"🔗 Identity Connection String: {testConn}");
-Console.WriteLine("========================================");
-
-Console.WriteLine("Machine: " + Environment.MachineName);
-Console.WriteLine("Now: " + DateTime.Now);
-Console.WriteLine("TimeZone: " + TimeZoneInfo.Local.DisplayName);
-if (string.IsNullOrEmpty(testConn) || testConn.Contains("IdentityDb"))
-{
-    throw new Exception("❌ ERROR: Still using old connection string!");
-}
 
 
 
@@ -211,12 +193,9 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-// في الأول
 
 
-// باقي الكود...
-
-// في الـ middleware
+// middleware
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseStaticFiles();

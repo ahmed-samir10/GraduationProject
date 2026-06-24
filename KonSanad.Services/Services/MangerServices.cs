@@ -362,6 +362,26 @@ int? helpOrderId)
 
             await _unitOfWork.Complete();
 
+
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+       .GetQueryable()
+       
+       .FirstOrDefaultAsync(b =>
+           b.HelpOrders.Any(h => h.Id == mission.HelpOrderId));
+
+            if (beneficiary?.AppUserId != null)
+            {
+                await _notificationService.NotifyUserAsync(
+                    beneficiary.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.HelpRequestApproved, // أو النوع المناسب عندك
+                        Title = "تم قبول عنصر من الطلب",
+                        Message = $"تمت رفض الطلب  على {item.QuantityRequested} من {item.Title}",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = mission.HelpOrderId
+                    });
+            }
             return "تم رفض العنصر";
         }
         public async Task<string> AcceptItem(int missionId, int itemId)
@@ -401,6 +421,26 @@ int? helpOrderId)
             await UpdateOrderStatus(mission.HelpOrder);
 
             await _unitOfWork.Complete();
+
+            var beneficiary = await _unitOfWork.Repository<Beneficiary, int>()
+       .GetQueryable()
+      
+       .FirstOrDefaultAsync(b =>
+           b.HelpOrders.Any(h => h.Id == mission.HelpOrderId));
+
+            if (beneficiary?.AppUserId != null)
+            {
+                await _notificationService.NotifyUserAsync(
+                    beneficiary.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.HelpRequestApproved, // أو النوع المناسب عندك
+                        Title = "تم قبول عنصر من الطلب",
+                        Message = $"تمت الموافقة على {item.QuantityRequested} من {supply.Name}",
+                        EntityType = nameof(HelpOrder),
+                        EntityId = mission.HelpOrderId
+                    });
+            }
 
             return "تم قبول العنصر";
         }

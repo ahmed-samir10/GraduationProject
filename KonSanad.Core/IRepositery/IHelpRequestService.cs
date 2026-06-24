@@ -16,7 +16,11 @@ namespace KonSanad.Core.IRepositery
         Task<(bool Success, string Message, HelpOrderItem? UpdatedItem)> UpdateHelpOrderQuantityAsync(
        int helpOrderId,
        int newQuantity);
-
+        Task<string> DeleteHelpRequestAsync(int itemid, string userId);
+        Task<string> UpdateHelpRequestAsync(
+    int itemId,
+    string userId,
+    int amount);
 
 
 
