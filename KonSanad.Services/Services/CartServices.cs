@@ -170,6 +170,7 @@ namespace KonSanad.Services.Services
                                 .FirstOrDefaultAsync(p => p.Id == cash.HelpOrderId);
 
                             productName = supply.Name;
+
                             donationKey = cash.HelpOrderId.ToString();
                         }
 

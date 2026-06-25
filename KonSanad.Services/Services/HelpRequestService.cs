@@ -445,7 +445,7 @@ namespace KonSanad.Services.Services
         }
 
 
-        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileBenDto dto)
         {
             var beneficiaryRepo = _unitOfWork.Repository<Beneficiary, int>();
 

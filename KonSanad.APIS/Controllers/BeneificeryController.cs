@@ -207,7 +207,7 @@ namespace KonSanad.APIS.Controllers
 
         [Authorize]
         [HttpPut("UpdateProfile")]
-        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto dto)
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileBenDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

@@ -12,6 +12,7 @@ using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -1122,7 +1123,7 @@ int referenceId, int type)
                 .Where(cd => !cd.IsDeleted && cd.DonationOrder.Id == DonationOrderId) //هات التبرع اللي: مش محذوف , رقم الطلب بتاعه = الـ id اللي جايلي.
                 .FirstOrDefaultAsync();
 
-            if (cashDonation != null)
+           /* if (cashDonation != null)
             {
                 // Base fields
                 var dto = new GetAllDonationDetailsDto
@@ -1171,7 +1172,7 @@ int referenceId, int type)
 
                 return dto;
             }
-
+*/
             // ======= Try Item Donation =======
             var orderItem = await _unitOfWork.Repository<OrderItem, int>()
      .GetQueryable()
@@ -1222,6 +1223,8 @@ int referenceId, int type)
                 .GetQueryable()
                 .Include(d => d.Donor)
                 .FirstOrDefaultAsync(d => d.Id == donationOrderId);
+            var donorId = donationOrder.DonorId;
+
 
             if (donationOrder == null)
                 return "التبرع مش موجود";
@@ -1239,9 +1242,13 @@ int referenceId, int type)
             // ✅ Accept
             item.orderItemStatus = RequestedStatus.Approved;
 
-            if (donationOrder.DonationCategoryStatus == "custom")
+            var supply = await _unitOfWork.Repository<Supply, int>()
+                .FirstOrDefaultAsync(s => s.Id == item.SupplyId);
+
+            if (supply == null)
+                
             {
-                var supply = new Supply
+                var newsupply = new Supply
                 {
                     Name = item.CustomSupplyName,
                     Description = item.Description,
@@ -1258,15 +1265,16 @@ int referenceId, int type)
                     UpdatedAt = DateTime.Now,
                 };
 
-                await _unitOfWork.Repository<Supply, int>().AddAsync(supply);
-            }
-            else if (donationOrder.DonationCategoryStatus == "donationItem")
-            {
-                var supply = await _unitOfWork.Repository<Supply, int>()
-                    .FirstOrDefaultAsync(s => s.Id == item.SupplyId);
+                await _unitOfWork.Repository<Supply, int>().AddAsync(newsupply);
+                await _unitOfWork.Complete();
 
-                if (supply == null)
-                    return "العنصر مش موجود في المخزن";
+                item.SupplyId = newsupply.Id;
+
+                _unitOfWork.Repository<OrderItem, int>().Update(item);
+                await _unitOfWork.Complete();
+            }
+            else 
+            {
 
                 supply.StockQuantity += item.Quantity;
                 supply.UpdatedAt = DateTime.Now;
@@ -1275,6 +1283,22 @@ int referenceId, int type)
             await UpdateDonationOrderStatus(donationOrderId);
 
             await _unitOfWork.Complete();
+            var donor = await _unitOfWork.Repository<Donor, int>()
+                .FirstOrDefaultAsync(d => d.Id == donorId);
+            if (donor?.AppUserId != null)
+            {
+                await _notificationService.NotifyUserAsync(
+                    donor.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.DonationApproved, // أو النوع المناسب عندك
+                        Title = "تم قبول عنصر من الطلب",
+                        Message = $"تمت الموافقة على {item.CustomSupplyName}",
+                        EntityType = nameof(donationOrder),
+                        EntityId = donationOrderId
+                    });
+            }
+
 
             return "تم الموافقة على التبرع بنجاح";
         }
@@ -1285,6 +1309,12 @@ int referenceId, int type)
             var item = await _unitOfWork.Repository<OrderItem, int>()
                 .GetQueryable()
                 .FirstOrDefaultAsync(i => i.Id == itemId && i.DonationOrderId == donationOrderId && !i.IsDeleted);
+            var donationOrder = await _unitOfWork.Repository<DonationOrder, int>()
+                  .GetQueryable()
+                  .Include(d => d.Donor)
+                  .FirstOrDefaultAsync(d => d.Id == donationOrderId);
+            var donorId = donationOrder.DonorId;
+
 
             if (item == null)
                 return "العنصر غير موجود";
@@ -1299,7 +1329,21 @@ int referenceId, int type)
             await UpdateDonationOrderStatus(donationOrderId);
 
             await _unitOfWork.Complete();
-
+            var donor = await _unitOfWork.Repository<Donor, int>()
+               .FirstOrDefaultAsync(d => d.Id == donorId);
+            if (donor?.AppUserId != null)
+            {
+                await _notificationService.NotifyUserAsync(
+                    donor.AppUserId,
+                    new NotificationMessageDto
+                    {
+                        Type = NotificationType.DonationApproved, // أو النوع المناسب عندك
+                        Title = "تم رفض عنصر من الطلب",
+                        Message = $"تمت الرفض على {item.CustomSupplyName}",
+                        EntityType = nameof(donationOrder),
+                        EntityId = donationOrderId
+                    });
+            }
             return "تم رفض العنصر";
         }
         private async Task UpdateDonationOrderStatus(int donationOrderId)

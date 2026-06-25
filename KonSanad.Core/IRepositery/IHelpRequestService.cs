@@ -31,7 +31,7 @@ namespace KonSanad.Core.IRepositery
         Task<IEnumerable<object>> GetMyHelpRequestsAsync(string userId, int pageNumber, int pageSize);
 
         Task<GetProfileDto> GetProfileAsync(string userId);
-        Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+        Task<bool> UpdateProfileAsync(string userId, UpdateProfileBenDto dto);
 
 
     }
