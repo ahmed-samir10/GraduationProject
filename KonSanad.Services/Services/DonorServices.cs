@@ -48,9 +48,11 @@ namespace KonSanad.Services.Services
         {
             var supplies = await _unitOfWork.Repository<Supply, int>()
                 .GetQueryable()
-                .Where(s => s.StockQuantity <= s.MinimumLevel
-               || s.ShowinType == ShowinType.donor 
-               || s.ShowinType == ShowinType.Both)
+                .Where( s  =>
+            (s.ShowinType == ShowinType.donor ||
+              s.ShowinType == ShowinType.Both)
+                 &&
+                s.StockQuantity < s.MinimumLevel)
 
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -60,7 +62,7 @@ namespace KonSanad.Services.Services
             {
                 Id = s.Id,
                 Name = s.Name,
-                Quantity = s.StockQuantity ?? 0,
+                Quantity = Math.Max(0, (int)s.MinimumLevel - (int)s.StockQuantity),
                 imageurl = s.ImageUrl,
                 Unit = s.Unit,
                 title = s.Title

@@ -1278,6 +1278,18 @@ int referenceId, int type)
 
                 supply.StockQuantity += item.Quantity;
                 supply.UpdatedAt = DateTime.Now;
+                if (supply.ShowinType == ShowinType.donor && supply.StockQuantity > supply.MinimumLevel)
+                {
+                    await _notificationService.NotifyManagersAsync(new NotificationMessageDto
+                    {
+                        Type = NotificationType.CampaignGoalReached,
+                        Title = "تم اكتمال الهدف",
+                        Message = $"تم اكتمال الهدف للمنتج رقم {supply.Id} ليصبح {supply.StockQuantity} {supply.Unit}",
+                        EntityType = nameof(supply),
+                        EntityId = supply.Id
+                    }); 
+                }
+
             }
 
             await UpdateDonationOrderStatus(donationOrderId);
@@ -1451,6 +1463,11 @@ int referenceId, int type)
         {
             var supply = await _unitOfWork.Repository<Supply, int>().GetByIdAsync(controlSupply.SupplyId);
             if (supply == null) return "لا يوجد منتج";
+    /*        if (supply.ShowinType == ShowinType.donor) return "تم الاضافه من قبل";
+            if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";
+            if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";*/
+
+
             supply.ShowinType = controlSupply.ShowIn;
             supply.UpdatedAt = DateTime.Now;
             await _unitOfWork.Complete();
