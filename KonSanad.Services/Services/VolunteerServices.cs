@@ -246,7 +246,7 @@ namespace KonSanad.Services.Services
             {
                 Type = NotificationType.MissionReportSubmitted,
                 Title = "تقرير ميداني جديد",
-                Message = $"المتطوع {volunteer.FullName} رفع تقريرًا للمهمة رقم {missionId}.",
+                Message = $"المتطوع {volunteer.FullName} رفع تقريرًا للمهمة رقم {missionId} للطلب رقم {volunteerMission.Mission.HelpOrderId}.",
                 EntityType = nameof(MissionVolunteers),
                 EntityId = volunteerMission.Id
             });

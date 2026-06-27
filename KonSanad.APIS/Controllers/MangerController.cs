@@ -43,11 +43,10 @@ namespace KonSanad.APIS.Controllers
         [HttpGet("AllVolunteer")]
         public async Task<IActionResult> GetVolunteers(
      string? search = null,          // اسم المتطوع أو موقعه أو مهارته
-     RequestedStatus? status = null, // حالة الطلب (Rejected/Pending/Approved) - لو null هيجيب الكل
-     int pageNumber = 1,             // رقم الصفحة
-     int pageSize = 8)               // عدد العناصر في الصفحة
+     RequestedStatus? status = null // حالة الطلب (Rejected/Pending/Approved) - لو null هيجيب الكل
+     )               // عدد العناصر في الصفحة
         {
-            var result = await _mangerServices.GetVolunteerAsync(search, status, pageNumber, pageSize);
+            var result = await _mangerServices.GetVolunteerAsync(search, status);
             return Ok(new { success = true, data = result });
         }
         //---------------------------------------------------------------------------------------

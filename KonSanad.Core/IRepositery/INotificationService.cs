@@ -10,9 +10,7 @@ namespace KonSanad.Core.IRepositery
         Task NotifyUsersAsync(IEnumerable<string> appUserIds, NotificationMessageDto notification);
         Task<IReadOnlyList<NotificationMessageDto>> GetCurrentUserNotificationsAsync(
             string appUserId,
-            IEnumerable<string> roles,
-            int pageNumber = 1,
-            int pageSize = 20);
+            IEnumerable<string> roles);
         Task MarkAsReadAsync(string appUserId, IEnumerable<string> roles, string notificationId);
         Task MarkAllAsReadAsync(string appUserId, IEnumerable<string> roles);
     }

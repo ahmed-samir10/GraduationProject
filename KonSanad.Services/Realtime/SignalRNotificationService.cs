@@ -79,9 +79,7 @@ namespace KonSanad.Services.Realtime
 
         public async Task<IReadOnlyList<NotificationMessageDto>> GetCurrentUserNotificationsAsync(
             string appUserId,
-            IEnumerable<string> roles,
-            int pageNumber = 1,
-            int pageSize = 20)
+            IEnumerable<string> roles)
         {
             var notifications = new List<NotificationMessageDto>();
 
@@ -98,8 +96,7 @@ namespace KonSanad.Services.Realtime
             return notifications
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .ThenByDescending(x => x.Id)
-                .Skip((Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1))
-                .Take(Math.Max(pageSize, 1))
+               
                 .ToList();
         }
 

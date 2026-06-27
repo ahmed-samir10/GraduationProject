@@ -39,8 +39,7 @@ namespace KonSanad.APIS.Controllers
         [Authorize]
         [HttpGet("my")]
         public async Task<IActionResult> GetMyNotifications(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 20)
+            )
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
@@ -59,16 +58,14 @@ namespace KonSanad.APIS.Controllers
 
             var notifications = await _notificationService.GetCurrentUserNotificationsAsync(
                 userId,
-                roles,
-                pageNumber,
-                pageSize);
+                roles
+               );
 
             return Ok(new
             {
                 success = true,
                 data = notifications,
-                pageNumber,
-                pageSize,
+               
                 roles
             });
         }

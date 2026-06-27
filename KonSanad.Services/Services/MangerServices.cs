@@ -301,9 +301,8 @@ int? helpOrderId)
         #region  المتطوعين 
         public async Task<IEnumerable<GetVolunteerDto>> GetVolunteerAsync(
   string? search = null,          // بيسيرش في كل الحقول
-  RequestedStatus? status = null, // الفيلتر بالحالة بس
-  int pageNumber = 1,
-  int pageSize = 8)
+  RequestedStatus? status = null // الفيلتر بالحالة بس
+  )
         {
             var query = _unitOfWork.Repository<Volunteer, int>().GetQueryable()
                 .Where(v => !v.IsDeleted);
@@ -322,8 +321,7 @@ int? helpOrderId)
 
             var result = await query
                 .OrderByDescending(v => v.CreatedAt)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+                
                 .Select(v => new GetVolunteerDto
                 {
                     Id = v.Id,
@@ -1314,7 +1312,7 @@ int referenceId, int type)
 
             return "تم الموافقة على التبرع بنجاح";
         }
-        #endregion
+        
 
         public async Task<string> RejectDonationItem(int donationOrderId, int itemId, string reason)
         {
@@ -1379,6 +1377,10 @@ int referenceId, int type)
 
             donationOrder.UpdatedAt = DateTime.Now;
         }
+#endregion
+
+
+
         #region المستودع
 
         public async Task<IEnumerable<GetSupplyDto>> GetSuppliesAsync(
