@@ -17,7 +17,7 @@ namespace KonSanad.Repository.Entities
         public RequestedStatus? DonationRequestStatus { get; set; } = RequestedStatus.Pending;
         public DateTime? OrderDate { get; set; }
 
-        // Donor
+    
         public int? DonorId { get; set; }
         [ForeignKey(nameof(DonorId))]
         public Donor? Donor { get; set; }
