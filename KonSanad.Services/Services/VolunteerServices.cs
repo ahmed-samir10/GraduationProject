@@ -224,7 +224,7 @@ namespace KonSanad.Services.Services
 
 
             // Save file
-            var relativeUrl = await _fileService.SaveFileAsync(file, "uploads");
+            var relativeUrl = await _fileService.SaveFileAsync(file, "Image");
 
 
             // Store the result (for now store a single URL).

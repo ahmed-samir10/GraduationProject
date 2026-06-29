@@ -28,6 +28,7 @@ namespace KonSanad.Core.IRepositery
         Task<string> ControlIsVisibility(ControlSupplyDto controlSupply);
         Task<string> AssignVolunteerAsync(int HelpOderId, int VolunteerId, DateTime Start, DateTime End);
         Task<ViewReportDto> ViewReport(int HelpOrderId, int itemId);
+        Task<string?> GetReportFileAsync(int helpOrderId);
         Task<string> AcceptItem(int missionId, int itemId);
    Task<string> RejectItem(int missionId, int itemId);
         Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(
