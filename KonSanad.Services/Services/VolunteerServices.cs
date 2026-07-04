@@ -253,7 +253,7 @@ namespace KonSanad.Services.Services
                 EntityId = volunteerMission.Id
             });
 
-            return relativeUrl;
+            return " تم رفغ التقرير بنجاح";
         }
         // ----------------------------------------------------------
 
