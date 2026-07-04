@@ -43,8 +43,10 @@ namespace KonSanad.Services.Services
 
             var missions = await _context.Missions
                 .AsNoTracking()
-                .Where(m => m.MissionStatus == MissionStatus.New
-                         || volunteerMissionDict.Keys.Contains(m.Id)).Skip((pageNumber - 1) * pageSize)
+.Where(m =>
+    (m.MissionStatus == MissionStatus.New ||
+     volunteerMissionDict.Keys.Contains(m.Id))
+    && m.EndDate > DateTime.Now)
                  .Take(pageSize)
                 .Select(m => new MissionDto
                 {

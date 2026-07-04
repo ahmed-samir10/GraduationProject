@@ -93,8 +93,8 @@ namespace KonSanad.APIS.Controllers
                 _webHostEnvironment.WebRootPath,
                 filePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
-            if (!System.IO.File.Exists(fullPath))
-                return NotFound("File not found.");
+/*            if (!System.IO.File.Exists(fullPath))
+                return NotFound("File not found.");*/
 
             var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
 

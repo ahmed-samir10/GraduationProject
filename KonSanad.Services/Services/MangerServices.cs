@@ -1498,7 +1498,14 @@ int referenceId, int type)
             if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";
             if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";*/
 
-
+            if (controlSupply.ShowIn == ShowinType.beneficiary && supply.ShowinType == ShowinType.donor)
+            {
+             supply.ShowinType = ShowinType.Both;
+            }
+            if (controlSupply.ShowIn == ShowinType.donor && supply.ShowinType == ShowinType.beneficiary)
+            {
+                supply.ShowinType = ShowinType.Both;
+            }
             supply.ShowinType = controlSupply.ShowIn;
             supply.UpdatedAt = DateTime.Now;
             await _unitOfWork.Complete();
