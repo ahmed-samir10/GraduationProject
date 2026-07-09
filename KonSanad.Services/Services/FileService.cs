@@ -13,9 +13,14 @@ namespace KonSanad.Services.Services
         public async Task<string> SaveFileAsync(IFormFile file, string folder = "uploads")
         {
             if (file == null || file.Length == 0)
-                throw new ArgumentException("file");
+                throw new ArgumentException(nameof(file));
 
-            var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", folder);
+            Console.WriteLine($"WebRootPath = {_env.WebRootPath}");
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, folder);
+
+            Console.WriteLine($"UploadsFolder = {uploadsFolder}");
+
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
@@ -23,8 +28,12 @@ namespace KonSanad.Services.Services
             var fileName = $"{Guid.NewGuid()}{ext}";
             var filePath = Path.Combine(uploadsFolder, fileName);
 
+            Console.WriteLine($"Saving To = {filePath}");
+
             await using var fs = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(fs);
+
+            Console.WriteLine($"Exists = {System.IO.File.Exists(filePath)}");
 
             return $"{folder}/{fileName}";
         }

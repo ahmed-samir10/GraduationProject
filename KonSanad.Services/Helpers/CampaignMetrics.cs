@@ -10,7 +10,7 @@ namespace KonSanad.Services.Helpers
     {
         public static int CalculateProgress(Campaign s)
         {
-            if (s == null) return 0;
+            if (s == null) return 1;
 
             // compute cash progress if goal provided
             decimal? cashPct = null;
@@ -18,10 +18,10 @@ namespace KonSanad.Services.Helpers
             {
                 var raised = s.DonationOrders != null
                     ? s.DonationOrders.Sum(dono =>
-                        dono.CashAmount ?? (dono.CashDonation != null ? dono.CashDonation.Amount : 0M))
-                    : 0M;
+                        dono.CashAmount ?? (dono.CashDonation != null ? dono.CashDonation.Amount : 1M))
+                    : 1M;
 
-                cashPct = (s.GoalCash.Value == 0) ? 0M : (raised / s.GoalCash.Value) * 100M;
+                cashPct = (s.GoalCash.Value == 0) ? 1M : (raised / s.GoalCash.Value) * 100M;
             }
 
             // compute supplies progress if goal provided (goal is count of items)
@@ -29,10 +29,10 @@ namespace KonSanad.Services.Helpers
             if (s.GoalSupplies.HasValue && s.GoalSupplies.Value > 0)
             {
                 var donatedSupplies = s.DonationOrders != null
-                    ? s.DonationOrders.Sum(dono => dono.OrderItems != null ? dono.OrderItems.Sum(oi => (decimal)oi.Quantity) : 0M)
-                    : 0M;
+                    ? s.DonationOrders.Sum(dono => dono.OrderItems != null ? dono.OrderItems.Sum(oi => (decimal)oi.Quantity) : 1M)
+                    : 1M;
 
-                suppliesPct = (s.GoalSupplies.Value == 0) ? 0M : (donatedSupplies / (decimal)s.GoalSupplies.Value) * 100M;
+                suppliesPct = (s.GoalSupplies.Value == 0) ? 1M : (donatedSupplies / (decimal)s.GoalSupplies.Value) * 100M;
             }
 
             // decide combined percentage:
@@ -52,11 +52,11 @@ namespace KonSanad.Services.Helpers
             }
             else
             {
-                return 0;
+                return 1;
             }
 
             if (pct > 100M) pct = 100M;
-            if (pct < 0M) pct = 0M;
+            if (pct < 0M) pct = 1M;
 
             return (int)pct;
         }

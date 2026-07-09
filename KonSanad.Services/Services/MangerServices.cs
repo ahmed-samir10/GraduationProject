@@ -501,7 +501,36 @@ int? helpOrderId)
 
             return report;
         }
+        public async Task<string?> GetReportFileAsync(int helpOrderId)
+        {
+            var helpOrder = await _unitOfWork.Repository<HelpOrder, int>()
+                .GetQueryable()
+                .Include(h => h.Beneficiary)
+                .FirstOrDefaultAsync(h => h.Id == helpOrderId);
 
+            if (helpOrder == null)
+                return null;
+
+            var mission = await _unitOfWork.Repository<Mission, int>()
+                .GetQueryable()
+                .Include(m => m.HelpOrder)
+                    .ThenInclude(h => h.Beneficiary)
+                .FirstOrDefaultAsync(m =>
+                    m.HelpOrderId == helpOrderId &&
+                    m.Title == helpOrder.Beneficiary.FullName &&
+                    m.PhoneNumber == helpOrder.Beneficiary.Phone);
+
+            if (mission == null)
+                return null;
+
+            var fileUrl = await _unitOfWork.Repository<MissionVolunteers, int>()
+                .GetQueryable()
+                .Where(x => x.MissionId == mission.Id)
+                .Select(x => x.ResultMission)
+                .FirstOrDefaultAsync();
+
+            return fileUrl;
+        }
         public async Task<IEnumerable<GetJoinVolunteerDto>> GetJoinVolunteer(int pageNumber, int pageSize, RequestedStatus? status) // ✅ UPDATED: استقبلنا status
         {
             var query = _unitOfWork.Repository<Volunteer, int>()
@@ -1469,7 +1498,14 @@ int referenceId, int type)
             if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";
             if (supply.ShowinType == ShowinType.beneficiary) return "تم الاضافه من قبل";*/
 
-
+            if (controlSupply.ShowIn == ShowinType.beneficiary && supply.ShowinType == ShowinType.donor)
+            {
+             supply.ShowinType = ShowinType.Both;
+            }
+            if (controlSupply.ShowIn == ShowinType.donor && supply.ShowinType == ShowinType.beneficiary)
+            {
+                supply.ShowinType = ShowinType.Both;
+            }
             supply.ShowinType = controlSupply.ShowIn;
             supply.UpdatedAt = DateTime.Now;
             await _unitOfWork.Complete();

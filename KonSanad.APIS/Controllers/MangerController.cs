@@ -1,5 +1,6 @@
 ﻿using KonSanad.Core.Dtos.ManagerDtos;
 using KonSanad.Core.Entity.Enums;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -11,10 +12,12 @@ namespace KonSanad.APIS.Controllers
     public class MangerController : ControllerBase
     {
         private readonly IMangerServices _mangerServices;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public MangerController(IMangerServices mangerServices)
+        public MangerController(IMangerServices mangerServices , IWebHostEnvironment webHostEnvironment)
         {
             _mangerServices = mangerServices;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         //----------------------------------------------------------------------------------
@@ -76,6 +79,29 @@ namespace KonSanad.APIS.Controllers
                 return Ok(new { success = false, massage = "لم يتم العثور على التقرير" });
 
             return Ok(new { success = true, data = result });
+        }
+       
+        [HttpGet("download-report/{helpOrderId}")]
+        public async Task<IActionResult> DownloadReport(int helpOrderId)
+        {
+            var filePath = await _mangerServices.GetReportFileAsync(helpOrderId);
+
+            if (string.IsNullOrWhiteSpace(filePath))
+                return NotFound("No report found.");
+
+            var fullPath = Path.Combine(
+                _webHostEnvironment.WebRootPath,
+                filePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+
+/*            if (!System.IO.File.Exists(fullPath))
+                return NotFound("File not found.");*/
+
+            var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
+
+            return File(
+                stream,
+                "application/pdf",
+                Path.GetFileName(fullPath));
         }
         //---------------------------------------------------------------------------------------
 

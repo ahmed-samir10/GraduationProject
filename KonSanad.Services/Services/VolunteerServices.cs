@@ -43,8 +43,10 @@ namespace KonSanad.Services.Services
 
             var missions = await _context.Missions
                 .AsNoTracking()
-                .Where(m => m.MissionStatus == MissionStatus.New
-                         || volunteerMissionDict.Keys.Contains(m.Id)).Skip((pageNumber - 1) * pageSize)
+.Where(m =>
+    (m.MissionStatus == MissionStatus.New ||
+     volunteerMissionDict.Keys.Contains(m.Id))
+    && m.EndDate > DateTime.Now)
                  .Take(pageSize)
                 .Select(m => new MissionDto
                 {
@@ -224,7 +226,7 @@ namespace KonSanad.Services.Services
 
 
             // Save file
-            var relativeUrl = await _fileService.SaveFileAsync(file, "uploads");
+            var relativeUrl = await _fileService.SaveFileAsync(file, "Image");
 
 
             // Store the result (for now store a single URL).
@@ -251,7 +253,7 @@ namespace KonSanad.Services.Services
                 EntityId = volunteerMission.Id
             });
 
-            return relativeUrl;
+            return " تم رفغ التقرير بنجاح";
         }
         // ----------------------------------------------------------
 

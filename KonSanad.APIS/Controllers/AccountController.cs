@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace KonSanad.APIS.Controllers
 {
@@ -97,7 +98,7 @@ namespace KonSanad.APIS.Controllers
 
             await CreateProfileBasedOnRole(user, role, registerDto);
 
-            return Ok(await BuildUserResponseAsync(user));
+            return Ok(new {sucess = true , data = " تم التسجيل بنجاج"});
         }
 
 
