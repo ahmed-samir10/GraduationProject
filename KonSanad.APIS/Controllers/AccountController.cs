@@ -51,6 +51,7 @@ namespace KonSanad.APIS.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
+            // تحقق من صحة البريد الإلكتروني وكلمة المرور
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
             if (user == null)
                 return Ok(new { success = false, data = "  خطا في الايميل او الباسورد" });
